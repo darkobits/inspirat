@@ -1,0 +1,18 @@
+{
+  "name": "@darkobits/frontlawn-website",
+  "description": "The ever-so-enticing homepage of frontlawn.net.",
+  "version": "0.0.0",
+  "author": "darkobits",
+  "license": "WTFPL",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/darkobits/frontlawn-website.git"
+  },
+  "scripts": {
+    "start": "live-server docs"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.0"
+  }
+}
