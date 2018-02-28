@@ -50,7 +50,7 @@ body {
 
 #house-2 {
   align-items: flex-start;
-  background-image: url('assets/house-2-colorcross.png');
+  background-image: url('assets/house-2-colorcross.jpg');
   background-position: top right;
   background-repeat: no-repeat;
   background-size: cover;
@@ -61,13 +61,6 @@ body {
   height: 100%;
   justify-content: flex-end;
   padding-right: 0.4em;
-  /* padding-top: 0.1em; */
   text-shadow: -2px 2px 4px rgba(28, 29, 17, 0.15);
   width: 100%;
-  /* -webkit-text-stroke: 1px rgba(20, 6, 25, 0.8); */
 }
-
-
-/* colorcross */
-/* cinema */
-/* matte mmx a */
