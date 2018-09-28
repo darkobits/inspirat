@@ -1,0 +1,25 @@
+{
+  "presets": [
+    "@babel/preset-env",
+    "@babel/preset-react",
+    "@babel/preset-typescript"
+  ],
+  "plugins": [
+    "babel-plugin-emotion",
+    "@babel/plugin-proposal-object-rest-spread",
+    ["babel-plugin-module-resolver", {
+      "cwd": "babelrc",
+      "root": ["./src"],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".jpg",
+        ".png",
+        ".svg",
+        ".json"
+      ]
+    }]
+  ]
+}
