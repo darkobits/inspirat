@@ -9,7 +9,7 @@ import LocationMarker from 'components/location-marker';
 
 export interface ImageLocationProps {
   className?: string;
-  location: string;
+  location?: string;
 }
 
 
@@ -32,6 +32,10 @@ const markerClass = css`
 // ----- Component -------------------------------------------------------------
 
 const ImageLocation: React.SFC<ImageLocationProps> = ({className, location}) => {
+  if (!location) {
+    return <div></div>;
+  }
+
   return (
     <ImageInfo className={className || ''}>
       <LocationMarker className={markerClass} fill="#BABABA" shadow={shadow} />

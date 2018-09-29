@@ -13,15 +13,15 @@ interface SplashProps {
   href: string;
 
   /**
-   * Geographical location where the image was taken. Shown in the lower left
-   * corner.
-   */
-  location: string;
-
-  /**
    * Attribution for the image. Shown in the lower right corner.
    */
   author: string;
+
+  /**
+   * (Optional) Geographical location where the image was taken. Shown in the
+   * lower left corner.
+   */
+  location?: string;
 
   /**
    * (Optional) Link for the attribution text.
@@ -34,14 +34,21 @@ interface SplashProps {
 
 const SplashInner = styled.div<{href: string}>`
   align-items: flex-end;
+  background-attachment: fixed;
   background-image: url(${props => props.href});
   background-position: center center;
-  background-size: fill;
+  background-size: cover;
   display: flex;
   height: 100%;
   justify-content: space-between;
   padding: 0px 4px 4px 4px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   width: 100%;
+  height: 100%;
 `;
 
 

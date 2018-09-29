@@ -7,7 +7,7 @@ export default () => injectGlobal`
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     font-weight: 200;
-    font-size: 12px;
+    font-size: 14px;
   }
 
   a {
