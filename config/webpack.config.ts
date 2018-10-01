@@ -6,6 +6,7 @@ import webpack from 'webpack';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import {API_PREFIX} from '../src/etc/constants';
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => { // tslint:disable-line no-unused
@@ -138,6 +139,14 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     const port = await getPort({port: 8080}); // tslint:disable-line await-promise
 
     config.devServer = {
+      proxy: {
+        [API_PREFIX]: {
+          target: 'http://localhost:9000', // tslint:disable-line no-http-string
+          pathRewrite: {
+            [`^${API_PREFIX}`]: ''
+          }
+        }
+      },
       bonjour: true,
       historyApiFallback: true,
       disableHostCheck: true,

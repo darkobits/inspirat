@@ -25,6 +25,8 @@
 		// and more.
 		"no-unused": [true, "unused-catch-binding"],
 
+		"object-literal-key-quotes": false,
+
     // Require single quotemarks in code, double quotemarks in JSX.
 		"quotemark": [true, "single", "jsx-double"],
 

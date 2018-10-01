@@ -1,13 +1,14 @@
 import {injectGlobal} from 'emotion';
+import {buildFontFamilyString} from 'lib/typography';
 
 
 export default () => injectGlobal`
   * {
     box-sizing: border-box;
     color: white;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    font-weight: 200;
-    font-size: 14px;
+    font-family: ${buildFontFamilyString('Josefin Sans')};
+    font-weight: 300;
+    font-size: 16px;
   }
 
   a {

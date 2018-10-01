@@ -1,67 +1,103 @@
-import styled from 'react-emotion';
+import mousetrap from 'mousetrap';
+import {css} from 'react-emotion';
 import React from 'react';
-import ImageLocation from 'components/image-location';
-import ImageAttribution from 'components/image-attribution';
+
+import PhotoContext from 'components/photo-context';
+import SplashMid from 'components/splash-mid';
+import SplashLower from 'components/splash-lower';
+import {LooseObject, UnsplashPhotoResource} from 'etc/types';
+import {getImages} from 'lib/images';
+import {getIndexForDayOfYear, modIndex} from 'lib/utils';
 
 
-// ----- Props -----------------------------------------------------------------
+// ----- Styles ----------------------------------------------------------------
 
-interface SplashProps {
-  /**
-   * URL of the image to display.
-   */
-  href: string;
-
-  /**
-   * Attribution for the image. Shown in the lower right corner.
-   */
-  author: string;
-
-  /**
-   * (Optional) Geographical location where the image was taken. Shown in the
-   * lower left corner.
-   */
-  location?: string;
-
-  /**
-   * (Optional) Link for the attribution text.
-   */
-  authorHref?: string;
-}
-
-
-// ----- Styled Elements -------------------------------------------------------
-
-const SplashInner = styled.div<{href: string}>`
-  align-items: flex-end;
+const className = ({backgroundImage, backgroundPosition}: LooseObject) => css`
   background-attachment: fixed;
-  background-image: url(${props => props.href});
-  background-position: center center;
+  background-image: url(${backgroundImage});
+  background-position: ${backgroundPosition || 'center center'};
   background-size: cover;
   display: flex;
+  flex-direction: column;
   height: 100%;
   justify-content: space-between;
-  padding: 0px 4px 4px 4px;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  padding: 14px 18px;
   width: 100%;
-  height: 100%;
 `;
 
 
 // ----- Component -------------------------------------------------------------
 
-const Splash: React.SFC<SplashProps> = ({href, location, author, authorHref}) => {
-  return (
-    <SplashInner href={href}>
-      <ImageLocation location={location} />
-      <ImageAttribution author={author} href={authorHref} />
-    </SplashInner>
-  );
-};
+export interface SplashState {
+  images: Array<UnsplashPhotoResource>;
+  index: number;
+}
 
 
-export default Splash;
+export default class Splash extends React.Component<{}, SplashState> {
+  state = {images: [], index: 0};
+
+
+  /**
+   * In development, allows the left/right arrow keys to switch between images
+   * in the collection.
+   */
+  private enableKeyboardShortcuts() {
+    if (process.env.NODE_ENV === 'development') {
+      mousetrap.bind('left', () => {
+        this.setState(prevState => ({index: prevState.index - 1}));
+      });
+
+      mousetrap.bind('right', () => {
+        this.setState(prevState => ({index: prevState.index + 1}));
+      });
+
+      console.debug('[Development] Keyboard shortcuts registered.');
+    }
+  }
+
+
+  /**
+   * Bind the left/right arrow keys to handlers that will cycle through images.
+   */
+  async componentDidMount() {
+    const images = await getImages();
+    const index = getIndexForDayOfYear(images);
+
+    this.setState(prevState => ({...prevState, images, index}));
+    this.enableKeyboardShortcuts();
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Splash] Got images:', images);
+    }
+  }
+
+
+  /**
+   * Renders the component.
+   */
+  render() {
+    const photo = modIndex<UnsplashPhotoResource>(this.state.index, this.state.images);
+
+    if (!photo) {
+      return <div></div>;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.groupCollapsed(`[Splash] Current photo ID: "${photo.id}"`);
+      console.debug(photo);
+      console.groupEnd();
+    }
+
+    const backgroundImage = photo.urls.full;
+
+    return (
+      <PhotoContext.Provider value={photo}>
+        <div className={className({backgroundImage/* , backgroundPosition */})}>
+          <SplashMid></SplashMid>
+          <SplashLower />
+        </div>
+      </PhotoContext.Provider>
+    );
+  }
+}

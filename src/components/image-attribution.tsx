@@ -1,49 +1,53 @@
 import React from 'react';
 import styled from 'react-emotion';
+
+import PhotoContext from 'components/photo-context';
 import {shadow} from 'etc/constants';
 
 
 // ----- Props -----------------------------------------------------------------
 
 export interface ImageAttributionProps {
-  author: string;
   className?: string;
-  href?: string;
 }
 
 
 // ----- Styled Elements -------------------------------------------------------
 
 const ImageAttributionInner = styled.div`
+  color: rgb(255, 255, 255, 0.64);
   display: flex;
   text-shadow: ${shadow};
-`;
+  user-select: none;
 
+  & a {
+    color: white;
+    opacity: 0.8;
+    transition: all 0.15s ease-in-out;
 
-const AvatarIcon = styled.img`
-  border-radius: 50%;
-  display: block;
-  filter: drop-shadow(0px 0px 1px rgba(0, 0, 0, 0.33));
-  float: left;
-  height: 0.8em;
-  margin-right: 0.4em;
-  margin-top: 0.23em;
-  width: 0.8em;
+    &:hover {
+      opacity: 1;
+      text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.48);
+    }
+  }
 `;
 
 
 // ----- Component -------------------------------------------------------------
 
-const ImageAttribution: React.SFC<ImageAttributionProps> = ({className, author, href}) => {
-  return (
-    <ImageAttributionInner className={className || ''}>
-      <a href={href || '#'}>
-        <AvatarIcon src="https://images.unsplash.com/placeholder-avatars/extra-large.jpg"></AvatarIcon>
-        {author}
-      </a>
-    </ImageAttributionInner>
-  );
-};
+const ImageAttribution: React.SFC<ImageAttributionProps> = ({className}) => (
+  <PhotoContext.Consumer>{photo => {
+    if (!photo) {
+      return <div></div>;
+    }
+
+    return (
+      <ImageAttributionInner className={className}>
+        Photo by&nbsp;<a href={photo.user.links.html}>{photo.user.name}</a>&nbsp;on&nbsp;<a href="https://unsplash.com">Unsplash</a>
+      </ImageAttributionInner>
+    );
+  }}</PhotoContext.Consumer>
+);
 
 
 export default ImageAttribution;
