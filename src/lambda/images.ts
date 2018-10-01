@@ -1,3 +1,4 @@
+import '@babel/polyfill';
 import {Context} from 'aws-lambda';
 import axios from 'axios';
 import {buildResponse} from 'lib/utils';
