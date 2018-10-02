@@ -14,6 +14,9 @@ export function buildResponse(userResponse: LooseObject | AxiosError): LooseObje
 
     return {
       statusCode,
+      headers: {
+        'Access-Control-Allow-Origin': '*'
+      },
       body: JSON.stringify({
         statusCode,
         statusText: errResponse.statusText,
@@ -24,6 +27,9 @@ export function buildResponse(userResponse: LooseObject | AxiosError): LooseObje
 
   const response: any = {
     statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
     ...userResponse
   };
 
