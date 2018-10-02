@@ -1,18 +1,61 @@
+import ms from 'ms';
 import queryString from 'query-string';
 
+import {CACHE_TTL} from 'etc/constants';
 import {LooseObject, UnsplashPhotoResource} from 'etc/types';
 import client from 'lib/client';
+import storage from 'lib/storage';
 import {greaterOf} from 'lib/utils';
 
 
+interface CollectionCache {
+  images: Array<UnsplashPhotoResource>;
+  updatedAt: number;
+}
+
+
 /**
- * Returns an array of all images in the Front Lawn collection.
+ * Returns an array of all images in the Front Lawn collection. The response
+ * will be persisted to local storage to improve load times and asynchronously
+ * updated in the background.
  *
  * See: lambda/images.ts.
  */
-export async function getImages(): Promise<Array<UnsplashPhotoResource>> {
-  const res = await client.get('/images');
-  return res.data as Array<UnsplashPhotoResource>;
+export async function getImages() {
+  // Sub-routine that fetches up-to-date image collection data, immediately
+  // resolves with it, then caches it to local storage.
+  const fetchAndUpdateCollection = async () => {
+    const res = await client.get('/images');
+
+    if (process.env.NODE_ENV === 'development') {
+      console.debug(`[getImages] Returning ${res.data.length} images.`);
+    }
+
+    storage.setItem('imageCollection', {images: res.data, updatedAt: Date.now()}); // tslint:disable-line no-floating-promises
+    return res.data;
+  };
+
+  const storageKeys = await storage.keys();
+
+  // If the cache is empty, fetch collection data and cache it.
+  if (!storageKeys.includes('imageCollection')) {
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[getImages] Cache empty.');
+    }
+
+    return fetchAndUpdateCollection();
+  }
+
+  // Otherwise, get data from the cache.
+  const cachedImages = await storage.getItem<CollectionCache>('imageCollection');
+
+  // Then, if the data is stale, update it.
+  if ((Date.now() - cachedImages.updatedAt) >= ms(CACHE_TTL)) {
+    fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
+  }
+
+  // Immediately resolve with cached data.
+  return cachedImages.images;
 }
 
 

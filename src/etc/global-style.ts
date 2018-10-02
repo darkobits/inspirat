@@ -18,7 +18,7 @@ export default () => injectGlobal`
   html,
   body,
   #root {
-    background-color: rgb(5, 5, 5);
+    background-color: rgb(42, 42, 42);
     height: 100%;
     margin: 0;
     padding: 0;

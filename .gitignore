@@ -87,5 +87,11 @@ typings/
 # next.js build output
 .next
 
+# Key files
+*.pem
+
+# Chrome pack artifacts.
+*.crx
+
 # Build artifacts
 dist

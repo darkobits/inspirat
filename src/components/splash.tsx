@@ -61,14 +61,18 @@ export default class Splash extends React.Component<{}, SplashState> {
    * Bind the left/right arrow keys to handlers that will cycle through images.
    */
   async componentDidMount() {
-    const images = await getImages();
-    const index = getIndexForDayOfYear(images);
+    try {
+      const images = await getImages();
+      const index = getIndexForDayOfYear(images);
 
-    this.setState(prevState => ({...prevState, images, index}));
-    this.enableKeyboardShortcuts();
+      this.setState(prevState => ({...prevState, images, index}));
+      this.enableKeyboardShortcuts();
 
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[Splash] Got images:', images);
+      if (process.env.NODE_ENV === 'development') {
+        console.debug('[Splash] Got images:', images);
+      }
+    } catch (err) {
+      console.error('[Splash] Error:', err.message);
     }
   }
 

@@ -1,12 +1,28 @@
 import path from 'path';
+
+import fs from 'fs-extra';
 import getPort from 'get-port';
 import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
+
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 // @ts-ignore
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import {API_PREFIX} from '../src/etc/constants';
+
+
+async function synchronizeVersions(fromFile: string, toFile: string): Promise<void> {
+  const fromJson = await fs.readJson(fromFile);
+
+  if (!fromJson.version) {
+    throw new Error('Source file does not have a "version" property.');
+  }
+
+  const toJson = await fs.readJson(toFile);
+  toJson.version = fromJson.version;
+  await fs.writeJson(toFile, toJson, {spaces: 2});
+}
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => { // tslint:disable-line no-unused
@@ -14,8 +30,11 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module = {rules: []};
   config.plugins = [];
 
-  const {pkg, path: pkgPath} = await readPkgUp();
+  const {path: pkgPath} = await readPkgUp();
   const pkgRoot = path.parse(pkgPath).dir;
+
+  const DEV_API_PREFIX = '/.netlify/functions/';
+  const PROD_API_PREFIX = `https://frontlawn.net${DEV_API_PREFIX}`;
 
 
   // ----- Entry / Output ------------------------------------------------------
@@ -104,8 +123,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.plugins.push(new webpack.NamedModulesPlugin());
 
   config.plugins.push(new webpack.DefinePlugin({
-    'process.env.__PKG_NAME__': `"${pkg.name}"`,
-    'process.env.__PKG_VERSION__': `"${pkg.version}"`
+    'process.env.API_PREFIX': JSON.stringify(argv.mode === 'development' ? DEV_API_PREFIX : PROD_API_PREFIX)
   }));
 
   config.plugins.push(new HtmlWebpackPlugin({
@@ -120,15 +138,22 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   }
 
   if (argv.mode === 'production') {
+    config.plugins.push(new CopyWebpackPlugin([
+      path.resolve(pkgRoot, 'src', 'manifest.json'),
+      path.resolve(pkgRoot, 'assets', 'favicon-16.png'),
+      path.resolve(pkgRoot, 'assets', 'favicon-48.png'),
+      path.resolve(pkgRoot, 'assets', 'favicon-128.png')
+    ]));
+
     config.plugins.push(new webpack.LoaderOptionsPlugin({
       minimize: true
     }));
 
     config.plugins.push(new FaviconsWebpackPlugin({
-      logo: path.resolve(pkgRoot, 'src', 'assets', 'favicon.png'),
+      logo: path.resolve(pkgRoot, 'assets', 'favicon.png'),
       persistentCache: true,
       inject: true,
-      title: 'Frontlawn Netwerks'
+      title: 'Front Lawn'
     }));
   }
 
@@ -140,10 +165,10 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
     config.devServer = {
       proxy: {
-        [API_PREFIX]: {
+        [DEV_API_PREFIX]: {
           target: 'http://localhost:9000', // tslint:disable-line no-http-string
           pathRewrite: {
-            [`^${API_PREFIX}`]: ''
+            [`^${DEV_API_PREFIX}`]: ''
           }
         }
       },
@@ -194,6 +219,11 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
       }
     }
   };
+
+  // When building, sync the version from package.json to manifest.json.
+  if (argv.mode === 'production') {
+    await synchronizeVersions(path.resolve(pkgRoot, 'package.json'), path.resolve(pkgRoot, 'src', 'manifest.json'));
+  }
 
 
   return config;

@@ -12,12 +12,13 @@ const className = ({opacity}: LooseObject) => css`
   align-items: center;
   display: flex;
   flex-grow: 1;
-  font-size: 64px;
+  font-size: 56px;
   font-weight: 300;
   justify-content: center;
   letter-spacing: 1.5px;
   margin-bottom: 8px;
   opacity: ${opacity || 1};
+  padding-bottom: 1.2em;
   text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.72);
   transition: opacity 1s ease-in-out;
   user-select: none;
