@@ -4,9 +4,9 @@ import ReactDOM from 'react-dom';
 
 import App from 'components/app';
 import globalStyles from 'etc/global-style';
-// import printReadme from 'lib/readme';
+import printReadme from 'lib/readme';
 
 
 globalStyles();
-// printReadme();
+printReadme();
 ReactDOM.render(<App />, document.getElementById('root'));

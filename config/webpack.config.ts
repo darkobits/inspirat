@@ -30,7 +30,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module = {rules: []};
   config.plugins = [];
 
-  const {path: pkgPath} = await readPkgUp();
+  const {pkg, path: pkgPath} = await readPkgUp();
   const pkgRoot = path.parse(pkgPath).dir;
 
   const DEV_API_PREFIX = '/.netlify/functions/';
@@ -123,7 +123,8 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.plugins.push(new webpack.NamedModulesPlugin());
 
   config.plugins.push(new webpack.DefinePlugin({
-    'process.env.API_PREFIX': JSON.stringify(argv.mode === 'development' ? DEV_API_PREFIX : PROD_API_PREFIX)
+    'process.env.API_PREFIX': JSON.stringify(argv.mode === 'development' ? DEV_API_PREFIX : PROD_API_PREFIX),
+    'process.env.PACKAGE_VERSION': JSON.stringify(pkg.version)
   }));
 
   config.plugins.push(new HtmlWebpackPlugin({
