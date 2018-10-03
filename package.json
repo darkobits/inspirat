@@ -20,6 +20,7 @@
     "build:server": "netlify-lambda --config webpack.config.lambda.js build ./src/lambda",
     "build:client": "webpack --mode=production",
     "build": "run-p build:*",
+    "prebump": "npm run build",
     "bump": "standard-version",
     "bump:beta": "npm run bump -- --prerelease=beta",
     "start:server": "netlify-lambda --config webpack.config.lambda.js serve ./src/lambda",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
+    "chalk": "^2.4.1",
     "emotion": "^9.2.10",
     "localforage": "^1.7.2",
     "luxon": "^1.4.1",
