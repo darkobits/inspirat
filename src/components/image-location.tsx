@@ -1,3 +1,4 @@
+import {rgba} from 'polished';
 import React from 'react';
 import styled from 'react-emotion';
 
@@ -13,10 +14,15 @@ export interface ImageLocationProps {
 
 // ----- Styled Elements -------------------------------------------------------
 
-const ImageInfo = styled.div`
+const textShadow = (color: string) => [
+  `0px 0px 2px  ${rgba(0, 0, 0, 1)}`,
+  `0px 0px 8px ${rgba(color, 0.3)}`
+].join(', ');
+
+const ImageInfo = styled.div<{shadowColor: string}>`
   color: rgb(255, 255, 255, 0.96);
   display: flex;
-  text-shadow: 0px 0px 3px rgba(255, 255, 255, 0.48);
+  text-shadow: ${props => textShadow(props.shadowColor)};
   user-select: none;
 `;
 
@@ -29,7 +35,11 @@ const ImageLocation: React.SFC<ImageLocationProps> = ({className}) => (
       return <div></div>;
     }
 
-    return (<ImageInfo className={className}>{photo.location.title}</ImageInfo>);
+    return (
+      <ImageInfo shadowColor={photo.color} className={className}>
+        {photo.location.title}
+      </ImageInfo>
+    );
   }}</PhotoContext.Consumer>
 );
 

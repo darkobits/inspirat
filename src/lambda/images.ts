@@ -1,9 +1,9 @@
 import '@babel/polyfill';
-// import util from 'util';
 import {Context} from 'aws-lambda';
 import axios from 'axios';
 import parseLinkHeader from 'parse-link-header';
 import {buildResponse} from 'lib/utils';
+
 
 /**
  * Unsplash ID of our collection.
@@ -18,7 +18,7 @@ const MAX_PAGE_SIZE = 30;
 
 
 /**
- * Axios client bound to the Unsplash API.
+ * Axios client with our client token bound to it.
  */
 const client = axios.create({
   headers: {
@@ -27,7 +27,6 @@ const client = axios.create({
   }
 });
 
-// `collections/${COLLECTION_ID}/photos`
 
 /**
  * Provided a URL for an API that returns "link" headers containing pagination
@@ -82,8 +81,6 @@ export async function handler(event: any, context: Context) { // tslint:disable-
       const res = await client.get(`https://api.unsplash.com/photos/${photo.id}`);
       return res.data;
     }));
-
-    // console.log('HEADERS', util.inspect(collection.headers, {colors: true, depth: 20}));
 
     return buildResponse({body: photosInCollection});
   } catch (err) {

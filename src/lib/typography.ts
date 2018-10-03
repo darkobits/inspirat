@@ -1,4 +1,4 @@
-import queryString from 'query-string';
+import queryString from 'lib/query';
 
 
 /**
@@ -93,7 +93,7 @@ export function buildFontFamilyString(additionalFont?: string): string {
   const fonts = [];
 
   if (process.env.NODE_ENV === 'development') {
-    const parsedQuery = queryString.parse(location.search);
+    const parsedQuery = queryString();
 
     if (parsedQuery.family) {
       fonts.push(`"${useFont(parsedQuery.family)}"`);

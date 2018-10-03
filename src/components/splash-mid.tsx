@@ -1,6 +1,8 @@
+import {rgba} from 'polished';
 import {css} from 'react-emotion';
 import React from 'react';
 
+import PhotoContext from 'components/photo-context';
 import {LooseObject} from 'etc/types';
 import storage from 'lib/storage';
 import {getPeriodDescriptor} from 'lib/time';
@@ -8,18 +10,24 @@ import {getPeriodDescriptor} from 'lib/time';
 
 // ----- Styles ----------------------------------------------------------------
 
-const className = ({opacity}: LooseObject) => css`
+const textShadow = (color: string) => [
+  `0px 0px 2px  ${rgba(0, 0, 0, 1)}`,
+  `0px 0px 32px ${rgba(color, 0.3)}`,
+  `0px 0px 96px ${rgba(color, 0.6)}`,
+].join(', ');
+
+const className = ({color, opacity}: LooseObject) => css`
   align-items: center;
   display: flex;
   flex-grow: 1;
-  font-size: 56px;
+  font-size: 96px;
   font-weight: 300;
   justify-content: center;
   letter-spacing: 1.5px;
   margin-bottom: 8px;
   opacity: ${opacity || 1};
   padding-bottom: 1.2em;
-  text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.72);
+  text-shadow: ${textShadow(color)};
   transition: opacity 1s ease-in-out;
   user-select: none;
 
@@ -88,9 +96,15 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
    */
   render() {
     return (
-      <div className={className({opacity: this.state.ready ? '1' : '0'})}>
-        {this.getGreeting()}
-      </div>
+      <PhotoContext.Consumer>{photo => {
+        const color = photo ? photo.color : 'black';
+
+        return (
+          <div className={className({color, opacity: this.state.ready ? '1' : '0'})}>
+            {this.getGreeting()}
+          </div>
+        );
+      }}</PhotoContext.Consumer>
     );
   }
 }

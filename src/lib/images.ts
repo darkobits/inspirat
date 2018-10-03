@@ -108,20 +108,21 @@ export function getFullImageUrl(baseUrl: string, options?: LooseObject) {
 
 
 /**
- * Asynchronously pre-loads the image at the provided URL.
+ * Asynchronously pre-loads the image at the provided URL and returns a promise
+ * that resolves when the image has finished loading.
  */
-// export async function preloadImage(imgUrl: string): Promise<void> {
-//   return new Promise<void>((resolve, reject) => {
-//     const img = new Image();
+export async function preloadImage(imgUrl: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const img = new Image();
 
-//     img.onload = () => {
-//       resolve();
-//     };
+    img.onload = () => {
+      resolve();
+    };
 
-//     img.onerror = event => {
-//       reject(event);
-//     };
+    img.onerror = event => {
+      reject(event);
+    };
 
-//     img.src = imgUrl;
-//   });
-// }
+    img.src = imgUrl;
+  });
+}

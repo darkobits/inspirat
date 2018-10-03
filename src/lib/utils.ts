@@ -52,13 +52,12 @@ export function greaterOf(a: number, b: number): number {
 
 
 /**
- * Provided a number and an array, returns the element at that position. If the
- * position is out of bounds, modulo will be used to calculate the position,
- * enabling "circular" arrays.
+ * Provided a any integer and an array, returns the index in that array computed
+ * by diving the number by the length of the array.
  */
-export function modIndex<T>(num: number, arr: Array<T>): T {
+export function modIndex(num: number, arr: Array<any>): number {
   const index = num % arr.length;
-  return arr[index < 0 ? index + arr.length : index];
+  return index < 0 ? index + arr.length : index;
 }
 
 

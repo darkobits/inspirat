@@ -6,9 +6,9 @@ import {DateTime} from 'luxon';
  * day.
  */
 export function getPeriodDescriptor() {
-  const now = DateTime.local();
+  const {hour} = DateTime.local();
 
-  switch (now.hour) {
+  switch (hour) {
     // 12:00AM - 2:59AM
     case 0:
     case 1:
@@ -24,19 +24,19 @@ export function getPeriodDescriptor() {
     case 8:
     case 9:
     case 10:
+    case 11:
       return 'morning';
 
     // 12:00PM - 5:59PM
-    case 11:
     case 12:
     case 13:
     case 14:
     case 15:
     case 16:
+    case 17:
       return 'afternoon';
 
     // 6:00PM - 11:59PM
-    case 17:
     case 18:
     case 19:
     case 20:
