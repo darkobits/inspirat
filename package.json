@@ -1,6 +1,6 @@
 {
-  "name": "@darkobits/frontlawn-website",
-  "description": "The ever-so-enticing homepage of frontlawn.net.",
+  "name": "@darkobits/inspirat",
+  "description": "A new tab experience for Chrome in the style of Momentum.",
   "version": "0.3.0",
   "author": "darkobits",
   "license": "WTFPL",
@@ -20,9 +20,10 @@
     "build:server": "netlify-lambda --config webpack.config.lambda.js build ./src/lambda",
     "build:client": "webpack --mode=production",
     "build": "run-p build:*",
-    "prebump": "npm run build",
+    "prebump": "npm run prebuild",
     "bump": "standard-version",
     "bump:beta": "npm run bump -- --prerelease=beta",
+    "postbump": "npm run build --ignore-scripts",
     "start:server": "netlify-lambda --config webpack.config.lambda.js serve ./src/lambda",
     "start:client": "webpack-dev-server --mode=development",
     "start": "run-p start:*"

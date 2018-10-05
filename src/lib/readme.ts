@@ -1,21 +1,20 @@
 import chalk from 'chalk';
 
-chalk.enabled = true;
-chalk.level = 2;
 
 export default function printReadme() {
   const vr = process.env.PACKAGE_VERSION;
+  const _chalk = chalk.constructor({enabled: true, level: 2});
 
   console.info(chalk.reset([
-    `+------ Front Lawn Splash v${vr} ----------------------------------------------+`,
+    `+------ Inspirat v${vr} -------------------------------------------------------+`,
     `|                                                                              |`,
     `|  Welcome! To set your name, use the 'setName' method:                        |`,
     `|                                                                              |`,
-    `|  setName(${chalk.green('\'Alice\'')});                                                           |`,
+    `|  setName(${_chalk.green('\'Alice\'')});                                                           |`,
     `|                                                                              |`,
     `|  If you experience any issues, head over GitHub:                             |`,
     `|                                                                              |`,
-    `|  http://bit.ly/2y95akl                                                       |`,
+    `|  https://github.com/darkobits/inspirat/issues                                |`,
     `|                                                                              |`,
     `+------------------------------------------------------------------------------+`
   ].join('\n')));

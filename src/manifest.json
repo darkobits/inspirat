@@ -1,7 +1,7 @@
 {
-  "name": "Front Lawn Splash",
-  "description": "A minimalistic new tab experience in the style of Momentum.\n\nTo set your name, open Developer Tools and call the \"setName\" function:\n\nsetName('Frodo')",
-  "version": "0.2.0",
+  "name": "Inspirat",
+  "description": "A minimalistic new tab experience in the style of Momentum.",
+  "version": "0.3.0",
   "manifest_version": 2,
   "icons": {
     "16": "favicon-16.png",
