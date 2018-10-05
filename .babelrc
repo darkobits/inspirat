@@ -1,6 +1,12 @@
 {
   "presets": [
-    "@babel/preset-env",
+    ["@babel/preset-env", {
+      "targets": {
+        "chrome": "60",
+        "node": "8.0.0"
+      },
+      "useBuiltIns": "entry"
+    }],
     "@babel/preset-react",
     "@babel/preset-typescript"
   ],
