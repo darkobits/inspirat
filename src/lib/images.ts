@@ -1,5 +1,7 @@
 import ms from 'ms';
 import queryString from 'query-string';
+// @ts-ignore
+import shuffleSeed from 'shuffle-seed';
 
 import {CACHE_TTL} from 'etc/constants';
 import {LooseObject, UnsplashPhotoResource} from 'etc/types';
@@ -27,12 +29,15 @@ export async function getImages() {
   const fetchAndUpdateCollection = async () => {
     const res = await client.get('/images');
 
+    const name = await storage.getItem<string>('name');
+    const shuffledCollection = shuffleSeed.shuffle(res.data, name);
+
     if (process.env.NODE_ENV === 'development') {
-      console.debug(`[getImages] Returning ${res.data.length} images.`);
+      console.debug(`[getImages] Returning ${res.data.length} images, shuffled using seed "${name}".`);
     }
 
-    storage.setItem('imageCollection', {images: res.data, updatedAt: Date.now()}); // tslint:disable-line no-floating-promises
-    return res.data;
+    storage.setItem('imageCollection', {images: shuffledCollection, updatedAt: Date.now()}); // tslint:disable-line no-floating-promises
+    return shuffledCollection;
   };
 
   const storageKeys = await storage.keys();
