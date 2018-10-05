@@ -8,6 +8,7 @@ import SplashMid from 'components/splash-mid';
 import SplashLower from 'components/splash-lower';
 import {BACKGROUND_POSITION_OVERRIDES} from 'etc/constants';
 import {LooseObject, UnsplashPhotoResource} from 'etc/types';
+// import client from 'lib/client';
 import {getImages, preloadImage} from 'lib/images';
 import queryString from 'lib/query';
 import {getIndexForDayOfYear, modIndex} from 'lib/utils';
@@ -109,10 +110,6 @@ export default class Splash extends React.Component<{}, SplashState> {
 
       this.setState(prevState => ({...prevState, images, index}));
       this.enableKeyboardShortcuts();
-
-      if (process.env.NODE_ENV === 'development') {
-        console.debug('[Splash] Got images:', images);
-      }
     } catch (err) {
       console.error('[Splash] Error:', err.message);
     }
@@ -145,7 +142,7 @@ export default class Splash extends React.Component<{}, SplashState> {
     const photo = this.state.images[this.state.index];
 
     // If in development, enable the swatch when ?swatch=true is in the query.
-    const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch;
+    const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch === 'true';
 
     // If the photo collection hasnt loaded yet, return an empty div.
     if (!photo) {
@@ -160,8 +157,17 @@ export default class Splash extends React.Component<{}, SplashState> {
     }
 
     const backgroundImage = photo.urls.full;
-    const backgroundPosition = BACKGROUND_POSITION_OVERRIDES[photo.id];
     const color = photo.color;
+
+    // Compute 'background-position' for the current photo.
+    const backgroundPosition = BACKGROUND_POSITION_OVERRIDES[photo.id];
+
+    // Hit the download API to track a download for the current photo.
+    // client.get('/download', {params: {id: photo.id}}).then(() => {
+    //   if (process.env.NODE_ENV === 'development') {
+    //     console.debug(`[Splash] Download tracked for photo ${photo.id}.`);
+    //   }
+    // });
 
     return (
       <PhotoContext.Provider value={photo}>
