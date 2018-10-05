@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.4.0"></a>
+# [0.4.0](https://github.com/darkobits/frontlawn-website/compare/v0.3.0...v0.4.0) (2018-10-05)
+
+
+### Features
+
+* Add lambda function for tracking downloads. ([2fe3c61](https://github.com/darkobits/frontlawn-website/commit/2fe3c61))
+* Deterministically shuffle photo collection based on name. ([9f9bc24](https://github.com/darkobits/frontlawn-website/commit/9f9bc24))
+
+
+
 <a name="0.3.0"></a>
 # [0.3.0](https://github.com/darkobits/frontlawn-website/compare/v0.2.0...v0.3.0) (2018-10-03)
 
