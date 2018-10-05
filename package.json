@@ -1,7 +1,7 @@
 {
   "name": "@darkobits/inspirat",
   "description": "A new tab experience for Chrome in the style of Momentum.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "darkobits",
   "license": "WTFPL",
   "private": true,
@@ -20,7 +20,7 @@
     "build:server": "netlify-lambda --config webpack.config.lambda.js build ./src/lambda",
     "build:client": "webpack --mode=production",
     "build": "run-p build:*",
-    "prebump": "npm run check:*",
+    "prebump": "run-p check:*",
     "bump": "standard-version",
     "bump:beta": "npm run bump -- --prerelease=beta",
     "postbump": "npm run build",
