@@ -1,7 +1,7 @@
 {
   "name": "@darkobits/inspirat",
   "description": "A new tab experience for Chrome in the style of Momentum.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": "darkobits",
   "license": "WTFPL",
   "private": true,
