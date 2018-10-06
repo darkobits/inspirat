@@ -58,56 +58,79 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
       test: /\.(ts|tsx)$/,
       exclude: /node_modules/,
       enforce: 'pre',
-      loader: 'tslint-loader',
-      options: {
-        configFile: path.resolve(pkgRoot, 'tslint.json'),
-        tsConfigFile: path.resolve(pkgRoot, 'tsconfig.json')
-      }
+      use: [
+        {
+          loader: 'tslint-loader',
+          options: {
+            configFile: path.resolve(pkgRoot, 'tslint.json'),
+            tsConfigFile: path.resolve(pkgRoot, 'tsconfig.json'),
+            formatter: 'codeFrame',
+            typeCheck: true
+          }
+        }
+      ]
     });
   }
 
   // TypeScript & JavaScript files.
   config.module.rules.push({
     test: /\.(ts|tsx|js|jsx)$/,
-    loader: 'babel-loader',
     exclude: /node_modules/,
-    options: {
-      plugins: [
-        argv.mode === 'development' && 'react-hot-loader/babel'
-      ].filter(Boolean),
-      cacheDirectory: true
-    }
+    use: [
+      {
+        loader: 'babel-loader',
+        options: {
+          plugins: [
+            argv.mode === 'development' && 'react-hot-loader/babel'
+          ].filter(Boolean),
+          cacheDirectory: true
+        }
+      }
+    ]
   });
 
   // Stylesheets.
   config.module.rules.push({
     test: /\.css$/,
-    loaders: ['style-loader', 'css-loader']
+    use: [
+      {loader: 'style-loader'},
+      {loader: 'css-loader'}
+    ]
   });
 
   // Images.
   config.module.rules.push({
     test: /\.(png|jpg|gif|svg)$/,
-    loader: 'url-loader',
-    options: {
-      limit: 10000,
-      name: 'assets/[name].[hash].[ext]'
-    }
+    use: [
+      {
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          name: 'assets/[name].[hash].[ext]'
+        }
+      }
+    ]
   });
 
   // Text.
   config.module.rules.push({
     test: /\.txt$/,
-    loader: 'raw-loader'
+    use: [
+      {
+        loader: 'raw-loader'
+      }
+    ]
   });
 
   // Fonts.
   config.module.rules.push({
     test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
-    loader: 'url-loader',
-    options: {
-      limit: 10000
-    }
+    use: [{
+      loader: 'url-loader',
+      options: {
+        limit: 10000
+      }
+    }]
   });
 
 
