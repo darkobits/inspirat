@@ -1,22 +1,29 @@
 import {rgba} from 'polished';
-import {css} from 'react-emotion';
+import styled from 'react-emotion';
 import React from 'react';
 
-import PhotoContext from 'components/photo-context';
-import {LooseObject} from 'etc/types';
-import storage from 'lib/storage';
+import PhotoContext from 'contexts/photo';
+import events from 'lib/events';
 import {getPeriodDescriptor} from 'lib/time';
+import R from 'lib/ramda';
+import storage from 'lib/storage';
+import {compositeTextShadow} from 'lib/typography';
 
 
-// ----- Styles ----------------------------------------------------------------
+// ----- Styled Elements -------------------------------------------------------
 
-const textShadow = (color: string) => [
-  `0px 0px 2px  ${rgba(0, 0, 0, 1)}`,
-  `0px 0px 32px ${rgba(color, 0.3)}`,
-  `0px 0px 96px ${rgba(color, 0.6)}`,
-].join(', ');
+const textShadow = (color: string) => compositeTextShadow([
+  [0, 0, 2, rgba(0, 0, 0, 1)],
+  [0, 0, 32, rgba(color, 0.3)],
+  [0, 0, 96, rgba(color, 0.6)]
+]);
 
-const className = ({color, opacity}: LooseObject) => css`
+export interface StyledSplashMidProps {
+  color: string;
+  opacity: number;
+}
+
+const StyledSplashMid = styled.div<StyledSplashMidProps>`
   align-items: center;
   display: flex;
   flex-grow: 1;
@@ -25,10 +32,10 @@ const className = ({color, opacity}: LooseObject) => css`
   justify-content: center;
   letter-spacing: 1.5px;
   margin-bottom: 8px;
-  opacity: ${opacity || 1};
+  opacity: ${R.propOr(1, 'opacity')};
   padding-bottom: 1.2em;
-  text-shadow: ${textShadow(color)};
-  transition: opacity 1s ease-in-out;
+  text-shadow: ${R.pipe(R.prop('color'), textShadow)};
+  transition: opacity 1.2s ease-in;
   user-select: none;
   z-index: 1;
 
@@ -65,7 +72,7 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
   /**
    * Adds a 'setName' method on the global object.
    */
-  componentWillMount() {
+  private installSetName() {
     if (!Reflect.has(window, 'setName')) {
       Object.defineProperty(window, 'setName', {
         value: (name: string) => {
@@ -78,12 +85,26 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
 
 
   /**
-   * Fetches any persisted 'name' from storage and sets it in the component's
-   * state.
+   * - Installs 'setName' on window.
+   * - Listens for the 'photoReady' event to render the greeting.
+   */
+  componentWillMount() {
+    this.installSetName();
+
+    // Listen for the photoReady event and set our state to ready. This ensures
+    // that the greeting renders after the photo has loaded.
+    events.on('photoReady', () => {
+      this.setState(prevState => ({...prevState, ready: true}));
+    });
+  }
+
+
+  /**
+   * - Fetches 'name' from storage and sets it in the component's state.
    */
   async componentDidMount() {
     const name = (await storage.getItem<string>('name')) || '';
-    this.setState({name, ready: true});
+    this.setState({name});
   }
 
 
@@ -105,15 +126,11 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
    */
   render() {
     return (
-      <PhotoContext.Consumer>{photo => {
-        const color = photo ? photo.color : 'black';
-
-        return (
-          <div className={className({color, opacity: this.state.ready ? '1' : '0'})}>
-            {this.getGreeting()}
-          </div>
-        );
-      }}</PhotoContext.Consumer>
+      <PhotoContext.Consumer>{photo => (
+        <StyledSplashMid color={R.pathOr('black', ['color'], photo)} opacity={this.state.ready ? 1 : 0}>
+          {this.getGreeting()}
+        </StyledSplashMid>
+      )}</PhotoContext.Consumer>
     );
   }
 }

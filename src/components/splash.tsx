@@ -3,11 +3,12 @@ import {mix, rgba} from 'polished';
 import styled from 'react-emotion';
 import React from 'react';
 
-import PhotoContext from 'components/photo-context';
+import PhotoContext from 'contexts/photo';
 import SplashMid from 'components/splash-mid';
 import SplashLower from 'components/splash-lower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
 import {UnsplashPhotoResource} from 'etc/types';
+import events from 'lib/events';
 import {getPhotos, preloadImage} from 'lib/photos';
 import queryString from 'lib/query';
 import R from 'lib/ramda';
@@ -66,8 +67,7 @@ const StyledSplash = styled.div<StyledSplashProps>`
   }
 `;
 
-// background-color: rgba(200, 200, 200, 0.5);
-// background-color: ${props => rgba(props.maskColor, Number(props.maskAmount || '0.2'))};
+
 interface SwatchProps {
   color: string;
 }
@@ -81,6 +81,9 @@ const Swatch = styled.div<SwatchProps>`
   right: 0;
   z-index: 1;
 `;
+
+
+
 
 
 // ----- Component -------------------------------------------------------------
@@ -120,13 +123,22 @@ export default class Splash extends React.Component<{}, SplashState> {
 
 
   /**
-   * Pre-loads the next photo in the collection. In development, additionally
-   * pre-loads the previous photo in the collection.
+   * Pre-loads the current and next photo in the collection. In development,
+   * additionally pre-loads the previous photo in the collection.
+   *
+   * The need to "preload" the current photo may seem redundant, however, the
+   * browser will only fetch it once, and by using this technique, we can use
+   * the Image's 'load' event (via preloadImage) to get notified when the image
+   * has finished loading so we can emit the 'photoReady' event.
    */
-  private async preloadNeighboringPhotos() {
+  private async preloadPhotos() {
+    const currentPhoto = this.state.photos[modIndex(this.state.index, this.state.photos)];
     const nextPhoto = this.state.photos[modIndex(this.state.index + 1, this.state.photos)];
 
-    const promises = [preloadImage(nextPhoto.urls.full)];
+    const promises = [
+      preloadImage(nextPhoto.urls.full),
+      preloadImage(currentPhoto.urls.full).then(async () => events.emit('photoReady'))
+    ];
 
     if (process.env.NODE_ENV === 'development') {
       const prevPhoto = this.state.photos[modIndex(this.state.index - 1, this.state.photos)];
@@ -158,7 +170,9 @@ export default class Splash extends React.Component<{}, SplashState> {
 
 
   /**
-   * Bind the left/right arrow keys to handlers that will cycle through photos.
+   * - Loads photo collection data.
+   * - Determines current photo to display.
+   * - Enables development keyboard shortcuts.
    */
   async componentDidMount() {
     try {
@@ -181,15 +195,14 @@ export default class Splash extends React.Component<{}, SplashState> {
 
 
   /**
-   * Whenever the component updates, preload the adjacent photos in the
-   * collection.
+   * - Pre-load the adjacent photos in the collection.
    */
   async componentDidUpdate() {
     if (process.env.NODE_ENV === 'development') {
       console.debug('[Splash] Preloading photos.');
     }
 
-    await this.preloadNeighboringPhotos();
+    await this.preloadPhotos();
 
     if (process.env.NODE_ENV === 'development') {
       console.debug('[Splash] Finished preloading photos.');
@@ -237,7 +250,7 @@ export default class Splash extends React.Component<{}, SplashState> {
       <PhotoContext.Provider value={photo}>
         {showSwatch ? <Swatch color={color} /> : null}
         <StyledSplash backgroundImage={backgroundImage} maskColor={photo.color} {...PhotoOverrides}>
-          <SplashMid></SplashMid>
+          <SplashMid />
           <SplashLower />
         </StyledSplash>
       </PhotoContext.Provider>

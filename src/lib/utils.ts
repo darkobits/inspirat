@@ -66,3 +66,15 @@ export function modIndex(num: number, arr: Array<any>): number {
 export function capitalizeWords(input: string): string {
   return input.split(' ').map(word => `${word.substr(0, 1).toUpperCase()}${word.substr(1).toLowerCase()}`).join(' ');
 }
+
+
+/**
+ * Returns a promise that resolves after the provided delay.
+ */
+export async function sleep(ms: number): Promise<void> {
+  return new Promise<void>(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, ms);
+  });
+}

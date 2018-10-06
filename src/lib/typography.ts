@@ -108,3 +108,18 @@ export function buildFontFamilyString(additionalFont?: string): string {
 
   return [...fonts, ...DEFAULT_FONTS].join(', ');
 }
+
+
+export type TextShadow = [number, number, number, string];
+
+
+/**
+ * Provided an array of TextShadow descriptors, returns a string suitable for
+ * use as a 'text-shadow' CSS rule.
+ */
+export function compositeTextShadow(shadows: Array<TextShadow>): string {
+  return shadows.map(shadow => {
+    const [offsetX, offsetY, blurRadius, color] = shadow;
+    return `${offsetX}px ${offsetY}px ${blurRadius}px ${color}`;
+  }).join(', ');
+}
