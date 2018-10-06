@@ -1,55 +1,92 @@
 import mousetrap from 'mousetrap';
-import {invert} from 'polished';
-import {css} from 'react-emotion';
+import {mix, rgba} from 'polished';
+import styled from 'react-emotion';
 import React from 'react';
 
 import PhotoContext from 'components/photo-context';
 import SplashMid from 'components/splash-mid';
 import SplashLower from 'components/splash-lower';
-import {BACKGROUND_POSITION_OVERRIDES} from 'etc/constants';
-import {LooseObject, UnsplashPhotoResource} from 'etc/types';
-// import client from 'lib/client';
-import {getImages, preloadImage} from 'lib/images';
+import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
+import {UnsplashPhotoResource} from 'etc/types';
+import {getPhotos, preloadImage} from 'lib/photos';
 import queryString from 'lib/query';
-import {getIndexForDayOfYear, modIndex} from 'lib/utils';
+import R from 'lib/ramda';
+import {sinceEpoch} from 'lib/time';
+import {modIndex} from 'lib/utils';
 
 
-// ----- Styles ----------------------------------------------------------------
+// ----- Styled Elements -------------------------------------------------------
 
-const className = ({backgroundImage, backgroundPosition}: LooseObject) => css`
-  background-attachment: fixed;
-  background-image: url(${backgroundImage});
-  background-position: ${backgroundPosition || 'center center'};
-  background-size: cover;
-  height: 100%;
-  width: 100%;
-`;
+export interface StyledSplashProps {
+  backgroundImage: string;
+  maskColor: string;
+  backgroundPosition?: string;
+  maskAmount?: string;
+  transform?: string;
+}
 
-const splashMaskClassName = css`
-  background-color: rgba(0, 0, 0, 0.2);
+const StyledSplash = styled.div<StyledSplashProps>`
+  align-items: center;
   display: flex;
   flex-direction: column;
   height: 100%;
-  justify-content: space-between;
+  justify-content: center;
   padding: 14px 18px;
   width: 100%;
+
+  &::before {
+    background-attachment: fixed;
+    background-image: url(${R.prop('backgroundImage')});
+    background-position: ${R.propOr('center center', 'backgroundPosition')};
+    background-repeat: no-repeat;
+    background-size: cover;
+    bottom: 0;
+    content: ' ';
+    display: block;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: ${R.propOr('initial', 'transform')};
+    z-index: 0;
+  }
+
+  &::after {
+    background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount || 0.2))};
+    bottom: 0;
+    content: ' ';
+    display: block;
+    left: 0;
+    mix-blend-mode: darken;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: ${R.propOr('initial', 'transfor')};
+    z-index: 0;
+  }
 `;
 
-const swatchClassName = ({color}: {color: string}) => css`
-  // background-color: ${invert(color)};
-  background-color: ${color};
+// background-color: rgba(200, 200, 200, 0.5);
+// background-color: ${props => rgba(props.maskColor, Number(props.maskAmount || '0.2'))};
+interface SwatchProps {
+  color: string;
+}
+
+const Swatch = styled.div<SwatchProps>`
+  background-color: ${({color}) => color};
   position: absolute;
   width: 50px;
   height: 50px;
   top: 0;
   right: 0;
+  z-index: 1;
 `;
 
 
 // ----- Component -------------------------------------------------------------
 
 export interface SplashState {
-  images: Array<UnsplashPhotoResource>;
+  photos: Array<UnsplashPhotoResource>;
   index: number;
   showSwatch: boolean;
 }
@@ -57,24 +94,24 @@ export interface SplashState {
 
 export default class Splash extends React.Component<{}, SplashState> {
   state = {
-    images: [] as Array<UnsplashPhotoResource>,
+    photos: [] as Array<UnsplashPhotoResource>,
     index: 0,
     showSwatch: false
   };
 
 
   /**
-   * In development, allows the left/right arrow keys to switch between images
+   * In development, allows the left/right arrow keys to switch between photos
    * in the collection.
    */
   private enableKeyboardShortcuts() {
     if (process.env.NODE_ENV === 'development') {
       mousetrap.bind('left', () => {
-        this.setState(prevState => ({index: modIndex(prevState.index - 1, this.state.images)}));
+        this.setState(prevState => ({index: modIndex(prevState.index - 1, this.state.photos)}));
       });
 
       mousetrap.bind('right', () => {
-        this.setState(prevState => ({index: modIndex(prevState.index + 1, this.state.images)}));
+        this.setState(prevState => ({index: modIndex(prevState.index + 1, this.state.photos)}));
       });
 
       console.debug('[Development] Keyboard shortcuts registered.');
@@ -87,12 +124,12 @@ export default class Splash extends React.Component<{}, SplashState> {
    * pre-loads the previous photo in the collection.
    */
   private async preloadNeighboringPhotos() {
-    const nextPhoto = this.state.images[modIndex(this.state.index + 1, this.state.images)];
+    const nextPhoto = this.state.photos[modIndex(this.state.index + 1, this.state.photos)];
 
     const promises = [preloadImage(nextPhoto.urls.full)];
 
     if (process.env.NODE_ENV === 'development') {
-      const prevPhoto = this.state.images[modIndex(this.state.index - 1, this.state.images)];
+      const prevPhoto = this.state.photos[modIndex(this.state.index - 1, this.state.photos)];
       promises.push(preloadImage(prevPhoto.urls.full));
     }
 
@@ -101,14 +138,41 @@ export default class Splash extends React.Component<{}, SplashState> {
 
 
   /**
-   * Bind the left/right arrow keys to handlers that will cycle through images.
+   * Returns the photo that render() should use. This is normally the current
+   * index in the component's photos array, but in development, this will return
+   * a 'mock' UnsplashPhotoResource by reading the "src" query param.
+   */
+  private getPhoto(): UnsplashPhotoResource {
+    if (process.env.NODE_ENV === 'development' && queryString().src) {
+      return {
+        id: 'SRC',
+        color: 'black',
+        urls: {
+          full: String(queryString().src)
+        }
+      } as UnsplashPhotoResource;
+    }
+
+    return this.state.photos[this.state.index];
+  }
+
+
+  /**
+   * Bind the left/right arrow keys to handlers that will cycle through photos.
    */
   async componentDidMount() {
     try {
-      const images = await getImages();
-      const index = getIndexForDayOfYear(images);
+      const photos = await getPhotos();
 
-      this.setState(prevState => ({...prevState, images, index}));
+      // Using the number of days since the Unix epoch, use modIndex to
+      // calculate the current index in the photo collection.
+      const index = modIndex(sinceEpoch('days'), photos);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`[Splash] Loaded ${photos.length} images. Initial index: ${index}.`);
+      }
+
+      this.setState(prevState => ({...prevState, photos, index}));
       this.enableKeyboardShortcuts();
     } catch (err) {
       console.error('[Splash] Error:', err.message);
@@ -138,10 +202,10 @@ export default class Splash extends React.Component<{}, SplashState> {
    */
   render() {
     // Use modIndex() here because the current index might be out-of-bounds if
-    // navigating between images in development.
-    const photo = this.state.images[this.state.index];
+    // navigating between photos in development.
+    const photo = this.getPhoto();
 
-    // If in development, enable the swatch when ?swatch=true is in the query.
+    // If in development, enable the swatch when "swatch=true" is in the query.
     const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch === 'true';
 
     // If the photo collection hasnt loaded yet, return an empty div.
@@ -159,8 +223,8 @@ export default class Splash extends React.Component<{}, SplashState> {
     const backgroundImage = photo.urls.full;
     const color = photo.color;
 
-    // Compute 'background-position' for the current photo.
-    const backgroundPosition = BACKGROUND_POSITION_OVERRIDES[photo.id];
+    // Load any CSS overrides for the current photo.
+    const PhotoOverrides = (BACKGROUND_RULE_OVERRIDES[photo.id] || {});
 
     // Hit the download API to track a download for the current photo.
     // client.get('/download', {params: {id: photo.id}}).then(() => {
@@ -171,13 +235,11 @@ export default class Splash extends React.Component<{}, SplashState> {
 
     return (
       <PhotoContext.Provider value={photo}>
-        {showSwatch ? <div className={swatchClassName({color})}></div> : null}
-        <div className={className({backgroundImage, backgroundPosition})}>
-          <div className={splashMaskClassName}>
-            <SplashMid></SplashMid>
-            <SplashLower />
-          </div>
-        </div>
+        {showSwatch ? <Swatch color={color} /> : null}
+        <StyledSplash backgroundImage={backgroundImage} maskColor={photo.color} {...PhotoOverrides}>
+          <SplashMid></SplashMid>
+          <SplashLower />
+        </StyledSplash>
       </PhotoContext.Provider>
     );
   }

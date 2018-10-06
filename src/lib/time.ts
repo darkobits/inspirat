@@ -1,4 +1,13 @@
-import {DateTime} from 'luxon';
+import {DateTime, Duration, DurationUnit} from 'luxon';
+
+
+/**
+ * Provided a unit of time (ex: 'days', 'minutes') returns the number of whole
+ * units that have passed since the Unix epoch.
+ */
+export function sinceEpoch(unitName: DurationUnit): number {
+  return Math.floor(Duration.fromMillis(Date.now()).as(unitName));
+}
 
 
 /**

@@ -30,6 +30,7 @@ const className = ({color, opacity}: LooseObject) => css`
   text-shadow: ${textShadow(color)};
   transition: opacity 1s ease-in-out;
   user-select: none;
+  z-index: 1;
 
   * {
     font-size: inherit;
@@ -41,7 +42,15 @@ const className = ({color, opacity}: LooseObject) => css`
 // ----- Component -------------------------------------------------------------
 
 export interface SplashMidState {
+  /**
+   * Optional name to use in the greeting.
+   */
   name: string;
+
+  /**
+   * Ensures we extract the 'name' from storage before rendering the greeting to
+   * avoid a flash of un... named... content.
+   */
   ready: boolean;
 }
 

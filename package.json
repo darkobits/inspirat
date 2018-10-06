@@ -26,7 +26,7 @@
     "postbump": "npm run build",
     "start:server": "netlify-lambda --config webpack.config.lambda.js serve ./src/lambda",
     "start:client": "webpack-dev-server --mode=development",
-    "start": "run-p start:*"
+    "start": "concurrently 'npm run start:server' 'npm run start:client'"
   },
   "dependencies": {
     "axios": "^0.18.0",
@@ -38,6 +38,7 @@
     "ms": "^2.1.1",
     "polished": "^2.2.0",
     "query-string": "^6.1.0",
+    "ramda": "^0.25.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "react-emotion": "^9.2.10",
@@ -65,6 +66,7 @@
     "@types/parse-link-header": "^1.0.0",
     "@types/pkg-dir": "^2.0.0",
     "@types/query-string": "^6.1.0",
+    "@types/ramda": "^0.25.39",
     "@types/react": "^16.4.14",
     "@types/react-dom": "^16.0.8",
     "@types/read-pkg-up": "^3.0.1",
@@ -75,6 +77,7 @@
     "babel-loader": "^8.0.4",
     "babel-plugin-emotion": "^9.2.10",
     "babel-plugin-module-resolver": "^3.1.1",
+    "concurrently": "^4.0.1",
     "copy-webpack-plugin": "^4.5.2",
     "del-cli": "^1.1.0",
     "dotenv": "^6.0.0",
@@ -97,6 +100,7 @@
     "tslint-loader": "^3.6.0",
     "tslint-xo": "^0.9.0",
     "typescript": "^3.1.1",
+    "typescript-styled-plugin": "^0.11.0",
     "url-loader": "^1.1.1",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.1",

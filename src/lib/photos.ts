@@ -11,7 +11,7 @@ import {greaterOf} from 'lib/utils';
 
 
 interface CollectionCache {
-  images: Array<UnsplashPhotoResource>;
+  photos: Array<UnsplashPhotoResource>;
   updatedAt: number;
 }
 
@@ -23,44 +23,52 @@ interface CollectionCache {
  *
  * See: lambda/images.ts.
  */
-export async function getImages() {
+export async function getPhotos() {
+  const COLLECTION_CACHE_KEY = 'photoCollection';
+
+  let photoCollection;
+
   // Sub-routine that fetches up-to-date image collection data, immediately
   // resolves with it, then caches it to local storage.
-  const fetchAndUpdateCollection = async () => {
-    const res = await client.get('/images');
-
-    const name = await storage.getItem<string>('name');
-    const shuffledCollection = shuffleSeed.shuffle(res.data, name);
+  const fetchAndUpdateCollection = async (): Promise<CollectionCache> => {
+    const photos = (await client.get('/images')).data;
 
     if (process.env.NODE_ENV === 'development') {
-      console.debug(`[getImages] Returning ${res.data.length} images, shuffled using seed "${name}".`);
+      console.debug(`[getImages] Fetched ${photos.length} images.`);
     }
 
-    storage.setItem('imageCollection', {images: shuffledCollection, updatedAt: Date.now()}); // tslint:disable-line no-floating-promises
-    return shuffledCollection;
+    const cacheData: CollectionCache = {photos, updatedAt: Date.now()};
+    storage.setItem(COLLECTION_CACHE_KEY, cacheData); // tslint:disable-line no-floating-promises
+    return cacheData;
   };
 
   const storageKeys = await storage.keys();
 
   // If the cache is empty, fetch collection data and cache it.
-  if (!storageKeys.includes('imageCollection')) {
+  if (!storageKeys.includes(COLLECTION_CACHE_KEY)) {
     if (process.env.NODE_ENV === 'development') {
       console.debug('[getImages] Cache empty.');
     }
 
-    return fetchAndUpdateCollection();
+    photoCollection = (await fetchAndUpdateCollection()).photos;
+  } else {
+    // Otherwise, get data from the cache.
+    const cachedData = await storage.getItem<CollectionCache>(COLLECTION_CACHE_KEY);
+
+    // Then, if the data is stale, update it.
+    if ((Date.now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
+      fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
+    }
+
+    // Immediately resolve with cached data.
+    photoCollection = cachedData.photos;
   }
 
-  // Otherwise, get data from the cache.
-  const cachedImages = await storage.getItem<CollectionCache>('imageCollection');
+  // Get the current 'name' from storage.
+  const name = await storage.getItem<string>('name');
 
-  // Then, if the data is stale, update it.
-  if ((Date.now() - cachedImages.updatedAt) >= ms(CACHE_TTL)) {
-    fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
-  }
-
-  // Immediately resolve with cached data.
-  return cachedImages.images;
+  // Use 'name' to deterministically shuffle the collection before returning it.
+  return shuffleSeed.shuffle(photoCollection, name);
 }
 
 

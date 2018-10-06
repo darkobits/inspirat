@@ -21,6 +21,7 @@ export default () => injectGlobal`
     background-color: rgb(42, 42, 42);
     height: 100%;
     margin: 0;
+    overflow: hidden;
     padding: 0;
     width: 100%;
   }

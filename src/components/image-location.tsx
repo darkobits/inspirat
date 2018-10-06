@@ -3,6 +3,7 @@ import React from 'react';
 import styled from 'react-emotion';
 
 import PhotoContext from 'components/photo-context';
+import R from 'lib/ramda';
 
 
 // ----- Props -----------------------------------------------------------------
@@ -22,7 +23,7 @@ const textShadow = (color: string) => [
 const ImageInfo = styled.div<{shadowColor: string}>`
   color: rgb(255, 255, 255, 0.96);
   display: flex;
-  text-shadow: ${props => textShadow(props.shadowColor)};
+  text-shadow: ${R.pipe(R.prop('shadowColor'), textShadow)};
   user-select: none;
 `;
 

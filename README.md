@@ -2,7 +2,7 @@
   <img src="https://user-images.githubusercontent.com/441546/46396498-69fe2680-c6a4-11e8-99c5-f07fa62935df.png" style="max-width: 100%">
 </a>
 
-A new tab experience for Chrome in the style of [Momentum](https://momentumdash.com/). Grab it [here](https://chrome.google.com/webstore/detail/front-lawn-splash/fpdbdpjcibecigaedhhkfbikpnllleeo).
+A new tab experience for Chrome in the style of [Momentum](https://momentumdash.com/). Grab it [here](https://bit.ly/inspirat-chrome).
 
 Also the homepage of [frontlawn.net](https://frontlawn.net).
 

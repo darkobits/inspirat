@@ -1,5 +1,4 @@
 import {AxiosError} from 'axios';
-import {DateTime} from 'luxon';
 import {LooseObject} from 'etc/types';
 
 
@@ -62,10 +61,8 @@ export function modIndex(num: number, arr: Array<any>): number {
 
 
 /**
- * Returns an index in the provided array. The index will increment by 1 each
- * calendar day.
+ * Provided a string, returns a new string with each word capitalized.
  */
-export function getIndexForDayOfYear(arr: Array<any>): number {
-  const dayOfYear = DateTime.local().ordinal;
-  return dayOfYear % arr.length;
+export function capitalizeWords(input: string): string {
+  return input.split(' ').map(word => `${word.substr(0, 1).toUpperCase()}${word.substr(1).toLowerCase()}`).join(' ');
 }

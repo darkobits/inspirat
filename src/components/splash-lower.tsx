@@ -11,6 +11,7 @@ const className = css`
   display: flex;
   justify-content: space-between;
   width: 100%;
+  z-index: 1;
 `;
 
 

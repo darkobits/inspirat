@@ -65,6 +65,10 @@
     "strictNullChecks": true,
 
     // Specify ECMAScript target version.
-    "target": "es5"
+    "target": "es5",
+
+    "plugins": [{
+      "name": "typescript-styled-plugin"
+    }]
   }
 }
