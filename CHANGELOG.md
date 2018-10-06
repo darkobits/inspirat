@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.5.0"></a>
+# [0.5.0](https://github.com/darkobits/frontlawn-website/compare/v0.4.2...v0.5.0) (2018-10-06)
+
+
+### Features
+
+* Use days since Unix epoch to cycle through images. ([aaf07f5](https://github.com/darkobits/frontlawn-website/commit/aaf07f5))
+
+
+
 <a name="0.4.2"></a>
 ## [0.4.2](https://github.com/darkobits/frontlawn-website/compare/v0.4.0...v0.4.2) (2018-10-05)
 
