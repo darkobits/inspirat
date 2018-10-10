@@ -31,14 +31,19 @@ export async function getPhotos() {
   // Sub-routine that fetches up-to-date image collection data, immediately
   // resolves with it, then caches it to local storage.
   const fetchAndUpdateCollection = async (): Promise<CollectionCache> => {
-    const photos = (await client.get('/images')).data;
+    const photos = (await client.get('/photos')).data;
 
     if (process.env.NODE_ENV === 'development') {
       console.debug(`[getImages] Fetched ${photos.length} images.`);
     }
 
-    const cacheData: CollectionCache = {photos, updatedAt: Date.now()};
+    const cacheData: CollectionCache = {
+      photos,
+      updatedAt: Date.now()
+    };
+
     storage.setItem(COLLECTION_CACHE_KEY, cacheData); // tslint:disable-line no-floating-promises
+
     return cacheData;
   };
 
@@ -57,7 +62,10 @@ export async function getPhotos() {
 
     // Then, if the data is stale, update it.
     if ((Date.now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
+      console.warn(`[getImages] Cache is stale, fetching new data. (${ms(Date.now() - cachedData.updatedAt, {long: true})} out of date.).`);
       fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
+    } else {
+      console.warn('CACHE IS OKAY.');
     }
 
     // Immediately resolve with cached data.

@@ -1,0 +1,23 @@
+{
+  "extends": "../../.babelrc",
+  "presets": [
+    "@babel/preset-react"
+  ],
+  "plugins": [
+    "babel-plugin-emotion",
+    ["babel-plugin-module-resolver", {
+      "cwd": "babelrc",
+      "root": ["./src"],
+      "extensions": [
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".jpg",
+        ".png",
+        ".svg",
+        ".json"
+      ]
+    }]
+  ]
+}

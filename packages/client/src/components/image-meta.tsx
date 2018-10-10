@@ -9,6 +9,11 @@ import {compositeTextShadow} from 'lib/typography';
 import {sleep} from 'lib/utils';
 
 
+export interface ImageMetaProps {
+  className?: string;
+}
+
+
 // ----- Styled Elements -------------------------------------------------------
 
 const textShadow = (color: string) => compositeTextShadow([
@@ -16,12 +21,12 @@ const textShadow = (color: string) => compositeTextShadow([
   [0, 0, 8, rgba(color, 0.3)]
 ]);
 
-export interface ImageInfoProps {
+export interface ImageMetaElProps {
   shadowColor: string;
   opacity: number;
 }
 
-const ImageInfo = styled.div<ImageInfoProps>`
+const ImageMetaEl = styled.div<ImageMetaElProps>`
   color: rgb(255, 255, 255, 0.96);
   display: flex;
   text-shadow: ${R.pipe(R.prop('shadowColor'), textShadow)};
@@ -42,7 +47,7 @@ const ImageInfo = styled.div<ImageInfoProps>`
 
 // ----- Component -------------------------------------------------------------
 
-export default class ImageMeta extends React.Component {
+export default class ImageMeta extends React.Component<ImageMetaProps> {
   state = {
     ready: false
   };
@@ -64,9 +69,9 @@ export default class ImageMeta extends React.Component {
         }
 
         return (
-          <ImageInfo shadowColor={R.prop('color', photo)} opacity={this.state.ready ? 1 : 0}>
+          <ImageMetaEl className={this.props.className} shadowColor={R.prop('color', photo)} opacity={this.state.ready ? 1 : 0}>
             {this.props.children}
-          </ImageInfo>
+          </ImageMetaEl>
         );
       }}</PhotoContext.Consumer>
     );

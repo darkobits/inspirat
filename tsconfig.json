@@ -1,25 +1,9 @@
 {
   "compilerOptions": {
-    // Base directory to resolve non-relative module names.
-    "baseUrl": ".",
-
-    // Redirect output structure to this directory.
-    "outDir": "dist",
-
-    // Specify path mapping to be computed relative to baseUrl option.
-    "paths": {
-      "*": [
-        "*",
-        "src/*"
-      ]
-    },
-
     // Specify a list of built-in API groups to include in the project.
     "lib": [
-      "dom",
       "esnext"
     ],
-
 
     // Allow default imports from modules with no default export. This does not
     // affect code emit, just typechecking.
@@ -65,10 +49,6 @@
     "strictNullChecks": true,
 
     // Specify ECMAScript target version.
-    "target": "es5",
-
-    "plugins": [{
-      "name": "typescript-styled-plugin"
-    }]
+    "target": "es5"
   }
 }

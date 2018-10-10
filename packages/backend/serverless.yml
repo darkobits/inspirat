@@ -1,0 +1,109 @@
+service:
+  name: inspirat
+plugins:
+  - serverless-webpack
+
+custom:
+  stage: ${opt:stage, 'dev'}
+
+
+# ----- Serverless Compute Provider Configuration ------------------------------
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  region: us-west-1
+  stage: ${self:custom.stage}
+  environment:
+    STAGE: ${self:custom.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource: arn:aws:dynamodb:*:*:table/inspirat-${self:custom.stage}
+
+
+
+# ----- Functions --------------------------------------------------------------
+
+functions:
+  # Queries the Unsplash API and adds any new photos from our collection to our
+  # DynamoDB table as "partial" records.
+  sync-collection:
+    events:
+      - schedule:
+          name: sync-collection-${self:custom.stage}
+          description: 'Sync collection from Unsplash.'
+          rate: rate(1 hour)
+      # - http:
+      #     method: GET
+      #     path: photos/update-collection
+    handler: src/photos.syncCollection
+    environment:
+      UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
+      UNSPLASH_COLLECTION_ID: ${env:UNSPLASH_COLLECTION_ID}
+    timeout: 120
+
+  # Gets a list of all "partial" records from DynamoDB and converts them to
+  # "full" records by querying the Unsplash /photo/:photoId API.
+  update-records:
+    events:
+      - schedule:
+          name: update-records-${self:custom.stage}
+          description: 'Update partial records.'
+          rate: rate(1 hour)
+      # - http:
+      #     method: GET
+      #     path: photos/update-photos
+    handler: src/photos.updateRecords
+    environment:
+      UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
+    timeout: 120
+
+  # Returns all full photo records from our DynamoDB table.
+  get-photos:
+    events:
+      - http:
+          method: GET
+          path: photos
+          cors: true
+          origin: '*'
+    handler: src/photos.getPhotos
+
+
+# ----- CloudFormation Resource Templates --------------------------------------
+
+resources:
+  Resources:
+    # Development table.
+    Inspirat:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: inspirat-${self:custom.stage}
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    # # Production table.
+    # InspiratProd:
+    #   Type: 'AWS::DynamoDB::Table'
+    #   Properties:
+    #     TableName: inspirat-prod
+    #     AttributeDefinitions:
+    #       -
+    #         AttributeName: id
+    #         AttributeType: S
+    #     KeySchema:
+    #       -
+    #         AttributeName: id
+    #         KeyType: HASH
+    #     ProvisionedThroughput:
+    #       ReadCapacityUnits: 1
+    #       WriteCapacityUnits: 1

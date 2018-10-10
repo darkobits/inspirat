@@ -33,8 +33,8 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   const {pkg, path: pkgPath} = await readPkgUp();
   const pkgRoot = path.parse(pkgPath).dir;
 
-  const DEV_API_PREFIX = '/.netlify/functions/';
-  const PROD_API_PREFIX = `https://frontlawn.net${DEV_API_PREFIX}`;
+  const DEV_API_URL = 'https://mbs6kyu6d2.execute-api.us-west-1.amazonaws.com/dev';
+  const PROD_API_URL = 'https://s9uzi7wzrj.execute-api.us-west-1.amazonaws.com/prod';
 
 
   // ----- Entry / Output ------------------------------------------------------
@@ -146,7 +146,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.plugins.push(new webpack.NamedModulesPlugin());
 
   config.plugins.push(new webpack.DefinePlugin({
-    'process.env.API_PREFIX': JSON.stringify(argv.mode === 'development' ? DEV_API_PREFIX : PROD_API_PREFIX),
+    'process.env.API_URL': JSON.stringify(argv.mode === 'development' ? DEV_API_URL : PROD_API_URL),
     'process.env.PACKAGE_VERSION': JSON.stringify(pkg.version)
   }));
 
@@ -188,14 +188,6 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     const port = await getPort({port: 8080}); // tslint:disable-line await-promise
 
     config.devServer = {
-      proxy: {
-        [DEV_API_PREFIX]: {
-          target: 'http://localhost:9000', // tslint:disable-line no-http-string
-          pathRewrite: {
-            [`^${DEV_API_PREFIX}`]: ''
-          }
-        }
-      },
       bonjour: true,
       historyApiFallback: true,
       disableHostCheck: true,

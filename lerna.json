@@ -1,0 +1,23 @@
+{
+  "version": "0.5.1",
+  "packages": [
+    "packages/*"
+  ],
+  "command": {
+    "bootstrap": {
+      "ci": false,
+      "hoist": true
+    },
+    "version": {
+      "message": "chore(release): %v",
+      "conventionalCommits": true,
+      "gitTagVersion": true,
+      "push": false
+    },
+    "publish": {
+      "verifyAccess": false,
+      "gitTagVersion": false,
+      "push": false
+    }
+  }
+}

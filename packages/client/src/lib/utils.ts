@@ -1,0 +1,36 @@
+/**
+ * Returns the greater of the two values provided.
+ */
+export function greaterOf(a: number, b: number): number {
+  return a >= b ? a : b;
+}
+
+
+/**
+ * Provided a any integer and an array, returns the index in that array computed
+ * by diving the number by the length of the array.
+ */
+export function modIndex(num: number, arr: Array<any>): number {
+  const index = num % arr.length;
+  return index < 0 ? index + arr.length : index;
+}
+
+
+/**
+ * Provided a string, returns a new string with each word capitalized.
+ */
+export function capitalizeWords(input: string): string {
+  return input.split(' ').map(word => `${word.substr(0, 1).toUpperCase()}${word.substr(1).toLowerCase()}`).join(' ');
+}
+
+
+/**
+ * Returns a promise that resolves after the provided delay.
+ */
+export async function sleep(ms: number): Promise<void> {
+  return new Promise<void>(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, ms);
+  });
+}

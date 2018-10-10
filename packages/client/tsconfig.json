@@ -1,0 +1,28 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // Base directory to resolve non-relative module names.
+    "baseUrl": ".",
+
+    // Redirect output structure to this directory.
+    "outDir": "dist",
+
+    // Specify a list of built-in API groups to include in the project.
+    "lib": [
+      "esnext",
+      "dom"
+    ],
+
+    // Specify path mapping to be computed relative to baseUrl option.
+    "paths": {
+      "*": [
+        "*",
+        "src/*"
+      ]
+    },
+
+    "plugins": [{
+      "name": "typescript-styled-plugin"
+    }]
+  }
+}

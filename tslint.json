@@ -7,6 +7,9 @@
 		// Do not enforce formatting rules for single-line comments.
 		"comment-format": false,
 
+		// Recommends using an early exit instead of a long if block. This means to
+		// return early from a function, continue early in loop, or break early in a
+		// switch case.
 		"early-exit": false,
 
 		// Allow multiple consecutive blank lines.

@@ -239,13 +239,6 @@ export default class Splash extends React.Component<{}, SplashState> {
     // Load any CSS overrides for the current photo.
     const PhotoOverrides = (BACKGROUND_RULE_OVERRIDES[photo.id] || {});
 
-    // Hit the download API to track a download for the current photo.
-    // client.get('/download', {params: {id: photo.id}}).then(() => {
-    //   if (process.env.NODE_ENV === 'development') {
-    //     console.debug(`[Splash] Download tracked for photo ${photo.id}.`);
-    //   }
-    // });
-
     return (
       <PhotoContext.Provider value={photo}>
         {showSwatch ? <Swatch color={color} /> : null}

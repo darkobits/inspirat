@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // Base directory to resolve non-relative module names.
+    "baseUrl": ".",
+
+    // Redirect output structure to this directory.
+    "outDir": "dist",
+
+    // Specify path mapping to be computed relative to baseUrl option.
+    "paths": {
+      "*": [
+        "*",
+        "src/*"
+      ]
+    }
+  }
+}

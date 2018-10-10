@@ -27,7 +27,7 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
   align-items: center;
   display: flex;
   flex-grow: 1;
-  font-size: 96px;
+  font-size: 32px;
   font-weight: 300;
   justify-content: center;
   letter-spacing: 1.5px;
@@ -42,6 +42,10 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
   * {
     font-size: inherit;
     font-weight: inherit;
+  }
+
+  @media(min-width: 760px) {
+    font-size: 96px;
   }
 `;
 
