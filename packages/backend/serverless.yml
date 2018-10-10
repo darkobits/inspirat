@@ -38,7 +38,7 @@ functions:
       # - http:
       #     method: GET
       #     path: photos/update-collection
-    handler: src/photos.syncCollection
+    handler: src/sync-collection.default
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
       UNSPLASH_COLLECTION_ID: ${env:UNSPLASH_COLLECTION_ID}
@@ -55,12 +55,13 @@ functions:
       # - http:
       #     method: GET
       #     path: photos/update-photos
-    handler: src/photos.updateRecords
+    handler: src/update-records.default
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
     timeout: 120
 
-  # Returns all full photo records from our DynamoDB table.
+  # Returns all full photo records from our DynamoDB table. This is the only
+  # function exposed via API Gateway.
   get-photos:
     events:
       - http:
@@ -68,7 +69,7 @@ functions:
           path: photos
           cors: true
           origin: '*'
-    handler: src/photos.getPhotos
+    handler: src/get-photos.default
 
 
 # ----- CloudFormation Resource Templates --------------------------------------

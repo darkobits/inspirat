@@ -22,22 +22,53 @@ function ensureIsArray(valueOrArr: any): Array<any> {
 
 
 /**
- * Provided a response object, ensure's that its 'body' is a string.
+ * Provided a response object, ensure's that its 'body' is a string. This is an
+ * AWS requirement. Additionally sets appropriate Content-Type and
+ * Content-Length headers.
  */
-function serializeBody(response: AWSLambdaFunctionResponse) {
-  if (typeof response !== 'object') {
+function serializeBody(res: AWSLambdaFunctionResponse) {
+  if (typeof res.body === 'string') {
+    res.headers['Content-Type'] = 'text/plain';
+    res.headers['Content-Length'] = String(res.body.length);
     return;
   }
 
-  if (typeof response.body !== 'string') {
-    response.body = JSON.stringify(response.body);
+  if (typeof res.body !== 'string') {
+    res.body = JSON.stringify(res.body);
+    res.headers['Content-Type'] = 'application/json';
+    res.headers['Content-Length'] = String(res.body.length);
+  }
+}
+
+
+// ----- Middleware ------------------------------------------------------------
+
+/**
+ * Middleware that sets CORS headers on the provided response. Note that the
+ * 'cors' setting must also be set in serverless.yml.
+ *
+ * See: https://serverless.com/blog/cors-api-gateway-survival-guide/
+ */
+export function setCorsHeaders(res: AWSLambdaFunctionResponse) {
+  res.headers['Access-Control-Allow-Origin'] = '*';
+  res.headers['Access-Control-Allow-Credentials'] = 'true';
+}
+
+
+/**
+ * Sets a custom header in the response indicating the package.json version at
+ * the time the function was compiled.
+ */
+export function setVersionHeader(res: AWSLambdaFunctionResponse) {
+  if (process.env.PACKAGE_VERSION) {
+    res.headers['X-Function-Version'] = process.env.PACKAGE_VERSION;
   }
 }
 
 
 /**
- * Error-handling middleware that formats the provided response according to the
- * shape of the error. Parses errors thrown by axios.
+ * Default error-handling middleware that formats the provided response
+ * according to the shape of the error. Parses errors thrown by axios.
  */
 function handleError(error: any, res: AWSLambdaFunctionResponse) {
   if (!error) {
@@ -52,6 +83,8 @@ function handleError(error: any, res: AWSLambdaFunctionResponse) {
   };
 }
 
+
+// ----- Types -----------------------------------------------------------------
 
 /**
  * Shape of the response object returned to AWS.
@@ -95,15 +128,22 @@ export interface AWSLambdaFunctionConfig<TEvent = any> {
 }
 
 
+// ----- Factory ---------------------------------------------------------------
+
 /**
  * Provided a configuration object with at least a 'handler' function, returns
  * a function conforming to the AWS Lambda signature.
+ *
+ * The configuration object may optionally contain 'pre' and 'err' keys, which
+ * should be arrays of functions that will run prior to the handler and in the
+ * event of an error, respectively. A default error handler is always included.
  */
 export function AWSLambdaFunction<TEvent = any>({pre, handler, err}: AWSLambdaFunctionConfig<TEvent>): Handler<TEvent> {
   return async (event: TEvent, context: Context, cb: Callback) => {
     const response: AWSLambdaFunctionResponse = {statusCode: 200, headers: {}, body: 'OK'};
 
     try {
+      // Run pre-handler middleware, then handler.
       await [...ensureIsArray(pre), handler].reduce(async (lastFn, curFn) => {
         await lastFn;
         await curFn(response, event, context);

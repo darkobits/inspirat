@@ -62,10 +62,11 @@ export async function getPhotos() {
 
     // Then, if the data is stale, update it.
     if ((Date.now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
-      console.warn(`[getImages] Cache is stale, fetching new data. (${ms(Date.now() - cachedData.updatedAt, {long: true})} out of date.).`);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`[getImages] Cache is stale, fetching new data. (${ms(Date.now() - cachedData.updatedAt, {long: true})} out of date.).`);
+      }
+
       fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
-    } else {
-      console.warn('CACHE IS OKAY.');
     }
 
     // Immediately resolve with cached data.
