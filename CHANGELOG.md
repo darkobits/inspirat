@@ -1,5 +1,21 @@
 # Change Log
 
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+# [0.6.0](https://github.com/darkobits/inspirat/compare/v0.5.1...v0.6.0) (2018-10-10)
+
+
+### Features
+
+* Use Lerna, port backend to Serverless. ([a618ed6](https://github.com/darkobits/inspirat/commit/a618ed6))
+
+
+
+
+
+# Change Log
+
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
 <a name="0.5.1"></a>
