@@ -21,6 +21,9 @@
       ]
     },
 
+    // Required so that TypeScript can find hoisted @types packages correctly.
+    "moduleResolution": "node",
+
     "plugins": [{
       "name": "typescript-styled-plugin"
     }]

@@ -5,6 +5,7 @@
   "scripts": {
     "clean": "lerna clean --yes && del packages/**/dist && del node_modules",
     "build": "lerna run --stream build",
+    "prebump": "npm run build",
     "bump": "lerna version",
     "bump:beta": "lerna version prerelease --preid=beta",
     "release": "lerna publish from-git",

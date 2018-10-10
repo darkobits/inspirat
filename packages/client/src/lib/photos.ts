@@ -2,6 +2,8 @@ import ms from 'ms';
 import queryString from 'query-string';
 // @ts-ignore
 import shuffleSeed from 'shuffle-seed';
+// @ts-ignore
+import urlParseLax from 'url-parse-lax';
 
 import {CACHE_TTL} from 'etc/constants';
 import {LooseObject, UnsplashPhotoResource} from 'etc/types';
@@ -99,8 +101,9 @@ export function getScreenSize() {
  *
  * See: https://docs.imgix.com/apis/url
  */
-export function buildOptions(overrides?: LooseObject): string {
+export function buildOptions(base?: LooseObject, overrides?: LooseObject): string {
   const params = {
+    ...base,
     // Sets several baseline parameters.
     auto: 'format',
     // Fit the image to the provided width/height without cropping and while
@@ -122,10 +125,13 @@ export function buildOptions(overrides?: LooseObject): string {
 
 /**
  * Provided a base URL for an Unsplash image, returns a URL with Imgix query
- * params added.
+ * params added/modified.
  */
 export function getFullImageUrl(baseUrl: string, options?: LooseObject) {
-  return `${baseUrl}?${buildOptions(options)}`;
+  const {protocol, host, pathname, query} = urlParseLax(baseUrl);
+  const parsedQuery = queryString.parse(query);
+  const updatedQuery = buildOptions(parsedQuery, options);
+  return `${protocol}//${host}${pathname}?${updatedQuery}`;
 }
 
 

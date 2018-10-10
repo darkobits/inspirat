@@ -38,7 +38,8 @@
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
     "react-emotion": "^9.2.10",
-    "shuffle-seed": "^1.1.6"
+    "shuffle-seed": "^1.1.6",
+    "url-parse-lax": "^3.0.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.0.0",

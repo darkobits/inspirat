@@ -9,7 +9,7 @@ import SplashLower from 'components/splash-lower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
 import {UnsplashPhotoResource} from 'etc/types';
 import events from 'lib/events';
-import {getPhotos, preloadImage} from 'lib/photos';
+import {getFullImageUrl, getPhotos, preloadImage} from 'lib/photos';
 import queryString from 'lib/query';
 import R from 'lib/ramda';
 import {sinceEpoch} from 'lib/time';
@@ -136,13 +136,13 @@ export default class Splash extends React.Component<{}, SplashState> {
     const nextPhoto = this.state.photos[modIndex(this.state.index + 1, this.state.photos)];
 
     const promises = [
-      preloadImage(nextPhoto.urls.full),
-      preloadImage(currentPhoto.urls.full).then(async () => events.emit('photoReady'))
+      preloadImage(getFullImageUrl(nextPhoto.urls.full)),
+      preloadImage(getFullImageUrl(currentPhoto.urls.full)).then(async () => events.emit('photoReady'))
     ];
 
     if (process.env.NODE_ENV === 'development') {
       const prevPhoto = this.state.photos[modIndex(this.state.index - 1, this.state.photos)];
-      promises.push(preloadImage(prevPhoto.urls.full));
+      promises.push(preloadImage(getFullImageUrl(prevPhoto.urls.full)));
     }
 
     return Promise.all(promises);
@@ -233,7 +233,7 @@ export default class Splash extends React.Component<{}, SplashState> {
       console.groupEnd();
     }
 
-    const backgroundImage = photo.urls.full;
+    const backgroundImage = getFullImageUrl(photo.urls.full);
     const color = photo.color;
 
     // Load any CSS overrides for the current photo.

@@ -3,8 +3,6 @@ import {API_URL} from 'etc/constants';
 
 
 /**
- * Axios client configured to make requests to our lambda functions.
+ * Axios client pre-configured to make requests to our backend.
  */
-export default axios.create({
-  baseURL: API_URL
-});
+export default axios.create({baseURL: API_URL});
