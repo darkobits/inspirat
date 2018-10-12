@@ -35,9 +35,6 @@ functions:
           name: sync-collection-${self:custom.stage}
           description: 'Sync collection from Unsplash.'
           rate: rate(1 hour)
-      # - http:
-      #     method: GET
-      #     path: photos/update-collection
     handler: src/sync-collection.default
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
@@ -52,9 +49,6 @@ functions:
           name: update-records-${self:custom.stage}
           description: 'Update partial records.'
           rate: rate(1 hour)
-      # - http:
-      #     method: GET
-      #     path: photos/update-photos
     handler: src/update-records.default
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
