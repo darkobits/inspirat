@@ -31,8 +31,14 @@ export default AWSLambdaFunction<APIGatewayEvent>({
         location: {
           title: R.path(['location', 'title'], photo)
         },
+        links: {
+          html: R.path(['links', 'html'], photo)
+        },
         user: {
-          name: R.path(['user', 'name'], photo)
+          name: R.path(['user', 'name'], photo),
+          links: {
+            html: R.path(['user', 'links', 'html'], photo)
+          }
         },
         color: R.path(['color'], photo)
       };

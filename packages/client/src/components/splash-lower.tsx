@@ -42,17 +42,23 @@ const SplashLower: React.SFC = () => {
           return null;
         }
 
+        if (!R.path(['user', 'name'], photo)) {
+          return null;
+        }
+
         // Format name we get from Unsplash, because some users think its cute
         // to stylize their names in ALL CAPS. :|
-        const name = capitalizeWords(photo.user.name);
-
+        const name = capitalizeWords(R.path(['user', 'name'], photo) as string);
         const nameHref = R.path<string>(['user', 'links', 'html'], photo);
-
         const unsplashHref = R.path<string>(['links', 'html'], photo);
 
         return [
-          <ImageMeta key="1" className={locationClassName}>{R.path(['location', 'title'], photo)}</ImageMeta>,
-          <ImageMeta key="2" className={attributionClassName}>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></ImageMeta>
+          <ImageMeta key="1" className={locationClassName}>
+            {R.path(['location', 'title'], photo)}
+          </ImageMeta>,
+          <ImageMeta key="2" className={attributionClassName}>
+            Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a>
+          </ImageMeta>
         ];
       }}</PhotoContext.Consumer>
     </SplashLowerEl>
