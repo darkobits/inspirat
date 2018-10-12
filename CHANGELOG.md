@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.8.0](https://github.com/darkobits/inspirat/compare/v0.7.1...v0.8.0) (2018-10-12)
+
+
+### Features
+
+* **backend:** Handle removal of photos from collection. ([5b70520](https://github.com/darkobits/inspirat/commit/5b70520))
+
+
+
+
+
 ## [0.7.1](https://github.com/darkobits/inspirat/compare/v0.7.0...v0.7.1) (2018-10-12)
 
 
