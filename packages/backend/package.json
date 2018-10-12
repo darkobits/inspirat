@@ -16,13 +16,14 @@
     "clean": "del dist",
     "check:styles": "tslint --project tsconfig.json --format codeFrame",
     "check:types": "tsc --noEmit",
-    "2predeploy": "npm run clean && run-p check:*",
+    "predeploy": "npm run clean && run-p check:*",
     "prebump": "npm run predeploy",
     "bump": "standard-version",
     "bump:beta": "npm run predeploy -- --prerelease=beta",
     "deploy": "dotenv serverless deploy",
     "deploy:prod": "dotenv serverless deploy -- --stage prod",
     "logs": "dotenv serverless logs -- --tail --function",
+    "invoke": "dotenv serverless invoke -- --function",
     "metrics": "dotenv serverless metrics -- --function"
   },
   "dependencies": {

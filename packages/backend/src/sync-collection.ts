@@ -53,7 +53,10 @@ export default AWSLambdaFunction({
     const db = new DynamoDBFactory();
     const table = db.table(`inspirat-${process.env.STAGE}`);
 
-    const results = await Promise.all(unsplashPhotoCollection.map(async (photo: any) => {
+
+    // ----- Handle Additions --------------------------------------------------
+
+    const additionResults = await Promise.all(unsplashPhotoCollection.map(async (photo: any) => {
       const existingItem = await table.where('id').eq(photo.id).consistent_read().get();
 
       // We will get back a value like {} if the table doesn't have a record.
@@ -69,11 +72,30 @@ export default AWSLambdaFunction({
       return true;
     }));
 
-    const numInsertions = R.filter<boolean>(R.identity, results).length;
+    const numAdditions = R.filter<boolean>(R.identity, additionResults).length;
 
-    console.log(`[syncCollection] Added ${chalk.green(numInsertions.toString())} photos.`);
+    console.log(`[syncCollection] Added ${chalk.green(numAdditions.toString())} photos.`);
 
-    res.body = `Added ${numInsertions} photos.`;
-    return;
+
+    // ----- Handle Deletions --------------------------------------------------
+
+    const allExistingItems: Array<any> = await table.consistent_read().scan();
+
+    const deletionResults = await Promise.all(allExistingItems.map(async (photo: any) => {
+      const itemInUnsplashCollection = R.find(R.propEq('id', photo.id), unsplashPhotoCollection);
+
+      if (!itemInUnsplashCollection) {
+        await table.where('id').eq(photo.id).delete();
+        return true;
+      }
+
+      return false;
+    }));
+
+    const numDeletions = R.filter<boolean>(R.identity, deletionResults).length;
+
+    console.log(`[syncCollection] Deleted ${chalk.green(numDeletions.toString())} photos.`);
+
+    res.body = {added: numAdditions, deleted: numDeletions};
   }
 });
