@@ -59,6 +59,7 @@
     "pkg-dir": "^3.0.0",
     "read-pkg-up": "^4.0.0",
     "serverless": "^1.32.0",
+    "serverless-domain-manager": "^2.6.5",
     "serverless-webpack": "^5.2.0",
     "source-map-support": "^0.5.9",
     "tslint": "^5.11.0",

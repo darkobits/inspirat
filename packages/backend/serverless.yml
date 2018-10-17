@@ -2,9 +2,23 @@ service:
   name: inspirat
 plugins:
   - serverless-webpack
+  - serverless-domain-manager
 
 custom:
   stage: ${opt:stage, 'dev'}
+  basePaths:
+    dev: inspirat-dev
+    prod: inspirat
+
+  # Configuration for serverless-domain-manager
+  customDomain:
+    domainName: aws.frontlawn.net
+    # Required when using us-west-1.
+    endpointType: regional
+    basePath: ${self:custom.basePaths.${self:custom.stage}}
+    stage: ${self:custom.stage}
+    createRoute53Record: true
+    # certificateArn: arn:aws:acm:us-west-1:771590014632:certificate/373dfce9-0c1d-4472-ae03-419370902bf5
 
 
 # ----- Serverless Compute Provider Configuration ------------------------------
