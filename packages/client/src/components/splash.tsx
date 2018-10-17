@@ -9,11 +9,9 @@ import SplashLower from 'components/splash-lower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
 import {UnsplashPhotoResource} from 'etc/types';
 import events from 'lib/events';
-import {getFullImageUrl, getPhotos, preloadImage} from 'lib/photos';
+import {getFullImageUrl, getCurrentPhoto, getPhotoForDay, preloadImage} from 'lib/photos';
 import queryString from 'lib/query';
 import R from 'lib/ramda';
-import {sinceEpoch} from 'lib/time';
-import {modIndex} from 'lib/utils';
 
 
 // ----- Styled Elements -------------------------------------------------------
@@ -37,7 +35,7 @@ const StyledSplash = styled.div<StyledSplashProps>`
 
   &::before {
     background-attachment: fixed;
-    background-image: url(${R.prop('backgroundImage')});
+    background-image: url(${R.prop<string, string>('backgroundImage')});
     background-position: ${R.propOr('center center', 'backgroundPosition')};
     background-repeat: no-repeat;
     background-size: cover;
@@ -89,16 +87,15 @@ const Swatch = styled.div<SwatchProps>`
 // ----- Component -------------------------------------------------------------
 
 export interface SplashState {
-  photos: Array<UnsplashPhotoResource>;
-  index: number;
+  currentPhoto?: UnsplashPhotoResource;
+  dayOffset: number;
   showSwatch: boolean;
 }
 
 
 export default class Splash extends React.Component<{}, SplashState> {
-  state = {
-    photos: [] as Array<UnsplashPhotoResource>,
-    index: 0,
+  state: SplashState = {
+    dayOffset: 0,
     showSwatch: false
   };
 
@@ -110,11 +107,15 @@ export default class Splash extends React.Component<{}, SplashState> {
   private enableKeyboardShortcuts() {
     if (process.env.NODE_ENV === 'development') {
       mousetrap.bind('left', () => {
-        this.setState(prevState => ({index: modIndex(prevState.index - 1, this.state.photos)}));
+        this.setState(prevState => ({dayOffset: prevState.dayOffset - 1}), async () => {
+          return this.setCurrentPhoto();
+        });
       });
 
       mousetrap.bind('right', () => {
-        this.setState(prevState => ({index: modIndex(prevState.index + 1, this.state.photos)}));
+        this.setState(prevState => ({dayOffset: prevState.dayOffset + 1}), async () => {
+          return this.setCurrentPhoto();
+        });
       });
 
       console.debug('[Development] Keyboard shortcuts registered.');
@@ -132,8 +133,8 @@ export default class Splash extends React.Component<{}, SplashState> {
    * has finished loading so we can emit the 'photoReady' event.
    */
   private async preloadPhotos() {
-    const currentPhoto = this.state.photos[modIndex(this.state.index, this.state.photos)];
-    const nextPhoto = this.state.photos[modIndex(this.state.index + 1, this.state.photos)];
+    const currentPhoto = await getPhotoForDay();
+    const nextPhoto = await getPhotoForDay({offset: this.state.dayOffset + 1});
 
     const promises = [
       preloadImage(getFullImageUrl(nextPhoto.urls.full)),
@@ -141,7 +142,7 @@ export default class Splash extends React.Component<{}, SplashState> {
     ];
 
     if (process.env.NODE_ENV === 'development') {
-      const prevPhoto = this.state.photos[modIndex(this.state.index - 1, this.state.photos)];
+      const prevPhoto = await getPhotoForDay({offset: this.state.dayOffset - 1});
       promises.push(preloadImage(getFullImageUrl(prevPhoto.urls.full)));
     }
 
@@ -150,22 +151,30 @@ export default class Splash extends React.Component<{}, SplashState> {
 
 
   /**
-   * Returns the photo that render() should use. This is normally the current
-   * index in the component's photos array, but in development, this will return
-   * a 'mock' UnsplashPhotoResource by reading the "src" query param.
+   * Sets the components' state's currentPhoto property. If in development, uses
+   * getPhotoForDay or the 'src' query string param. In production, uses
+   * getCurrentPhoto.
    */
-  private getPhoto(): UnsplashPhotoResource {
-    if (process.env.NODE_ENV === 'development' && queryString().src) {
-      return {
-        id: 'SRC',
-        color: 'black',
-        urls: {
-          full: String(queryString().src)
-        }
-      } as UnsplashPhotoResource;
+  private async setCurrentPhoto(): Promise<void> {
+    let currentPhoto: any;
+
+    if (process.env.NODE_ENV === 'development') {
+      if (queryString().src) {
+        currentPhoto = {
+          id: 'SRC',
+          color: 'black',
+          urls: {
+            full: String(queryString().src)
+          }
+        };
+      } else {
+        currentPhoto = await getPhotoForDay({offset: this.state.dayOffset});
+      }
+    } else {
+      currentPhoto = await getCurrentPhoto();
     }
 
-    return this.state.photos[this.state.index];
+    this.setState(prevState => ({...prevState, currentPhoto}));
   }
 
 
@@ -176,18 +185,8 @@ export default class Splash extends React.Component<{}, SplashState> {
    */
   async componentDidMount() {
     try {
-      const photos = await getPhotos();
-
-      // Using the number of days since the Unix epoch, use modIndex to
-      // calculate the current index in the photo collection.
-      const index = modIndex(sinceEpoch('days'), photos);
-
-      if (process.env.NODE_ENV === 'development') {
-        console.debug(`[Splash] Loaded ${photos.length} images. Initial index: ${index}.`);
-      }
-
-      this.setState(prevState => ({...prevState, photos, index}));
       this.enableKeyboardShortcuts();
+      await this.setCurrentPhoto();
     } catch (err) {
       console.error('[Splash] Error:', err.message);
     }
@@ -195,7 +194,7 @@ export default class Splash extends React.Component<{}, SplashState> {
 
 
   /**
-   * - Pre-load the adjacent photos in the collection.
+   * Pre-load the adjacent photos in the collection.
    */
   async componentDidUpdate() {
     if (process.env.NODE_ENV === 'development') {
@@ -216,7 +215,7 @@ export default class Splash extends React.Component<{}, SplashState> {
   render() {
     // Use modIndex() here because the current index might be out-of-bounds if
     // navigating between photos in development.
-    const photo = this.getPhoto();
+    const photo = this.state.currentPhoto;
 
     // If in development, enable the swatch when "swatch=true" is in the query.
     const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch === 'true';

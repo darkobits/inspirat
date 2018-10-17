@@ -9,44 +9,56 @@ import {CACHE_TTL} from 'etc/constants';
 import {LooseObject, UnsplashPhotoResource} from 'etc/types';
 import client from 'lib/client';
 import storage from 'lib/storage';
-import {greaterOf} from 'lib/utils';
+import {midnight, now, daysSinceEpoch} from 'lib/time';
+import {greaterOf, modIndex} from 'lib/utils';
 
 
-interface CollectionCache {
+/**
+ * Storage key used to cache the photo collection.
+ */
+const COLLECTION_CACHE_KEY = 'photoCollection';
+
+
+/**
+ * Shape of the object used to cache the photo collection.
+ */
+interface PhotoCollectionStorageItem {
   photos: Array<UnsplashPhotoResource>;
   updatedAt: number;
 }
 
 
 /**
- * Returns an array of all images in the Front Lawn collection. The response
- * will be persisted to local storage to improve load times and asynchronously
+ * Returns an array of all images in the Inspirat collection. The response will
+ * be persisted to local storage to improve load times and asynchronously
  * updated in the background.
  *
  * See: lambda/images.ts.
  */
-export async function getPhotos() {
-  const COLLECTION_CACHE_KEY = 'photoCollection';
-
+export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
   let photoCollection;
 
   // Sub-routine that fetches up-to-date image collection data, immediately
   // resolves with it, then caches it to local storage.
-  const fetchAndUpdateCollection = async (): Promise<CollectionCache> => {
-    const photos = (await client.get('/photos')).data;
+  const fetchAndUpdateCollection = async (): Promise<PhotoCollectionStorageItem> => {
+    try {
+      const photos = (await client.get('/photos')).data;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.debug(`[getImages] Fetched ${photos.length} images.`);
+      if (process.env.NODE_ENV === 'development') {
+        console.debug(`[getImages] Fetched ${photos.length} images.`);
+      }
+
+      const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
+
+      // Return photos immediately
+      storage.setItem(COLLECTION_CACHE_KEY, cacheData); // tslint:disable-line no-floating-promises
+
+      return cacheData;
+    } catch (err) {
+      console.error('Unable to fetch photos:', err.message);
+
+      return {photos: [], updatedAt: -1};
     }
-
-    const cacheData: CollectionCache = {
-      photos,
-      updatedAt: Date.now()
-    };
-
-    storage.setItem(COLLECTION_CACHE_KEY, cacheData); // tslint:disable-line no-floating-promises
-
-    return cacheData;
   };
 
   const storageKeys = await storage.keys();
@@ -60,12 +72,12 @@ export async function getPhotos() {
     photoCollection = (await fetchAndUpdateCollection()).photos;
   } else {
     // Otherwise, get data from the cache.
-    const cachedData = await storage.getItem<CollectionCache>(COLLECTION_CACHE_KEY);
+    const cachedData = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
 
     // Then, if the data is stale, update it.
-    if ((Date.now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
+    if ((now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
       if (process.env.NODE_ENV === 'development') {
-        console.warn(`[getImages] Cache is stale, fetching new data. (${ms(Date.now() - cachedData.updatedAt, {long: true})} out of date.).`);
+        console.warn(`[getImages] Cache is stale, fetching new data. (${ms(now() - cachedData.updatedAt, {long: true})} out of date.).`);
       }
 
       fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
@@ -80,6 +92,67 @@ export async function getPhotos() {
 
   // Use 'name' to deterministically shuffle the collection before returning it.
   return shuffleSeed.shuffle(photoCollection, name);
+}
+
+
+/**
+ * Storage key used for the current photo.
+ */
+const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
+
+
+/**
+ * Shape of the object used to cache the current photo.
+ */
+export interface CurrentPhotoStorageItem {
+  photo: UnsplashPhotoResource;
+  expires: number;
+}
+
+
+/**
+ * Returns the photo for the current day based on the current photo collection.
+ * Multiple calls to this function on the same day may return different results
+ * as the cached photo collection is updated. To retrieve a consistent photo
+ * for the current day regardless of the state of the photo collection, use
+ * getCurrentPhoto below.
+ *
+ * If a day argument is provided, will return the photo for the provided day.
+ */
+export async function getPhotoForDay({offset = 0} = {}): Promise<UnsplashPhotoResource> {
+  const day = daysSinceEpoch() + offset;
+  const photos = await getPhotos();
+
+  // Using the number of days since the Unix epoch, use modIndex to
+  // calculate the index in the photo collection to use for the indicated day.
+  return photos[modIndex(day, photos)];
+}
+
+
+/**
+ * Returns the photo for the current day. Will cache this result for the
+ * remainder of the day to prevent photos changing when the collection is
+ * updated.
+ */
+export async function getCurrentPhoto(): Promise<UnsplashPhotoResource> {
+  const storageKeys = await storage.keys();
+
+  if (storageKeys.includes(CURRENT_PHOTO_CACHE_KEY)) {
+    const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
+
+    if (currentPhoto.expires > now()) {
+      return currentPhoto.photo;
+    }
+  }
+
+  // Cache did not exist or was expired.
+  const photo = await getPhotoForDay();
+
+  // Don't wait for this promise; return immediately and cache the photo
+  // asynchronously.
+  storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()}); // tslint:disable-line no-floating-promises
+
+  return photo;
 }
 
 
