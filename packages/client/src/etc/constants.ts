@@ -12,9 +12,20 @@ export const CACHE_TTL = '1 day';
 
 
 /**
- * Map of Unsplash photo IDs to background-position values.
+ * Map of Unsplash photo IDs to various CSS overrides for that image.
+ *
+ * Supported overrides:
+ * - background-position
+ * - transform
+ * - mask amount
  */
 export const BACKGROUND_RULE_OVERRIDES: any = {
+  'pn2aVMO0lvE': {
+    backgroundPosition: 'center bottom'
+  },
+  '47HoSotxeRQ': {
+    backgroundPosition: 'center bottom'
+  },
   'oMneOBYhJxY': {
     maskAmount: '0.4'
   },
