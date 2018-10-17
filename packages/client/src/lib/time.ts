@@ -1,12 +1,27 @@
-import {DateTime, Duration, DurationUnit} from 'luxon';
+import {DateTime, Duration} from 'luxon';
 
 
 /**
- * Provided a unit of time (ex: 'days', 'minutes') returns the number of whole
- * units that have passed since the Unix epoch.
+ * Returns the number of days since the Unix epoch.
  */
-export function sinceEpoch(unitName: DurationUnit): number {
-  return Math.floor(Duration.fromMillis(Date.now()).as(unitName));
+export function daysSinceEpoch(): number {
+  return Math.floor(Duration.fromMillis(Date.now()).as('days'));
+}
+
+
+/**
+ * Returns the current Unix timestamp with millisecond precision.
+ */
+export function now() {
+  return DateTime.local().valueOf();
+}
+
+/**
+ * Returns the Unix timestamp (with millisecond precision) for the last
+ * millisecond of the current day, in the machine's local time zone.
+ */
+export function midnight() {
+  return DateTime.fromObject({hour: 23, minute: 59, second: 59, millisecond: 999}).valueOf();
 }
 
 
