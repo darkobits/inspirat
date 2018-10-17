@@ -1,5 +1,6 @@
 import path from 'path';
 
+import execa from 'execa';
 import fs from 'fs-extra';
 import getPort from 'get-port';
 import readPkgUp from 'read-pkg-up';
@@ -22,6 +23,10 @@ async function synchronizeVersions(fromFile: string, toFile: string): Promise<vo
   const toJson = await fs.readJson(toFile);
   toJson.version = fromJson.version;
   await fs.writeJson(toFile, toJson, {spaces: 2});
+
+  // Add the file to the Git index so that during "bump" commands, this change
+  // is not left out of the commit.
+  await execa.shell(`git add ${toFile}`);
 }
 
 
@@ -33,8 +38,8 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   const {pkg, path: pkgPath} = await readPkgUp();
   const pkgRoot = path.parse(pkgPath).dir;
 
-  const DEV_API_URL = 'https://mbs6kyu6d2.execute-api.us-west-1.amazonaws.com/dev';
-  const PROD_API_URL = 'https://s9uzi7wzrj.execute-api.us-west-1.amazonaws.com/prod';
+  const PROD_API_URL = 'https://aws.frontlawn.net/inspirat';
+  const DEV_API_URL = 'https://aws.frontlawn.net/inspirat-dev';
 
 
   // ----- Entry / Output ------------------------------------------------------
