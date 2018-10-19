@@ -20,6 +20,9 @@ export const CACHE_TTL = '1 day';
  * - mask amount
  */
 export const BACKGROUND_RULE_OVERRIDES: any = {
+  '85f8mC4SRzk': {
+    backgroundPosition: 'center 15%'
+  },
   'pn2aVMO0lvE': {
     backgroundPosition: 'center bottom'
   },
