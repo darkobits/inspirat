@@ -27,7 +27,7 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
   align-items: center;
   display: flex;
   flex-grow: 1;
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 300;
   justify-content: center;
   letter-spacing: 1.5px;
@@ -44,7 +44,27 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
     font-weight: inherit;
   }
 
+  @media(min-width: 520px) {
+    font-size: 38px;
+  }
+
+  @media(min-width: 640px) {
+    font-size: 52px;
+  }
+
   @media(min-width: 760px) {
+    font-size: 64px;
+  }
+
+  @media(min-width: 860px) {
+    font-size: 72px;
+  }
+
+  @media(min-width: 940px) {
+    font-size: 80px;
+  }
+
+  @media(min-width: 1120px) {
     font-size: 96px;
   }
 `;
