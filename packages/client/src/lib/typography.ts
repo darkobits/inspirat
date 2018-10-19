@@ -93,13 +93,13 @@ export function buildFontFamilyString(additionalFont?: string): string {
   const fonts = [];
 
   if (process.env.NODE_ENV === 'development') {
+    console.debug('[Development] "family" query param supported.');
+
     const parsedQuery = queryString();
 
-    if (parsedQuery.family) {
+    if (parsedQuery.family && typeof parsedQuery.family === 'string') {
       fonts.push(`"${useFont(parsedQuery.family)}"`);
     }
-
-    console.debug('[Development] "family" query param supported.');
   }
 
   if (additionalFont) {
