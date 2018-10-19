@@ -1,171 +1,77 @@
-import {Callback, Context, Handler} from 'aws-lambda';
-import * as R from 'ramda';
+import {SQS} from 'aws-sdk';
 
-
-/**
- * Provided a value, wraps the value in an array. If the value is already an
- * array, it is returned. If the value is undefined, an empty array is returned.
- *
- * This ensures that the value returned from this function is iterable.
- */
-function ensureIsArray(valueOrArr: any): Array<any> {
-  if (valueOrArr === undefined) {
-    return [];
-  }
-
-  if (Array.isArray(valueOrArr)) {
-    return valueOrArr;
-  }
-
-  return [valueOrArr];
+export interface AmazonResourceName {
+  partition: string;
+  service: string;
+  region: string;
+  accountId: string;
+  resource: string;
+  resourceType?: string;
+  qualifier: string;
 }
 
 
 /**
- * Provided a response object, ensure's that its 'body' is a string. This is an
- * AWS requirement. Additionally sets appropriate Content-Type and
- * Content-Length headers.
+ * Provided an AWS Amazon Resource Name, returns an object describing the
+ * resource.
  */
-function serializeBody(res: AWSLambdaFunctionResponse) {
-  if (typeof res.body === 'string') {
-    res.headers['Content-Type'] = 'text/plain';
-    res.headers['Content-Length'] = String(res.body.length);
-    return;
+export function parseArn(arn: string): AmazonResourceName {
+  if (typeof arn !== 'string' || !arn.startsWith('arn:')) { // tslint:disable-line strict-type-predicates
+    throw new Error('Invalid ARN.');
   }
 
-  if (typeof res.body !== 'string') {
-    res.body = JSON.stringify(res.body);
-    res.headers['Content-Type'] = 'application/json';
-    res.headers['Content-Length'] = String(res.body.length);
-  }
-}
+  const [, partition, service, region, accountId, resourceOrResourceType, resource, qualifier] = arn.split(/[:\/]/);
 
-
-// ----- Middleware ------------------------------------------------------------
-
-/**
- * Middleware that sets CORS headers on the provided response. Note that the
- * 'cors' setting must also be set in serverless.yml.
- *
- * See: https://serverless.com/blog/cors-api-gateway-survival-guide/
- */
-export function setCorsHeaders(res: AWSLambdaFunctionResponse) {
-  res.headers['Access-Control-Allow-Origin'] = '*';
-  res.headers['Access-Control-Allow-Credentials'] = 'true';
-}
-
-
-/**
- * Sets a custom header in the response indicating the package.json version at
- * the time the function was compiled.
- */
-export function setVersionHeader(res: AWSLambdaFunctionResponse) {
-  if (process.env.PACKAGE_VERSION) {
-    res.headers['X-Function-Version'] = process.env.PACKAGE_VERSION;
-  }
-}
-
-
-/**
- * Default error-handling middleware that formats the provided response
- * according to the shape of the error. Parses errors thrown by axios.
- */
-function handleError(error: any, res: AWSLambdaFunctionResponse) {
-  if (!error) {
-    return;
+  if (!partition) {
+    throw new Error('Invalid ARN; no partition.');
   }
 
-  res.statusCode = R.pathOr(500, ['response', 'status'], error);
+  if (!service) {
+    throw new Error('Invalid ARN; no service.');
+  }
 
-  res.body = {
-    statusText: R.pathOr('Internal Server Error', ['response', 'statusText'], error),
-    message: R.pathOr('An unknown error occurred.', ['message'], error)
-  };
-}
+  if (!region) {
+    throw new Error('Invalid ARN; no region.');
+  }
 
+  if (!accountId) {
+    throw new Error('Invalid ARN; no account ID.');
+  }
 
-// ----- Types -----------------------------------------------------------------
-
-/**
- * Shape of the response object returned to AWS.
- */
-export interface AWSLambdaFunctionResponse {
-  /**
-   * HTTP status to send with the response.
-   */
-  statusCode: number;
-
-  /**
-   * Headers may be any string -> string key/value pair.
-   */
-  headers: {
-    [index: string]: string;
+  const results: Partial<AmazonResourceName> = {
+    partition,
+    service,
+    region,
+    accountId
   };
 
-  /**
-   * Technically a response's body must be a string, but we allow consumers to
-   * set it to anything and serialize it for them before dispatching it.
-   */
-  body: any;
+  if (!resource) {
+    results.resource = resourceOrResourceType;
+  } else {
+    results.resourceType = resourceOrResourceType;
+    results.resource = resource;
+  }
+
+  if (qualifier) {
+    results.qualifier = qualifier;
+  }
+
+  return results as AmazonResourceName;
 }
 
 
 /**
- * Describes the signature of the function that should be provided to
- * AWSLambdaFunction; an async function that accepts an event object and a
- * context object.
+ * Provided a queue name, returns an SQS instance "bound" to the queue.
  */
-export type AsyncHandler<TEvent> = (response: AWSLambdaFunctionResponse, event: TEvent, context: Context) => void | Promise<void>;
+export async function getQueueHandle(QueueName: string, params?: any): Promise<SQS> {
+  const sqs = new SQS();
 
+  const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise();
 
-/**
- * Configuration object provided to AWSLambdaFunction.
- */
-export interface AWSLambdaFunctionConfig<TEvent = any> {
-  pre?: Function | Array<Function>;
-  handler: AsyncHandler<TEvent>;
-  err?: Function | Array<Function>;
-}
-
-
-// ----- Factory ---------------------------------------------------------------
-
-/**
- * Provided a configuration object with at least a 'handler' function, returns
- * a function conforming to the AWS Lambda signature.
- *
- * The configuration object may optionally contain 'pre' and 'err' keys, which
- * should be arrays of functions that will run prior to the handler and in the
- * event of an error, respectively. A default error handler is always included.
- */
-export function AWSLambdaFunction<TEvent = any>({pre, handler, err}: AWSLambdaFunctionConfig<TEvent>): Handler<TEvent> {
-  return async (event: TEvent, context: Context, cb: Callback) => {
-    const response: AWSLambdaFunctionResponse = {statusCode: 200, headers: {}, body: 'OK'};
-
-    try {
-      // Run pre-handler middleware, then handler.
-      await [...ensureIsArray(pre), handler].reduce(async (lastFn, curFn) => {
-        await lastFn;
-        await curFn(response, event, context);
-      }, Promise.resolve());
-
-      serializeBody(response);
-
-      cb(null, response);
-      return;
-    } catch (error) {
-      // Pre-middleware or handler threw, skip to error middleware.
-      await [handleError, ...ensureIsArray(err)].reduce(async (lastFn, curFn) => {
-        await lastFn;
-        await curFn(error, response, context, event);
-      }, Promise.resolve());
-
-      serializeBody(response);
-
-      console.log(`[AWSLambdaFunction] Error [${response.statusCode}]: ${error.stack}`);
-
-      cb(null, response);
-      return;
+  return new SQS({
+    params: {
+      QueueUrl,
+      ...params
     }
-  };
+  });
 }

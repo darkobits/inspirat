@@ -1,24 +1,31 @@
 service:
   name: inspirat
 plugins:
-  - serverless-webpack
   - serverless-domain-manager
+  - serverless-dotenv-plugin
+  - serverless-webpack
+
+
+# ----- Custom Config Data -----------------------------------------------------
 
 custom:
   stage: ${opt:stage, 'dev'}
   basePaths:
     dev: inspirat-dev
     prod: inspirat
+  dotenv:
+    include:
+      - UNSPLASH_ACCESS_KEY
+      - UNSPLASH_SECRET_KEY
+      - UNSPLASH_COLLECTION_ID
 
   # Configuration for serverless-domain-manager
   customDomain:
     domainName: aws.frontlawn.net
-    # Required when using us-west-1.
     endpointType: regional
     basePath: ${self:custom.basePaths.${self:custom.stage}}
     stage: ${self:custom.stage}
     createRoute53Record: true
-    # certificateArn: arn:aws:acm:us-west-1:771590014632:certificate/373dfce9-0c1d-4472-ae03-419370902bf5
 
 
 # ----- Serverless Compute Provider Configuration ------------------------------
@@ -26,23 +33,28 @@ custom:
 provider:
   name: aws
   runtime: nodejs8.10
-  region: us-west-1
+  region: ${env:AWS_REGION}
   stage: ${self:custom.stage}
   environment:
     STAGE: ${self:custom.stage}
+    # AWS_REGION: ${env:AWS_REGION}
   iamRoleStatements:
     - Effect: Allow
       Action:
         - dynamodb:*
       Resource: arn:aws:dynamodb:*:*:table/inspirat-${self:custom.stage}
-
+    - Effect: Allow
+      Action:
+        - sqs:*
+      Resource: arn:aws:sqs:*:*:inspirat-${self:custom.stage}
 
 
 # ----- Functions --------------------------------------------------------------
 
 functions:
-  # Queries the Unsplash API and adds any new photos from our collection to our
-  # DynamoDB table as "partial" records.
+  # Queries the Unsplash Collection API and adds any new photos from the
+  # collection to the SQS queue for further processing. Deletes any photos from
+  # the database that are not present in the collection response from Unsplash.
   sync-collection:
     events:
       - schedule:
@@ -55,21 +67,24 @@ functions:
       UNSPLASH_COLLECTION_ID: ${env:UNSPLASH_COLLECTION_ID}
     timeout: 120
 
-  # Gets a list of all "partial" records from DynamoDB and converts them to
-  # "full" records by querying the Unsplash /photo/:photoId API.
+  # Periodically checks the SQS queue for messages representing new photos. For
+  # each, queries the Unsplash Photos API and adds a record for the photo to the
+  # database. This function is run on a schedule rather than via SQS triggers
+  # because we want to spread this operation out over time so that we don't hit
+  # the Unsplash API rate limit.
   update-records:
     events:
       - schedule:
           name: update-records-${self:custom.stage}
-          description: 'Update partial records.'
-          rate: rate(1 hour)
+          description: 'Update the database with new photos.'
+          rate: rate(15 minutes)
     handler: src/update-records.default
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
     timeout: 120
 
-  # Returns all full photo records from our DynamoDB table. This is the only
-  # function exposed via API Gateway.
+  # Returns all photos from the database. This is the only function exposed via
+  # API Gateway.
   get-photos:
     events:
       - http:
@@ -84,9 +99,9 @@ functions:
 
 resources:
   Resources:
-    # Development table.
-    Inspirat:
-      Type: 'AWS::DynamoDB::Table'
+    # DynamoDB Tables
+    InspiratDatabase:
+      Type: AWS::DynamoDB::Table
       Properties:
         TableName: inspirat-${self:custom.stage}
         AttributeDefinitions:
@@ -100,19 +115,10 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-    # # Production table.
-    # InspiratProd:
-    #   Type: 'AWS::DynamoDB::Table'
-    #   Properties:
-    #     TableName: inspirat-prod
-    #     AttributeDefinitions:
-    #       -
-    #         AttributeName: id
-    #         AttributeType: S
-    #     KeySchema:
-    #       -
-    #         AttributeName: id
-    #         KeyType: HASH
-    #     ProvisionedThroughput:
-    #       ReadCapacityUnits: 1
-    #       WriteCapacityUnits: 1
+
+    # Queues
+    InspiratQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: inspirat-${self:custom.stage}
+        VisibilityTimeout: 120

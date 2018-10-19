@@ -1,9 +1,11 @@
 // @ts-ignore
 import DynamoDBFactory from '@awspilot/dynamodb';
+import env from '@darkobits/env';
 import * as R from 'ramda';
 
 import {UnsplashCollectionPhotoResource} from 'etc/types';
-import {AWSLambdaFunction} from 'lib/aws-helpers';
+import {getQueueHandle} from 'lib/aws-helpers';
+import {AWSLambdaFunction} from 'lib/aws-lambda';
 import chalk from 'lib/chalk';
 import {getAllPages, isEmptyObject} from 'lib/utils';
 
@@ -22,19 +24,21 @@ import {getAllPages, isEmptyObject} from 'lib/utils';
  * with a response from the /photos API.
  */
 export default AWSLambdaFunction({
-  async handler(res/* , event, context */) {
+  async handler(res) {
     /**
      * Maximum page size allowed by Unsplash.
      */
     const MAX_PAGE_SIZE = 30;
 
-    // Get all images in our collection from Unsplash.
+
+    // ----- [1] Get Unsplash Collection ---------------------------------------
+
     const unsplashPhotoCollection: Array<UnsplashCollectionPhotoResource> = await getAllPages({
       method: 'GET',
-      url: `https://api.unsplash.com/collections/${process.env.UNSPLASH_COLLECTION_ID}/photos`,
+      url: `https://api.unsplash.com/collections/${env('UNSPLASH_COLLECTION_ID', true)}/photos`,
       headers: {
         'Accept-Version': 'v1',
-        'Authorization': `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`
+        'Authorization': `Client-ID ${env('UNSPLASH_ACCESS_KEY', true)}`
       },
       params: {
         per_page: MAX_PAGE_SIZE
@@ -44,19 +48,26 @@ export default AWSLambdaFunction({
     if (!unsplashPhotoCollection.length) {
       console.warn('[syncCollection] Unsplash did not return any photos.');
 
-      res.body = 'Unsplash did not return any photos.';
+      res.body = {
+        message: 'Unsplash did not return any photos.'
+      };
+
       return;
     }
 
-    console.log(`[syncCollection] Collection has ${chalk.green(unsplashPhotoCollection.length.toString())} photos.`);
-
-    const db = new DynamoDBFactory();
-    const table = db.table(`inspirat-${process.env.STAGE}`);
+    console.log(`[sync-collection] Collection has ${chalk.green(unsplashPhotoCollection.length.toString())} photos.`);
 
 
-    // ----- Handle Additions --------------------------------------------------
+    // ----- [2] Create Resource Handles ---------------------------------------
+
+    const table = new DynamoDBFactory().table(`inspirat-${env('STAGE', true)}`);
+    const queueHandle = await getQueueHandle(`inspirat-${env('STAGE', true)}`);
+
+
+    // ----- [3] Handle Additions ----------------------------------------------
 
     const additionResults = await Promise.all(unsplashPhotoCollection.map(async (photo: any) => {
+      // Determine if the photo already exists in the database.
       const existingItem = await table.where('id').eq(photo.id).consistent_read().get();
 
       // We will get back a value like {} if the table doesn't have a record.
@@ -65,25 +76,33 @@ export default AWSLambdaFunction({
         return false;
       }
 
-      // Insert a partial record for the photo.
-      await table.insert({id: photo.id, hasFullResults: false});
+      // Post a message to our queue indicating that a new photo has been added.
+      await queueHandle.sendMessage({
+        // @ts-ignore
+        MessageBody: JSON.stringify({
+          id: photo.id
+        })
+      }).promise();
 
-      console.log(`[syncCollection] Added partial record for photo ${chalk.green(photo.id)}.`);
+      console.log(`[syncCollection] Message posted for ${chalk.green(photo.id)}.`);
       return true;
     }));
 
     const numAdditions = R.filter<boolean>(R.identity, additionResults).length;
 
-    console.log(`[syncCollection] Added ${chalk.green(numAdditions.toString())} photos.`);
+    console.log(`[sync-collection] Added ${chalk.green(numAdditions.toString())} photos.`);
 
 
-    // ----- Handle Deletions --------------------------------------------------
+    // ----- [4] Handle Deletions ----------------------------------------------
 
     const allExistingItems: Array<any> = await table.consistent_read().scan();
 
     const deletionResults = await Promise.all(allExistingItems.map(async (photo: any) => {
+      // Determine if the record from the database exists in our collection from
+      // Unsplash.
       const itemInUnsplashCollection = R.find(R.propEq('id', photo.id), unsplashPhotoCollection);
 
+      // If not, remove it from the database.
       if (!itemInUnsplashCollection) {
         await table.where('id').eq(photo.id).delete();
         return true;
@@ -94,8 +113,11 @@ export default AWSLambdaFunction({
 
     const numDeletions = R.filter<boolean>(R.identity, deletionResults).length;
 
-    console.log(`[syncCollection] Deleted ${chalk.green(numDeletions.toString())} photos.`);
+    console.log(`[sync-collection] Deleted ${chalk.green(numDeletions.toString())} photos.`);
 
-    res.body = {added: numAdditions, deleted: numDeletions};
+    res.body = {
+      added: numAdditions,
+      deleted: numDeletions
+    };
   }
 });

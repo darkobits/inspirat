@@ -41,3 +41,11 @@ export async function getAllPages(options: AxiosRequestConfig): Promise<Array<an
 export function isEmptyObject(value: LooseObject): boolean {
   return Object.keys(value).length === 0;
 }
+
+
+/**
+ * Returns true if any element in the provided array is an instance of Error.
+ */
+export function containsErrors(arr: Array<any>): boolean {
+  return Boolean(arr.find(item => item instanceof Error));
+}
