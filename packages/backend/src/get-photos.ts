@@ -10,7 +10,6 @@ import {AWSLambdaFunction, setCorsHeaders, setVersionHeader} from 'lib/aws-lambd
 
 // ----- Get Photos ------------------------------------------------------------
 
-
 /**
  * This function returns all "full" photo records from the database.
  *

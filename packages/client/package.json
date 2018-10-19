@@ -18,9 +18,6 @@
     "check:types": "tsc --noEmit",
     "prebuild": "npm run clean && run-p check:*",
     "build": "webpack --mode=production",
-    "prebump": "npm run build",
-    "bump": "standard-version",
-    "bump:beta": "npm run bump -- --prerelease=beta",
     "start": "webpack-dev-server --mode=development"
   },
   "dependencies": {
