@@ -1,9 +1,9 @@
+import * as R from 'ramda';
 import styled, {css} from 'react-emotion';
 import React from 'react';
 
 import PhotoContext from 'contexts/photo';
 import ImageMeta from 'components/image-meta';
-import R from 'lib/ramda';
 import {capitalizeWords} from 'lib/utils';
 
 
@@ -38,19 +38,9 @@ const SplashLower: React.SFC = () => {
   return (
     <SplashLowerEl>
       <PhotoContext.Consumer>{photo => {
-        if (!photo) {
-          return null;
-        }
-
-        if (!R.path(['user', 'name'], photo)) {
-          return null;
-        }
-
-        // Format name we get from Unsplash, because some users think its cute
-        // to stylize their names in ALL CAPS. :|
-        const name = capitalizeWords(R.path(['user', 'name'], photo) as string);
-        const nameHref = R.path<string>(['user', 'links', 'html'], photo);
-        const unsplashHref = R.path<string>(['links', 'html'], photo);
+        const name = capitalizeWords(R.pathOr('', ['user', 'name'], photo));
+        const nameHref = R.pathOr('', ['user', 'links', 'html'], photo);
+        const unsplashHref = R.pathOr('', ['links', 'html'], photo);
 
         return [
           <ImageMeta key="1" className={locationClassName}>

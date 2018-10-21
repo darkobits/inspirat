@@ -1,13 +1,14 @@
 import {rgba} from 'polished';
+import * as R from 'ramda';
 import styled from 'react-emotion';
 import React from 'react';
 
 import PhotoContext from 'contexts/photo';
 import events from 'lib/events';
 import {getPeriodDescriptor} from 'lib/time';
-import R from 'lib/ramda';
 import storage from 'lib/storage';
 import {compositeTextShadow} from 'lib/typography';
+import {sleep} from 'lib/utils';
 
 
 // ----- Styled Elements -------------------------------------------------------
@@ -117,7 +118,8 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
 
     // Listen for the photoReady event and set our state to ready. This ensures
     // that the greeting renders after the photo has loaded.
-    events.on('photoReady', () => {
+    events.on('photoReady', async () => {
+      await sleep(200);
       this.setState(prevState => ({...prevState, ready: true}));
     });
   }

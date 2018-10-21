@@ -1,10 +1,10 @@
 import {rgba} from 'polished';
+import * as R from 'ramda';
 import React from 'react';
 import styled from 'react-emotion';
 
 import PhotoContext from 'contexts/photo';
 import events from 'lib/events';
-import R from 'lib/ramda';
 import {compositeTextShadow} from 'lib/typography';
 import {sleep} from 'lib/utils';
 
@@ -23,7 +23,7 @@ const textShadow = (color: string) => compositeTextShadow([
 
 export interface ImageMetaElProps {
   shadowColor: string;
-  opacity: number;
+  opacity: string;
 }
 
 const ImageMetaEl = styled.div<ImageMetaElProps>`
@@ -52,9 +52,9 @@ export default class ImageMeta extends React.Component<ImageMetaProps> {
     ready: false
   };
 
-  componentDidMount() {
+  componentWillMount() {
     events.on('photoReady', async () => {
-      await sleep(1200);
+      await sleep(800);
       this.setState(prevState => ({...prevState, ready: true}));
     });
   }
@@ -62,14 +62,10 @@ export default class ImageMeta extends React.Component<ImageMetaProps> {
   render() {
     return (
       <PhotoContext.Consumer>{photo => {
-        // If the current photo doesn't have location information, render an empty
-        // div. This ensures we maintain correct flexbox layout for other elements.
-        if (!photo) {
-          return <div></div>;
-        }
+        const opacity = this.state.ready ? '1' : '0';
 
         return (
-          <ImageMetaEl className={this.props.className} shadowColor={R.prop('color', photo)} opacity={this.state.ready ? 1 : 0}>
+          <ImageMetaEl className={this.props.className} shadowColor={R.propOr('black', 'color', photo)} opacity={opacity}>
             {this.props.children}
           </ImageMetaEl>
         );

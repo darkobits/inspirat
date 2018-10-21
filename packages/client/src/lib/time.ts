@@ -17,7 +17,7 @@ export function now() {
 }
 
 /**
- * Returns the Unix timestamp (with millisecond precision) for the last
+ * Returns the Unix timestamp with millisecond precision for the last
  * millisecond of the current day, in the machine's local time zone.
  */
 export function midnight() {
