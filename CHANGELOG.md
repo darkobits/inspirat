@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.9.1](https://github.com/darkobits/inspirat/compare/v0.9.0...v0.9.1) (2018-10-21)
+
+
+### Bug Fixes
+
+* **client:** Fix typing issue. ([e0ad5a2](https://github.com/darkobits/inspirat/commit/e0ad5a2))
+
+
+
+
+
 # [0.9.0](https://github.com/darkobits/inspirat/compare/v0.8.0...v0.9.0) (2018-10-19)
 
 
