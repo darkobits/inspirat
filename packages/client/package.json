@@ -7,7 +7,7 @@
   "license": "WTFPL",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/darkobits/frontlawn-website.git"
+    "url": "git+https://github.com/darkobits/inspirat.git"
   },
   "files": [
     "dist"
