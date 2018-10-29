@@ -11,7 +11,7 @@ import {compositeTextShadow} from 'lib/typography';
 import {sleep} from 'lib/utils';
 
 
-// ----- Styled Elements -------------------------------------------------------
+// ----- Styles ----------------------------------------------------------------
 
 const textShadow = (color: string) => compositeTextShadow([
   [0, 0, 2, rgba(0, 0, 0, 1)],
@@ -110,11 +110,29 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
 
 
   /**
+   * Returns a standard greeting or a personalized greeting based on whether a
+   * name has been set.
+   */
+  private get greeting() {
+    const {name} = this.state;
+    const period = getPeriodDescriptor();
+    return name ? `Good ${period}, ${name}.` : `Good ${period}.`;
+  }
+
+
+  /**
    * - Installs 'setName' on window.
+   * - Gets 'name' for greeting from local storage.
    * - Listens for the 'photoReady' event to render the greeting.
    */
   componentWillMount() {
     this.installSetName();
+
+    storage.getItem<string>('name').then(name => { // tslint:disable-line no-floating-promises
+      if (name) {
+        this.setState({name});
+      }
+    });
 
     // Listen for the photoReady event and set our state to ready. This ensures
     // that the greeting renders after the photo has loaded.
@@ -126,35 +144,13 @@ export default class SplashMid extends React.Component<{}, SplashMidState> {
 
 
   /**
-   * - Fetches 'name' from storage and sets it in the component's state.
-   */
-  async componentDidMount() {
-    const name = (await storage.getItem<string>('name')) || '';
-    this.setState({name});
-  }
-
-
-  /**
-   * Returns a standard greeting or a personalized greeting based on whether a
-   * name has been set.
-   */
-  getGreeting() {
-    if (this.state.name) {
-      return `Good ${getPeriodDescriptor()}, ${this.state.name}.`;
-    }
-
-    return `Good ${getPeriodDescriptor()}.`;
-  }
-
-
-  /**
    * Renders the component.
    */
   render() {
     return (
       <PhotoContext.Consumer>{photo => (
         <StyledSplashMid color={R.pathOr('black', ['color'], photo)} opacity={this.state.ready ? 1 : 0}>
-          {this.getGreeting()}
+          {this.greeting}
         </StyledSplashMid>
       )}</PhotoContext.Consumer>
     );

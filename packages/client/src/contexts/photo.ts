@@ -1,6 +1,7 @@
 import React from 'react';
 import {UnsplashPhotoResource} from 'etc/types';
 
+
 /**
  * Tracks the current photo being displayed.
  *

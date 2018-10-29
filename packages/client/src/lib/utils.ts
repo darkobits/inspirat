@@ -7,8 +7,9 @@ export function greaterOf(a: number, b: number): number {
 
 
 /**
- * Provided a any integer and an array, returns the index in that array computed
- * by diving the number by the length of the array.
+ * Provided any integer and an array, returns the index in that array computed
+ * by diving the number by the length of the array and using the remainder as
+ * the index.
  */
 export function modIndex(num: number, arr: Array<any>): number {
   const index = num % arr.length;

@@ -1,5 +1,6 @@
 import Emittery from 'emittery';
 
+
 /**
  * Global shared event emitter.
  */

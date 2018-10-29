@@ -1,12 +1,11 @@
 import {injectGlobal} from 'emotion';
-import {buildFontFamilyString} from 'lib/typography';
 
 
 export default () => injectGlobal`
   * {
     box-sizing: border-box;
     color: white;
-    font-family: ${buildFontFamilyString('Josefin Sans')};
+    font-family: 'Josefin Sans';
     font-weight: 300;
     font-size: 16px;
   }

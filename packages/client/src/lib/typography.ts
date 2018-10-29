@@ -1,17 +1,4 @@
-import queryString from 'lib/query';
-
-
-/**
- * Default font family string to use.
- */
-const DEFAULT_FONTS = [
-  '-apple-system',
-  'BlinkMacSystemFont',
-  '"Segoe UI"',
-  'Helvetica',
-  'Arial',
-  'sans-serif'
-];
+import {DEFAULT_FONTS} from 'etc/constants';
 
 
 /**
@@ -19,15 +6,19 @@ const DEFAULT_FONTS = [
  * resolves when the resource has loaded. The object implements a custom
  * toString method that returns the font family,
  */
-class TypographyResource extends Promise<void> {
+class GoogleFontResource extends Promise<void> {
+  private static readonly BASE_URL = 'https://fonts.googleapis.com/css?family=';
+
   private readonly fontFamily: string;
 
-  constructor(param: string) {
-    const [fontFamily, weights] = param.split(':');
+  constructor(fontFamily: string, weights?: Array<number>) {
+    super(GoogleFontResource.getResolver(fontFamily, weights));
+    this.fontFamily = fontFamily;
+  }
 
-    const fontUrl = `https://fonts.googleapis.com/css?family=${param}`;
 
-    const resolver = (resolve: Function, reject: Function) => {
+  static getResolver(fontFamily: string, weights: Array<number> = []) {
+    return (resolve: Function, reject: Function) => {
       const linkTag = document.createElement('link');
       linkTag.type = 'text/css';
       linkTag.rel = 'stylesheet';
@@ -38,19 +29,23 @@ class TypographyResource extends Promise<void> {
         let message = `Font family '${fontFamily}'`;
 
         if (weights) {
-          message += ` (weights ${weights.split(',').join(', ')})`;
+          message += ` (weights ${weights.join(', ')})`;
         }
 
         message += ' loaded.';
 
-        console.debug(message);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug(message);
+        }
       };
 
       linkTag.onerror = () => {
         reject(new Error(`Error loading font '${fontFamily}'.`));
       };
 
-      linkTag.href = fontUrl;
+      const fontWeights = weights.length ? ':' + weights.join(',') : '';
+
+      linkTag.href = `${GoogleFontResource.BASE_URL}${fontFamily}${fontWeights}`;
 
       const documentHead = document.getElementsByTagName('head')[0];
 
@@ -60,14 +55,11 @@ class TypographyResource extends Promise<void> {
 
       documentHead.appendChild(linkTag);
     };
-
-    super(resolver);
-
-    this.fontFamily = fontFamily;
   }
 
+
   toString() {
-    return this.fontFamily.replace('+', ' ');
+    return `${this.fontFamily.replace('+', ' ')}, ${DEFAULT_FONTS.join(', ')}`;
   }
 }
 
@@ -81,33 +73,10 @@ class TypographyResource extends Promise<void> {
  *
  * "Lato:100,300"
  */
-function useFont(param: string): TypographyResource {
-  return new TypographyResource(param);
+export function useFont(fontFamily: string, weights?: Array<number>): GoogleFontResource {
+  return new GoogleFontResource(fontFamily, weights);
 }
 
-
-/**
- * Returns a string suitable for using as a font-family rule in a stylesheet.
- */
-export function buildFontFamilyString(additionalFont?: string): string {
-  const fonts = [];
-
-  if (process.env.NODE_ENV === 'development') {
-    console.debug('[Development] "family" query param supported.');
-
-    const parsedQuery = queryString();
-
-    if (parsedQuery.family && typeof parsedQuery.family === 'string') {
-      fonts.push(`"${useFont(parsedQuery.family)}"`);
-    }
-  }
-
-  if (additionalFont) {
-    fonts.push(`"${additionalFont}"`);
-  }
-
-  return [...fonts, ...DEFAULT_FONTS].join(', ');
-}
 
 
 export type TextShadow = [number, number, number, string];
@@ -118,8 +87,7 @@ export type TextShadow = [number, number, number, string];
  * use as a 'text-shadow' CSS rule.
  */
 export function compositeTextShadow(shadows: Array<TextShadow>): string {
-  return shadows.map(shadow => {
-    const [offsetX, offsetY, blurRadius, color] = shadow;
+  return shadows.map(([offsetX, offsetY, blurRadius, color]) => {
     return `${offsetX}px ${offsetY}px ${blurRadius}px ${color}`;
   }).join(', ');
 }

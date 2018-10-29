@@ -12,6 +12,19 @@ export const CACHE_TTL = '1 day';
 
 
 /**
+ * Default font family string to use.
+ */
+export const DEFAULT_FONTS = [
+  '-apple-system',
+  'BlinkMacSystemFont',
+  '"Segoe UI"',
+  'Helvetica',
+  'Arial',
+  'sans-serif'
+];
+
+
+/**
  * Map of Unsplash photo IDs to various CSS overrides for that image.
  *
  * Supported overrides:
@@ -20,6 +33,9 @@ export const CACHE_TTL = '1 day';
  * - mask amount
  */
 export const BACKGROUND_RULE_OVERRIDES: any = {
+  'bDVnmzmW4a0': {
+    backgroundPosition: 'center bottom'
+  },
   '85f8mC4SRzk': {
     backgroundPosition: 'center 15%'
   },

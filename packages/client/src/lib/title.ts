@@ -1,5 +1,5 @@
 /**
- * Returns the document title to used based on the current hostname.
+ * Returns the document title to use based on the current hostname.
  */
 export default function setTitle() {
   if (location.hostname.includes('frontlawn.net')) {

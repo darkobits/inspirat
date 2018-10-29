@@ -1,8 +1,9 @@
 import mousetrap from 'mousetrap';
 import {mix, rgba} from 'polished';
 import * as R from 'ramda';
-import styled from 'react-emotion';
 import React from 'react';
+import styled from 'react-emotion';
+import {hot} from 'react-hot-loader';
 
 import PhotoContext from 'contexts/photo';
 import SplashMid from 'components/splash-mid';
@@ -14,7 +15,7 @@ import {getFullImageUrl, getCurrentPhoto, getPhotoForDay, preloadImage} from 'li
 import queryString from 'lib/query';
 
 
-// ----- Styled Elements -------------------------------------------------------
+// ----- Styles ----------------------------------------------------------------
 
 export interface StyledSplashProps {
   backgroundImage: string;
@@ -68,13 +69,12 @@ const StyledSplash = styled.div<StyledSplashProps>`
   }
 `;
 
-
 interface SwatchProps {
   color: string;
 }
 
 const Swatch = styled.div<SwatchProps>`
-  background-color: ${({color}) => color};
+  background-color: ${props => props.color};
   position: absolute;
   width: 50px;
   height: 50px;
@@ -93,9 +93,8 @@ export interface SplashState {
 }
 
 
-export default class Splash extends React.Component<{}, SplashState> {
+class Splash extends React.Component<{}, SplashState> {
   state: SplashState = {
-    // currentPhoto: null,
     dayOffset: 0,
     showSwatch: false,
   };
@@ -134,7 +133,22 @@ export default class Splash extends React.Component<{}, SplashState> {
   async preparePhotos() {
     const photoPromises = [];
 
-    const currentPhoto = process.env.NODE_ENV === 'development' ? await getPhotoForDay({offset: this.state.dayOffset}) : await getCurrentPhoto();
+    let currentPhoto: any;
+
+    if (process.env.NODE_ENV === 'development') {
+      if (queryString().src) {
+        currentPhoto = {
+          urls: {
+            full: queryString().src
+          }
+        };
+      } else {
+        currentPhoto = await getPhotoForDay({offset: this.state.dayOffset});
+      }
+    } else {
+      currentPhoto = await getCurrentPhoto();
+    }
+
     const currentPhotoUrl = getFullImageUrl(currentPhoto.urls.full);
 
     const currentPhotoPromise = preloadImage(currentPhotoUrl).then(() => {
@@ -221,3 +235,6 @@ export default class Splash extends React.Component<{}, SplashState> {
     );
   }
 }
+
+
+export default hot(module)(Splash);

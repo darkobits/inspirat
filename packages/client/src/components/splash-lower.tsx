@@ -7,7 +7,7 @@ import ImageMeta from 'components/image-meta';
 import {capitalizeWords} from 'lib/utils';
 
 
-// ----- Styled Elements -------------------------------------------------------
+// ----- Styleds ---------------------------------------------------------------
 
 const SplashLowerEl = styled.div`
   display: flex;
@@ -15,7 +15,6 @@ const SplashLowerEl = styled.div`
   width: 100%;
   z-index: 1;
 `;
-
 
 const locationClassName = css`
   display: none;
@@ -25,35 +24,36 @@ const locationClassName = css`
   }
 `;
 
-
 const attributionClassName = css`
   margin-left: auto;
 `;
 
 
-
 // ----- Component -------------------------------------------------------------
 
-const SplashLower: React.SFC = () => {
-  return (
-    <SplashLowerEl>
-      <PhotoContext.Consumer>{photo => {
-        const name = capitalizeWords(R.pathOr('', ['user', 'name'], photo));
-        const nameHref = R.pathOr('', ['user', 'links', 'html'], photo);
-        const unsplashHref = R.pathOr('', ['links', 'html'], photo);
+const SplashLower: React.SFC = () => (
+  <PhotoContext.Consumer>{photo => {
+    // Location.
+    const location = R.path(['location', 'title'], photo);
 
-        return [
-          <ImageMeta key="1" className={locationClassName}>
-            {R.path(['location', 'title'], photo)}
-          </ImageMeta>,
-          <ImageMeta key="2" className={attributionClassName}>
-            Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a>
-          </ImageMeta>
-        ];
-      }}</PhotoContext.Consumer>
-    </SplashLowerEl>
-  );
-};
+    // Attribution.
+    const name = capitalizeWords(R.pathOr('', ['user', 'name'], photo));
+    const nameHref = R.pathOr('', ['user', 'links', 'html'], photo);
+    const unsplashHref = R.pathOr('', ['links', 'html'], photo);
+    const attribution = R.path(['user', 'name'], photo) ? <span>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></span> : null;
+
+    return (
+      <SplashLowerEl>
+        <ImageMeta className={locationClassName}>
+          {location}
+        </ImageMeta>
+        <ImageMeta className={attributionClassName}>
+          {attribution}
+        </ImageMeta>
+      </SplashLowerEl>
+    );
+  }}</PhotoContext.Consumer>
+);
 
 
 export default SplashLower;

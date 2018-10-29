@@ -7,13 +7,14 @@ import chalk from 'chalk';
 export default function printReadme() {
   const vr = process.env.PACKAGE_VERSION;
   const _chalk = chalk.constructor({enabled: true, level: 2});
+  const name = _chalk.greenBright('\'Alice\'');
 
   console.info(chalk.reset([
     `+------ Inspirat v${vr} -------------------------------------------------------+`,
     `|                                                                              |`,
     `|  Welcome! To set your name, use the 'setName' method:                        |`,
     `|                                                                              |`,
-    `|  setName(${_chalk.greenBright('\'Alice\'')});                                                           |`,
+    `|  setName(${name});                                                           |`,
     `|                                                                              |`,
     `|  If you experience any issues, head over GitHub:                             |`,
     `|                                                                              |`,

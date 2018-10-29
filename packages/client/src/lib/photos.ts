@@ -1,5 +1,6 @@
 import ms from 'ms';
 import queryString from 'query-string';
+import * as R from 'ramda';
 // @ts-ignore
 import shuffleSeed from 'shuffle-seed';
 // @ts-ignore
@@ -30,10 +31,8 @@ interface PhotoCollectionStorageItem {
 
 /**
  * Returns an array of all images in the Inspirat collection. The response will
- * be persisted to local storage to improve load times and asynchronously
+ * be persisted to local storage to improve load times and is asynchronously
  * updated in the background.
- *
- * See: lambda/images.ts.
  */
 export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
   let photoCollection;
@@ -50,13 +49,12 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
 
       const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
 
-      // Return photos immediately
+      // Return photos immediately and update storage in the background.
       storage.setItem(COLLECTION_CACHE_KEY, cacheData); // tslint:disable-line no-floating-promises
 
       return cacheData;
     } catch (err) {
       console.error('Unable to fetch photos:', err.message);
-
       return {photos: [], updatedAt: -1};
     }
   };
@@ -90,8 +88,9 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
   // Get the current 'name' from storage.
   const name = await storage.getItem<string>('name');
 
-  // Use 'name' to deterministically shuffle the collection before returning it.
-  return shuffleSeed.shuffle(photoCollection, name);
+  // First sort photos by their ID to ensure consistent initial ordering. Then,
+  // use the 'name' to deterministically shuffle the collection.
+  return shuffleSeed.shuffle(R.sortBy(R.prop<any, any>('id'), photoCollection), name);
 }
 
 
