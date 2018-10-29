@@ -1,7 +1,7 @@
 {
   "name": "inspirat-backend",
   "description": "Serverless functions for Inspirat.",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "private": true,
   "author": "darkobits",
   "license": "WTFPL",

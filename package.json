@@ -7,9 +7,10 @@
     "build": "lerna run --stream build",
     "deploy": "lerna run --stream deploy",
     "start": "lerna run --stream start",
-    "prebump": "npm run build",
+    "prebump": "lerna run --stream prebuild",
     "bump": "lerna version",
     "bump:beta": "lerna version prerelease --preid=beta",
+    "postbump": "npm run build",
     "release": "lerna publish from-git",
     "release:beta": "lerna publish from-git --npm-tag=canary",
     "prepare": "lerna bootstrap"
