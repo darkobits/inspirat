@@ -1,3 +1,4 @@
+import {differenceInMinutes} from 'date-fns';
 import ms from 'ms';
 import queryString from 'query-string';
 import * as R from 'ramda';
@@ -140,8 +141,17 @@ export async function getCurrentPhoto(): Promise<UnsplashPhotoResource> {
     const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
 
     if (currentPhoto.expires > now()) {
+      const exp = differenceInMinutes(new Date(currentPhoto.expires), now());
+      const hoursRemaining = Math.floor(exp / 60);
+      const minutesRemaining = exp % 60;
+      console.debug(`[getCurrentPhoto] Current photo expires in ${hoursRemaining} hours and ${minutesRemaining} minutes.`);
+
       return currentPhoto.photo;
     }
+
+    console.debug('[getCurrentPhot] Cached photo was expired.');
+  } else {
+    console.debug('[getCurrentPhoto] Cache did not contain a photo.');
   }
 
   // Cache did not exist or was expired.
