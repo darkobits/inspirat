@@ -1,11 +1,12 @@
-import {DateTime, Duration} from 'luxon';
+import {differenceInDays, endOfDay, getHours} from 'date-fns';
 
 
 /**
  * Returns the number of days since the Unix epoch.
  */
 export function daysSinceEpoch(): number {
-  return Math.floor(Duration.fromMillis(Date.now()).as('days'));
+  return differenceInDays(new Date(), new Date(0));
+
 }
 
 
@@ -13,7 +14,7 @@ export function daysSinceEpoch(): number {
  * Returns the current Unix timestamp with millisecond precision.
  */
 export function now() {
-  return DateTime.local().valueOf();
+  return new Date().valueOf();
 }
 
 /**
@@ -21,7 +22,7 @@ export function now() {
  * millisecond of the current day, in the machine's local time zone.
  */
 export function midnight() {
-  return DateTime.fromObject({hour: 23, minute: 59, second: 59, millisecond: 999}).valueOf();
+  return endOfDay(new Date()).valueOf();
 }
 
 
@@ -30,7 +31,7 @@ export function midnight() {
  * day.
  */
 export function getPeriodDescriptor() {
-  const {hour} = DateTime.local();
+  const hour = getHours(new Date());
 
   switch (hour) {
     // 12:00AM - 2:59AM
