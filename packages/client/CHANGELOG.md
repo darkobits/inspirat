@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.9.4](https://github.com/darkobits/inspirat/compare/v0.9.3...v0.9.4) (2019-03-18)
+
+**Note:** Version bump only for package inspirat-client
+
+
+
+
+
 ## [0.9.3](https://github.com/darkobits/inspirat/compare/v0.9.2...v0.9.3) (2018-11-02)
 
 **Note:** Version bump only for package inspirat-client
