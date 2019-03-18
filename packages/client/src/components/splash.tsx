@@ -1,8 +1,8 @@
+import styled from '@emotion/styled';
 import mousetrap from 'mousetrap';
 import {mix, rgba} from 'polished';
 import * as R from 'ramda';
 import React from 'react';
-import styled from 'react-emotion';
 import {hot} from 'react-hot-loader';
 
 import PhotoContext from 'contexts/photo';
@@ -221,8 +221,8 @@ class Splash extends React.Component<{}, SplashState> {
     const overrides = currentPhoto ? (BACKGROUND_RULE_OVERRIDES[currentPhoto.id]) : {};
 
     return (
-      <PhotoContext.Provider value={currentPhoto || null}>
-        {this.state.showSwatch ? <Swatch color={color} /> : null}
+      <PhotoContext.Provider value={currentPhoto || undefined}>
+        {this.state.showSwatch ? <Swatch color={color} /> : undefined}
         <StyledSplash backgroundImage={currentPhotoUrl}
           maskColor={color}
           opacity={opacity}

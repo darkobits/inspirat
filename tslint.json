@@ -1,6 +1,8 @@
 {
 	"extends": "tslint-xo/space",
 	"rules": {
+		"align": false,
+
 		// Requires using 'Array<T>' style for arrays.
 		"array-type": [true, "generic"],
 
@@ -11,6 +13,8 @@
 		// return early from a function, continue early in loop, or break early in a
 		// switch case.
 		"early-exit": false,
+
+		"member-ordering": false,
 
 		// Allow multiple consecutive blank lines.
 		"no-consecutive-blank-lines": false,
@@ -24,9 +28,13 @@
 		// polyfill and global styles.
 		"no-import-side-effect": false,
 
+		"no-unsafe-any": false,
+
 		// Disallows unused imports, variables, functions, classes, type parameters,
 		// and more.
 		"no-unused": [true, "unused-catch-binding"],
+
+		"no-void-expression": false,
 
 		"object-literal-key-quotes": false,
 
@@ -36,6 +44,10 @@
 		// Prevent errors related to this-bindings in React, but allow anonymous
 		// callbacks as event listeners.
 		"react-this-binding-issue": [true, {"allow-anonymous-listeners": true}],
+
+		// This rule requries explicit typedefs, even when TypeScript can trivially
+		// infer them, so disable it.
+		"typedef": false,
 
 		// Allow variable names in lowerCamelCase, PascalCase, and UPPER_CASE.
 		// Additionally, ban the use of reserved TypeScript keywords.

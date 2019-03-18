@@ -6,7 +6,6 @@ import {differenceInDays, endOfDay, getHours} from 'date-fns';
  */
 export function daysSinceEpoch(): number {
   return differenceInDays(new Date(), new Date(0));
-
 }
 
 

@@ -1,6 +1,6 @@
+import styled from '@emotion/styled';
 import {rgba} from 'polished';
 import * as R from 'ramda';
-import styled from 'react-emotion';
 import React from 'react';
 
 import PhotoContext from 'contexts/photo';

@@ -1,7 +1,7 @@
+import styled from '@emotion/styled';
 import {rgba} from 'polished';
 import * as R from 'ramda';
 import React from 'react';
-import styled from 'react-emotion';
 
 import PhotoContext from 'contexts/photo';
 import events from 'lib/events';

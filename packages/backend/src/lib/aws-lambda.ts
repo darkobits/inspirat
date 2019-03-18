@@ -151,7 +151,7 @@ export function AWSLambdaFunction<TEvent = any>({pre, handler, err}: AWSLambdaFu
 
       serializeBody(response);
 
-      cb(null, response);
+      cb(undefined, response);
       return;
     } catch (error) {
       // Pre-middleware or handler threw, skip to error middleware.

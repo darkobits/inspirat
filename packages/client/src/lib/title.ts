@@ -1,10 +1,7 @@
 /**
- * Returns the document title to use based on the current hostname.
+ * Sets the document's title based on the domain/context the application is
+ * running in.
  */
 export default function setTitle() {
-  if (location.hostname.includes('frontlawn.net')) {
-    document.title = 'Front Lawn';
-  } else {
-    document.title = 'New Tab';
-  }
+  document.title = location.hostname.includes('frontlawn.net') ? 'Front Lawn' : 'New Tab';
 }

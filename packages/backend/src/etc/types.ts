@@ -71,8 +71,8 @@ export interface UnsplashCollectionPhotoResource {
     published_at: string;
     updated_at: string;
     curated: boolean;
-    cover_photo: string | null;
-    user: string | null;
+    cover_photo: string | undefined;
+    user: string | undefined;
   }>;
 
   urls: {

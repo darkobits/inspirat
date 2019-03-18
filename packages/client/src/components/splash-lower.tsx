@@ -1,6 +1,7 @@
+import styled from '@emotion/styled';
+import {css} from '@emotion/core';
 import * as R from 'ramda';
-import styled, {css} from 'react-emotion';
-import React from 'react';
+import React, {FunctionComponent} from 'react';
 
 import PhotoContext from 'contexts/photo';
 import ImageMeta from 'components/image-meta';
@@ -31,7 +32,7 @@ const attributionClassName = css`
 
 // ----- Component -------------------------------------------------------------
 
-const SplashLower: React.SFC = () => (
+const SplashLower: FunctionComponent = () => (
   <PhotoContext.Consumer>{photo => {
     // Location.
     const location = R.path(['location', 'title'], photo);
@@ -40,7 +41,7 @@ const SplashLower: React.SFC = () => (
     const name = capitalizeWords(R.pathOr('', ['user', 'name'], photo));
     const nameHref = R.pathOr('', ['user', 'links', 'html'], photo);
     const unsplashHref = R.pathOr('', ['links', 'html'], photo);
-    const attribution = R.path(['user', 'name'], photo) ? <span>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></span> : null;
+    const attribution = R.path(['user', 'name'], photo) ? <span>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></span> : undefined;
 
     return (
       <SplashLowerEl>

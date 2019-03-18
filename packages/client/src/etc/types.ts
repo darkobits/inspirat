@@ -18,7 +18,7 @@ export interface UnsplashUserResource {
   last_name: string;
   twitter_username: string;
   portfolio_url: string;
-  bio: string | null;
+  bio: string | undefined;
   location: string;
   links: {
     self: string;
@@ -124,7 +124,7 @@ export interface UnsplashPhotoResource {
   liked_by_user: boolean;
 
 
-  slug: string | null;
+  slug: string | undefined;
 
   /**
    * List of collections created by the photo's owner that this photo is in.

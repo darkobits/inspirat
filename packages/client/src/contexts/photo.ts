@@ -8,4 +8,4 @@ import {UnsplashPhotoResource} from 'etc/types';
  * Producer: <Splash>
  * Consumers: <ImageMeta>, <SplashLower>
  */
-export default React.createContext<UnsplashPhotoResource | null>(null);
+export default React.createContext<UnsplashPhotoResource | undefined>(undefined);
