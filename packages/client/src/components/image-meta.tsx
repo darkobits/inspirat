@@ -1,23 +1,21 @@
+import {SerializedStyles} from '@emotion/core';
 import styled from '@emotion/styled';
 import {rgba} from 'polished';
 import * as R from 'ramda';
-import React from 'react';
+import React, {FunctionComponent, useContext} from 'react';
 
 import PhotoContext from 'contexts/photo';
-import events from 'lib/events';
 import {compositeTextShadow} from 'lib/typography';
-import {sleep} from 'lib/utils';
 
 
 // ----- Types -----------------------------------------------------------------
 
 export interface ImageMetaProps {
-  className?: string;
+  styles?: SerializedStyles;
 }
 
 export interface ImageMetaElProps {
-  shadowColor: string;
-  opacity: string | number;
+  shadowColor?: string;
 }
 
 
@@ -31,10 +29,8 @@ const textShadow = (color: string) => compositeTextShadow([
 const ImageMetaEl = styled.div<ImageMetaElProps>`
   color: rgb(255, 255, 255, 0.96);
   display: flex;
-  text-shadow: ${props => textShadow(props.shadowColor || 'black')};
+  text-shadow: ${R.pipe(R.propOr('black', 'shadowColor'), textShadow)};
   user-select: none;
-  opacity: ${R.prop('opacity')};
-  transition: opacity 1.2s ease-in;
 
   & a {
     color: rgb(255, 255, 255, 0.96);
@@ -49,30 +45,15 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
 
 // ----- Component -------------------------------------------------------------
 
-export default class ImageMeta extends React.Component<ImageMetaProps> {
-  state = {
-    ready: false
-  };
+const ImageMeta: FunctionComponent<ImageMetaProps> = props => {
+  const {currentPhoto} = useContext(PhotoContext);
 
-  componentWillMount() {
-    events.on('photoReady', async () => {
-      await sleep(800);
-      this.setState(prevState => ({...prevState, ready: true}));
-    });
-  }
+  return (
+    <ImageMetaEl css={props.styles} shadowColor={R.propOr(undefined, 'color', currentPhoto)}>
+      {props.children}
+    </ImageMetaEl>
+  );
+};
 
-  render() {
-    return (
-      <PhotoContext.Consumer>{photo => {
-        const opacity = this.state.ready ? 1 : 0;
-        const shadowColor = photo ? photo.color : '';
 
-        return (
-          <ImageMetaEl className={this.props.className} shadowColor={shadowColor} opacity={opacity}>
-            {this.props.children}
-          </ImageMetaEl>
-        );
-      }}</PhotoContext.Consumer>
-    );
-  }
-}
+export default ImageMeta;

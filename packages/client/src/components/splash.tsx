@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import mousetrap from 'mousetrap';
 import {mix, rgba} from 'polished';
 import * as R from 'ramda';
-import React from 'react';
+import React, {FunctionComponent, useContext, useEffect} from 'react';
 import {hot} from 'react-hot-loader';
 
 import PhotoContext from 'contexts/photo';
@@ -10,23 +10,22 @@ import SplashMid from 'components/splash-mid';
 import SplashLower from 'components/splash-lower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
 import {UnsplashPhotoResource} from 'etc/types';
-import events from 'lib/events';
-import {getFullImageUrl, getCurrentPhoto, getPhotoForDay, preloadImage} from 'lib/photos';
+import {getFullImageUrl} from 'lib/photos';
 import queryString from 'lib/query';
 
 
 // ----- Styles ----------------------------------------------------------------
 
-export interface StyledSplashProps {
+export interface SplashElProps {
   backgroundImage: string;
   maskColor: string;
   backgroundPosition?: string;
   maskAmount?: string;
-  opacity: string;
+  opacity: string | number;
   transform?: string;
 }
 
-const StyledSplash = styled.div<StyledSplashProps>`
+const SplashEl = styled.div<SplashElProps>`
   align-items: center;
   display: flex;
   flex-direction: column;
@@ -75,166 +74,99 @@ interface SwatchProps {
 
 const Swatch = styled.div<SwatchProps>`
   background-color: ${props => props.color};
+  border-radius: 26px;
   position: absolute;
-  width: 50px;
-  height: 50px;
-  top: 0;
-  right: 0;
+  width: 26px;
+  height: 26px;
+  top: 4px;
+  right: 4px;
   z-index: 1;
+`;
+
+const Source = styled.div`
+  font-size: 15px;
+  height: calc(1em + 8px);
+  left: 4px;
+  position: absolute;
+  top: 4px;
+  width: calc(100% - 26px - 14px);
+  z-index: 1;
+
+  input {
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: calc(1em + 8px);
+    border: none;
+    color: rgba(0, 0, 0, 0.6);
+    font-family: sans-serif;
+    font-size: inherit;
+    font-weight: 500;
+    height: calc(1em + 12px);
+    letter-spacing: 0.2px;
+    padding: 6px 10px 6px 14px;
+    width: 100%;
+
+    &:focus {
+      outline: none;
+    }
+  }
 `;
 
 
 // ----- Component -------------------------------------------------------------
 
-export interface SplashState {
-  currentPhoto?: UnsplashPhotoResource;
-  dayOffset: number;
-  showSwatch: boolean;
-}
+const Splash: FunctionComponent = () => {
+  const {currentPhoto, resetPhoto, setCurrentPhoto, setDayOffset} = useContext(PhotoContext);
 
-
-class Splash extends React.Component<{}, SplashState> {
-  state: SplashState = {
-    dayOffset: 0,
-    showSwatch: false,
-  };
-
-
-  /**
-   * In development, allows the left/right arrow keys to switch between photos
-   * in the collection.
-   */
-  private enableKeyboardShortcuts() {
-    if (process.env.NODE_ENV === 'development') {
+  // [Effect] Create Key-Bindings
+  if (process.env.NODE_ENV === 'development') {
+    useEffect(() => {
       mousetrap.bind('left', () => {
-        this.setState(prevState => ({dayOffset: prevState.dayOffset - 1}), async () => {
-          return this.preparePhotos();
-        });
+        setDayOffset('decrement');
       });
 
       mousetrap.bind('right', () => {
-        this.setState(prevState => ({dayOffset: prevState.dayOffset + 1}), async () => {
-          return this.preparePhotos();
-        });
+        setDayOffset('increment');
       });
 
       console.debug('[Development] Keyboard shortcuts registered.');
-    }
+
+      return () => {
+        mousetrap.unbind('left');
+        mousetrap.unbind('right');
+      };
+    }, [
+      // Only run this effect once, when the component mounts.
+    ]);
   }
 
+  const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch === 'true';
+  const showSrc = process.env.NODE_ENV === 'development' && queryString().src === 'true';
 
-  /**
-   * Loads the current photo, pre-loads the next photo, and updates the
-   * component's state.
-   *
-   * Additionally emits the 'photoReady' event when the current photo has
-   * finished loading.
-   */
-  async preparePhotos() {
-    const photoPromises = [];
+  const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
+  const color = R.propOr<string, UnsplashPhotoResource | undefined, string>('black', 'color', currentPhoto);
+  const opacity = currentPhoto ? 1 : 0;
+  const overrides = currentPhoto ? (BACKGROUND_RULE_OVERRIDES[currentPhoto.id]) : {};
 
-    let currentPhoto: any;
-
-    if (process.env.NODE_ENV === 'development') {
-      if (queryString().src) {
-        currentPhoto = {
-          urls: {
-            full: queryString().src
-          }
-        };
-      } else {
-        currentPhoto = await getPhotoForDay({offset: this.state.dayOffset});
-      }
-    } else {
-      currentPhoto = await getCurrentPhoto();
-    }
-
-    const currentPhotoUrl = getFullImageUrl(currentPhoto.urls.full);
-
-    const currentPhotoPromise = preloadImage(currentPhotoUrl).then(() => {
-      events.emit('photoReady'); // tslint:disable-line no-floating-promises
-    });
-
-    photoPromises.push(currentPhotoPromise);
-
-    // In development, log information about the current photo.
-    if (process.env.NODE_ENV === 'development') {
-      console.groupCollapsed(`[Splash] Current photo ID: "${currentPhoto.id}"`);
-      console.debug(currentPhoto);
-      console.groupEnd();
-    }
-
-    const nextPhoto = await getPhotoForDay({offset: this.state.dayOffset + 1});
-    const nextPhotoUrl = getFullImageUrl(nextPhoto.urls.full);
-    const nextPhotoPromise = preloadImage(nextPhotoUrl);
-    photoPromises.push(nextPhotoPromise);
-
-    // In development, also pre-load the previous photo.
-    if (process.env.NODE_ENV === 'development') {
-      const prevPhoto = await getPhotoForDay({offset: this.state.dayOffset - 1});
-      const prevPhotoUrl = getFullImageUrl(prevPhoto.urls.full);
-      const prevPhotoPromise = preloadImage(prevPhotoUrl);
-      photoPromises.push(prevPhotoPromise);
-    }
-
-    // If there is no current photo, or if the current photo does not match the
-    // one in the component's state, update state.
-    if (!this.state.currentPhoto || currentPhoto.id !== this.state.currentPhoto.id) {
-      await currentPhotoPromise;
-      this.setState(prevState => ({...prevState, currentPhoto}));
-    }
-
-    await Promise.all(photoPromises);
-
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[Splash] All photos loaded.');
-    }
-  }
-
-
-  // ----- React Lifecycles ----------------------------------------------------
-
-  async componentDidMount() {
+  const onSrcChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch === 'true';
-
-      this.enableKeyboardShortcuts();
-      this.setState(prevState => ({...prevState, showSwatch}));
-      this.preparePhotos(); // tslint:disable-line no-floating-promises
-    } catch (err) {
-      console.error('[Splash] Error:', err.message);
+      const url = new URL(event.target.value);
+      setCurrentPhoto({urls: {full: url.href}} as any);
+    } catch {
+      resetPhoto();
     }
-  }
+  };
 
-
-  /**
-   * Renders the component.
-   */
-  render() {
-    // Use modIndex() here because the current index might be out-of-bounds if
-    // navigating between photos in development.
-    const currentPhoto = this.state.currentPhoto;
-
-    const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
-    const color = R.propOr<string, UnsplashPhotoResource | undefined, string>('black', 'color', currentPhoto);
-    const opacity = currentPhoto ? '1' : '0';
-    const overrides = currentPhoto ? (BACKGROUND_RULE_OVERRIDES[currentPhoto.id]) : {};
-
-    return (
-      <PhotoContext.Provider value={currentPhoto || undefined}>
-        {this.state.showSwatch ? <Swatch color={color} /> : undefined}
-        <StyledSplash backgroundImage={currentPhotoUrl}
-          maskColor={color}
-          opacity={opacity}
-          {...overrides}
-        >
-          <SplashMid />
-          <SplashLower />
-        </StyledSplash>
-      </PhotoContext.Provider>
-    );
-  }
-}
+  return (
+    <SplashEl backgroundImage={currentPhotoUrl} maskColor={color} opacity={opacity} {...overrides}>
+      {showSrc ? <Source>
+        <input type="text" onChange={onSrcChange} />
+      </Source> : undefined}
+      {showSwatch ? <Swatch color={color} /> : undefined}
+      <SplashMid />
+      <SplashLower />
+    </SplashEl>
+  );
+};
 
 
 export default hot(module)(Splash);

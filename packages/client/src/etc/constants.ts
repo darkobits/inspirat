@@ -1,3 +1,5 @@
+import {BackgroundImageOverrides} from 'etc/types';
+
 /**
  * Netlify path where lambda functions are hosted. Provided by the DefinePlugin.
  */
@@ -23,6 +25,13 @@ export const DEFAULT_FONTS = [
   'sans-serif'
 ];
 
+export interface BackgroundImageOverride {
+  maskColor: string;
+  backgroundPosition?: string;
+  maskAmount?: string;
+  opacity: string;
+  transform?: string;
+}
 
 /**
  * Map of Unsplash photo IDs to various CSS overrides for that image.
@@ -32,7 +41,13 @@ export const DEFAULT_FONTS = [
  * - transform
  * - mask amount
  */
-export const BACKGROUND_RULE_OVERRIDES: any = {
+export const BACKGROUND_RULE_OVERRIDES: BackgroundImageOverrides = {
+  'IdYeC0NqNls': {
+    backgroundPosition: 'bottom center'
+  },
+  'Do6yoytec5E': {
+    backgroundPosition: 'center top'
+  },
   'bDVnmzmW4a0': {
     backgroundPosition: 'center bottom'
   },

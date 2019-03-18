@@ -1,28 +1,30 @@
 import styled from '@emotion/styled';
 import {rgba} from 'polished';
 import * as R from 'ramda';
-import React from 'react';
+import React, {FunctionComponent, useContext, useEffect, useState} from 'react';
 
 import PhotoContext from 'contexts/photo';
-import events from 'lib/events';
 import {getPeriodDescriptor} from 'lib/time';
 import storage from 'lib/storage';
 import {compositeTextShadow} from 'lib/typography';
-import {sleep} from 'lib/utils';
 
 
 // ----- Styles ----------------------------------------------------------------
-
-const textShadow = (color: string) => compositeTextShadow([
-  [0, 0, 2, rgba(0, 0, 0, 1)],
-  [0, 0, 32, rgba(color, 0.3)],
-  [0, 0, 96, rgba(color, 0.6)]
-]);
 
 export interface StyledSplashMidProps {
   color: string;
   opacity: number;
 }
+
+/**
+ * Returns a compount text-shadow string based on the swatch color for the
+ * current photo.
+ */
+const textShadow = (color: string) => compositeTextShadow([
+  [0, 0, 2, rgba(0, 0, 0, 1)],
+  [0, 0, 32, rgba(color, 0.3)],
+  [0, 0, 96, rgba(color, 0.6)]
+]);
 
 const StyledSplashMid = styled.div<StyledSplashMidProps>`
   align-items: center;
@@ -36,7 +38,7 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
   opacity: ${R.propOr(1, 'opacity')};
   padding-bottom: 1.2em;
   text-shadow: ${R.pipe(R.prop('color'), textShadow)};
-  transition: opacity 1.2s ease-in;
+  transition: opacity 1.2s ease-in 0.6s;
   user-select: none;
   z-index: 1;
 
@@ -73,86 +75,43 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
 
 // ----- Component -------------------------------------------------------------
 
-export interface SplashMidState {
-  /**
-   * Optional name to use in the greeting.
-   */
-  name: string;
+const SplashMid: FunctionComponent = () => {
+  const {currentPhoto} = useContext(PhotoContext);
+  const [name, setName] = useState('');
 
-  /**
-   * Ensures we extract the 'name' from storage before rendering the greeting to
-   * avoid a flash of un... named... content.
-   */
-  ready: boolean;
-}
-
-
-export default class SplashMid extends React.Component<{}, SplashMidState> {
-  state = {
-    name: '',
-    ready: false
-  };
-
-
-  /**
-   * Adds a 'setName' method on the global object.
-   */
-  private installSetName() {
-    if (!Reflect.has(window, 'setName')) {
-      Object.defineProperty(window, 'setName', {
-        value: (name: string) => {
-          storage.setItem('name', name); // tslint:disable-line no-floating-promises
-          this.setState({name});
-        }
-      });
-    }
-  }
-
-
-  /**
-   * Returns a standard greeting or a personalized greeting based on whether a
-   * name has been set.
-   */
-  private get greeting() {
-    const {name} = this.state;
-    const period = getPeriodDescriptor();
-    return name ? `Good ${period}, ${name}.` : `Good ${period}.`;
-  }
-
-
-  /**
-   * - Installs 'setName' on window.
-   * - Gets 'name' for greeting from local storage.
-   * - Listens for the 'photoReady' event to render the greeting.
-   */
-  componentWillMount() {
-    this.installSetName();
-
-    storage.getItem<string>('name').then(name => { // tslint:disable-line no-floating-promises
-      if (name) {
-        this.setState({name});
+  // [Effect] Attach 'setName' to Window
+  useEffect(() => {
+    Object.defineProperty(window, 'setName', {
+      value: (newName: string) => {
+        storage.setItem('name', newName); // tslint:disable-line no-floating-promises
+        setName(newName);
       }
     });
 
-    // Listen for the photoReady event and set our state to ready. This ensures
-    // that the greeting renders after the photo has loaded.
-    events.on('photoReady', async () => {
-      await sleep(200);
-      this.setState(prevState => ({...prevState, ready: true}));
+    return () => {
+      Reflect.deleteProperty(window, 'setName');
+    };
+  }, [
+    // Only run this effect once, when the component mounts.
+  ]);
+
+  // [Effect] Asynchronously Get Name From Storage
+  useEffect(() => {
+    storage.getItem<string>('name').then(nameFromStorage => { // tslint:disable-line no-floating-promises
+      if (nameFromStorage) {
+        setName(nameFromStorage);
+      }
     });
-  }
+  }, [
+    // Only run this effect once, when the component mounts.
+  ]);
+
+  return (
+    <StyledSplashMid color={R.pathOr('black', ['color'], currentPhoto)} opacity={currentPhoto ? 1 : 0}>
+      {name ? `Good ${getPeriodDescriptor()}, ${name}.` : `Good ${getPeriodDescriptor()}.`}
+    </StyledSplashMid>
+  );
+};
 
 
-  /**
-   * Renders the component.
-   */
-  render() {
-    return (
-      <PhotoContext.Consumer>{photo => (
-        <StyledSplashMid color={R.pathOr('black', ['color'], photo)} opacity={this.state.ready ? 1 : 0}>
-          {this.greeting}
-        </StyledSplashMid>
-      )}</PhotoContext.Consumer>
-    );
-  }
-}
+export default SplashMid;
