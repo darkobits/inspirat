@@ -6,6 +6,8 @@
 		// Requires using 'Array<T>' style for arrays.
 		"array-type": [true, "generic"],
 
+		"ban-types": false,
+
 		// Do not enforce formatting rules for single-line comments.
 		"comment-format": false,
 
