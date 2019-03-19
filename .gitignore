@@ -85,3 +85,5 @@ dist
 
 # Webpack directories.
 .webpack
+
+NOTES.md
