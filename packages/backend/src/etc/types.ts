@@ -23,7 +23,6 @@ export interface UnsplashCollectionPhotoResource {
   liked_by_user: boolean;
   description: string;
 
-
   /**
    * This is a *partial* User resource; it is missing the following keys that
    * are returned by the /users/:username endpoint:
@@ -60,7 +59,6 @@ export interface UnsplashCollectionPhotoResource {
       portfolio: string;
     };
   };
-
 
   /**
    * The *current user's* collections that this photo belongs to.

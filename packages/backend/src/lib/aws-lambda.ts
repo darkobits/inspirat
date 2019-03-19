@@ -57,7 +57,8 @@ export function setCorsHeaders(res: AWSLambdaFunctionResponse) {
 
 /**
  * Sets a custom header in the response indicating the package.json version at
- * the time the function was compiled.
+ * the time the function was compiled. This assumes a "PACKAGE_VERSION"
+ * compile-time constant was set in the project's bundler configuration.
  */
 export function setVersionHeader(res: AWSLambdaFunctionResponse) {
   if (process.env.PACKAGE_VERSION) {
@@ -104,7 +105,8 @@ export interface AWSLambdaFunctionResponse {
 
   /**
    * Technically a response's body must be a string, but we allow consumers to
-   * set it to anything and serialize it for them before dispatching it.
+   * set it to anything and serialize it for them with middleware before
+   * dispatching it.
    */
   body: any;
 }
@@ -122,8 +124,21 @@ export type AsyncHandler<TEvent> = (response: AWSLambdaFunctionResponse, event: 
  * Configuration object provided to AWSLambdaFunction.
  */
 export interface AWSLambdaFunctionConfig<TEvent = any> {
+  /**
+   * (Optional) array of middleware functions to call prior to calling the
+   * lambda's handler.
+   */
   pre?: Function | Array<Function>;
+
+  /**
+   * The lambda's handler.
+   */
   handler: AsyncHandler<TEvent>;
+
+  /**
+   * (Optional) array of middleware functions to call if an error is thrown by
+   * the handler.
+   */
   err?: Function | Array<Function>;
 }
 

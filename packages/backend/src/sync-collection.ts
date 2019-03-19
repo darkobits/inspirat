@@ -13,10 +13,10 @@ import {getAllPages, isEmptyObject} from 'lib/utils';
 // ----- Sync Collection -------------------------------------------------------
 
 /**
- * This function queries the /collections API with our collection ID, which
- * will give us a list of all photos in our collection on Unsplash. This API is
- * paginated (with a max page size of 30) so any collection of non-trivial size
- * will require several API requests.
+ * This function queries the /collections API with our Unsplashcollection ID,
+ * which will give us a list of all photos in our collection on Unsplash. This
+ * API is paginated (with a max page size of 30) so any collection of
+ * non-trivial size will require several API requests.
  *
  * Additionally, the /collections API doesn't return all the information we need
  * about photos (see next function below) so we only store the photo's 'id' in
@@ -76,7 +76,8 @@ export default AWSLambdaFunction({
         return false;
       }
 
-      // Post a message to our queue indicating that a new photo has been added.
+      // Post a message to our queue indicating that a new photo needs to be
+      // added to the database.
       await queueHandle.sendMessage({
         // @ts-ignore
         MessageBody: JSON.stringify({
@@ -85,6 +86,7 @@ export default AWSLambdaFunction({
       }).promise();
 
       console.log(`[syncCollection] Message posted for ${chalk.green(photo.id)}.`);
+
       return true;
     }));
 

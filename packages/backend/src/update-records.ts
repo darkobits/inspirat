@@ -36,6 +36,10 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
     return;
   }
 
+  // Map our collection of messages into a collection of booleans and/or errors.
+  // This approach allows us to attempt to insert as many photos as possible,
+  // only failing at the end of the operation if we were unable to process any
+  // photos.
   const results = await Promise.all(Messages.map(async (message: SQS.Types.Message) => {
     if (!message.Body) {
       return new Error('Message has no body.');
@@ -44,7 +48,7 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
     const body = JSON.parse(message.Body);
 
 
-    // ----- Request Photo From Unsplash ---------------------------------------
+    // ----- [1] Request Photo From Unsplash -----------------------------------
 
     let photoRes: any;
 
@@ -64,7 +68,7 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
     }
 
 
-    // ----- Add Photo to Database ---------------------------------------------
+    // ----- [2] Add Photo to Database -----------------------------------------
 
     const photo = photoRes.data;
 
@@ -80,7 +84,7 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
     }
 
 
-    // ----- Delete Message from Queue -----------------------------------------
+    // ----- [3] Delete Message from Queue -------------------------------------
 
     // @ts-ignore
     await queueHandle.deleteMessage({ReceiptHandle: message.ReceiptHandle}).promise();
@@ -99,8 +103,9 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
 // ----- Update Records --------------------------------------------------------
 
 /**
- * This function pulls a batch of messages from the queue, then queries the
- * Unsplash Photo API, adding the result to the DynamoDB table.
+ * This function pulls a batch of messages from the queue, each of which contain
+ * the ID of an Unsplash photo that should be added to the database, and then
+ * queries the Unsplash Photo API, adding the result to the DynamoDB table.
  *
  * If the queue has no messages, or if the Unsplash rate limit is reached, the
  * function will exit early.

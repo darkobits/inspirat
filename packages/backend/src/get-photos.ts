@@ -4,8 +4,36 @@ import env from '@darkobits/env';
 import {APIGatewayEvent} from 'aws-lambda';
 import * as R from 'ramda';
 
-import {UnsplashCollectionPhotoResource} from 'etc/types';
+import {LooseObject} from 'etc/types';
 import {AWSLambdaFunction, setCorsHeaders, setVersionHeader} from 'lib/aws-lambda';
+
+
+/**
+ * Provided a list of paths, a source object, and a destination object, returns
+ * a new object built by cloning the destination object and then assigning each
+ * path from the source object to the destination object. If a destination
+ * object is omitted, an empty object is used.
+ */
+const assocAllPaths = R.curry((paths: Array<Array<string>>, srcObj: LooseObject, destObj: LooseObject = {}) => {
+  return R.reduce((accumulator, curPath) => {
+    return R.assocPath(curPath, R.path(curPath, srcObj), accumulator);
+  }, destObj, paths);
+});
+
+
+/**
+ * Provided an Unsplash photo resource, returns a partial photo resource with
+ * only those fields used by the Inspirat client.
+ */
+const assocPhotoPaths = assocAllPaths([
+  ['id'],
+  ['color'],
+  ['links', 'html'],
+  ['location', 'title'],
+  ['urls', 'full'],
+  ['user', 'links', 'html'],
+  ['user', 'name']
+]);
 
 
 // ----- Get Photos ------------------------------------------------------------
@@ -20,28 +48,6 @@ export default AWSLambdaFunction<APIGatewayEvent>({
   async handler(res) {
     const table = new DynamoDBFactory().table(`inspirat-${env('STAGE', true)}`);
     const photos = await table.scan();
-
-    // Return only the information we need in the client.
-    res.body = photos.map((photo: UnsplashCollectionPhotoResource) => {
-      return {
-        id: R.path(['id'], photo),
-        urls: {
-          full: R.path(['urls', 'full'], photo)
-        },
-        location: {
-          title: R.path(['location', 'title'], photo)
-        },
-        links: {
-          html: R.path(['links', 'html'], photo)
-        },
-        user: {
-          name: R.path(['user', 'name'], photo),
-          links: {
-            html: R.path(['user', 'links', 'html'], photo)
-          }
-        },
-        color: R.path(['color'], photo)
-      };
-    });
+    res.body = photos.map(assocPhotoPaths);
   }
 });
