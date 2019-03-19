@@ -68,54 +68,101 @@ const SplashEl = styled.div<SplashElProps>`
   }
 `;
 
+
+/**
+ * Basis for computing various attributes of the Source and Swatch components.
+ */
+const BASIS = '28px';
+
+
+/**
+ * Swatch component that resides at the top of the screen in development mode
+ * when the "dev=true" query param is present.
+ */
 interface SwatchProps {
   color: string;
 }
 
 const Swatch = styled.div<SwatchProps>`
   background-color: ${props => props.color};
-  border-radius: 26px;
+  border-radius: ${BASIS};
+  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
   position: absolute;
-  width: 26px;
-  height: 26px;
-  top: 4px;
+  width: ${BASIS};
+  height: ${BASIS};
+  top: 8px;
   right: 4px;
   z-index: 1;
 `;
 
+
+/**
+ * Image source input that resides at the top of the screen in development mode
+ * when the "dev=true" query param is present.
+ */
 const Source = styled.div`
-  font-size: 15px;
-  height: calc(1em + 8px);
+  height: ${BASIS};
   left: 4px;
   position: absolute;
-  top: 4px;
-  width: calc(100% - 26px - 14px);
-  z-index: 1;
+  top: 8px;
+  width: calc(100% - ${BASIS} - 14px);
+  z-index: 2;
 
   input {
     background: rgba(255, 255, 255, 0.5);
-    border-radius: calc(1em + 8px);
+    border-radius: ${BASIS};
     border: none;
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
     color: rgba(0, 0, 0, 0.6);
     font-family: sans-serif;
+    font-size: 15px;
     font-size: inherit;
     font-weight: 500;
-    height: calc(1em + 12px);
-    letter-spacing: 0.2px;
-    padding: 6px 10px 6px 14px;
+    height: ${BASIS};
+    letter-spacing: 0.3px;
+    line-height: ${BASIS};
+    padding: 0px 10px 0px 14px;
     width: 100%;
 
     &:focus {
       outline: none;
     }
+
+    &::selection {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
   }
+`;
+
+
+/**
+ * Progress bar that resides at the top of the screen in development mode when
+ * the "dev=true" query parameter is present.
+ */
+const Progress = styled.div<{progress: number; color: string}>`
+  border-left-color: ${props => rgba(props.color || 'white', 1)};
+  border-left-style: solid;
+  border-left-width: ${props => (props.progress || 0) * 100}vw;
+  height: 2px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: border-left-width 0.2s ease-in;
 `;
 
 
 // ----- Component -------------------------------------------------------------
 
 const Splash: FunctionComponent = () => {
-  const {currentPhoto, resetPhoto, setCurrentPhoto, setDayOffset} = useContext(PhotoContext);
+  const {
+    dayOffset,
+    setDayOffset,
+    currentPhoto,
+    setCurrentPhoto,
+    resetPhoto,
+    numPhotos
+  } = useContext(PhotoContext);
 
   // [Effect] Create Key-Bindings
   if (process.env.NODE_ENV === 'development') {
@@ -139,8 +186,7 @@ const Splash: FunctionComponent = () => {
     ]);
   }
 
-  const showSwatch = process.env.NODE_ENV === 'development' && queryString().swatch === 'true';
-  const showSrc = process.env.NODE_ENV === 'development' && queryString().src === 'true';
+  const showDevTools = process.env.NODE_ENV === 'development' && queryString().dev === 'true';
 
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
   const color = R.propOr<string, UnsplashPhotoResource | undefined, string>('black', 'color', currentPhoto);
@@ -158,10 +204,11 @@ const Splash: FunctionComponent = () => {
 
   return (
     <SplashEl backgroundImage={currentPhotoUrl} maskColor={color} opacity={opacity} {...overrides}>
-      {showSrc ? <Source>
-        <input type="text" onChange={onSrcChange} />
-      </Source> : undefined}
-      {showSwatch ? <Swatch color={color} /> : undefined}
+      {showDevTools ? <>
+        <Progress progress={((dayOffset % numPhotos) || 0) / numPhotos} color={color} />
+        <Source><input type="text" onChange={onSrcChange} /></Source>
+        <Swatch color={color} />
+      </> : undefined}
       <SplashMid />
       <SplashLower />
     </SplashEl>
