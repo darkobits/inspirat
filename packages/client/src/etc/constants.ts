@@ -42,6 +42,9 @@ export interface BackgroundImageOverride {
  * - mask amount
  */
 export const BACKGROUND_RULE_OVERRIDES: BackgroundImageOverrides = {
+  '9h2CRu-lqyw': {
+    backgroundPosition: 'center bottom'
+  },
   'IdYeC0NqNls': {
     backgroundPosition: 'bottom center'
   },
