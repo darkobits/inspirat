@@ -1,3 +1,10 @@
 {
-  "extends": "../../tslint.json"
+  "extends": "@darkobits/ts-unified/dist/config/tslint.json",
+  "rules": {
+    "object-literal-key-quotes": false,
+
+    // Allow imports with side-effects. This is necessary for things like Babel
+		// polyfill and global styles.
+		"no-import-side-effect": false
+  }
 }

@@ -158,14 +158,16 @@ const Splash: FunctionComponent = () => {
   const {
     dayOffset,
     setDayOffset,
+    isDevMode,
     currentPhoto,
     setCurrentPhoto,
     resetPhoto,
     numPhotos
   } = useContext(PhotoContext);
 
-  // [Effect] Create Key-Bindings
-  if (process.env.NODE_ENV === 'development') {
+  // ----- Effect: Create Key-Bindings -----------------------------------------
+
+  if (isDevMode) {
     useEffect(() => {
       mousetrap.bind('left', () => {
         setDayOffset('decrement');
@@ -186,7 +188,6 @@ const Splash: FunctionComponent = () => {
     ]);
   }
 
-  const showDevTools = process.env.NODE_ENV === 'development' && queryString().dev === 'true';
 
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
   const color = R.propOr<string, UnsplashPhotoResource | undefined, string>('black', 'color', currentPhoto);
@@ -204,9 +205,9 @@ const Splash: FunctionComponent = () => {
 
   return (
     <SplashEl backgroundImage={currentPhotoUrl} maskColor={color} opacity={opacity} {...overrides}>
-      {showDevTools ? <>
+      {isDevMode ? <>
         <Progress progress={((dayOffset % numPhotos) || 0) / numPhotos} color={color} />
-        <Source><input type="text" onChange={onSrcChange} /></Source>
+        <Source><input type='text' onChange={onSrcChange} /></Source>
         <Swatch color={color} />
       </> : undefined}
       <SplashMid />

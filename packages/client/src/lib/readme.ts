@@ -11,15 +11,15 @@ export default function printReadme() {
 
   console.info(chalk.reset([
     `+------ Inspirat v${vr} -------------------------------------------------------+`,
-    `|                                                                              |`,
-    `|  Welcome! To set your name, use the 'setName' method:                        |`,
-    `|                                                                              |`,
+    '|                                                                              |',
+    '|  Welcome! To set your name, use the \'setName\' method:                        |',
+    '|                                                                              |',
     `|  setName(${name});                                                           |`,
-    `|                                                                              |`,
-    `|  If you experience any issues, head over GitHub:                             |`,
-    `|                                                                              |`,
-    `|  https://github.com/darkobits/inspirat/issues                                |`,
-    `|                                                                              |`,
-    `+------------------------------------------------------------------------------+`
+    '|                                                                              |',
+    '|  If you experience any issues, head over GitHub:                             |',
+    '|                                                                              |',
+    '|  https://github.com/darkobits/inspirat/issues                                |',
+    '|                                                                              |',
+    '+------------------------------------------------------------------------------+'
   ].join('\n')));
 }
