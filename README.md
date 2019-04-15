@@ -4,20 +4,16 @@
 
 A new tab experience for Chrome in the style of [Momentum](https://momentumdash.com/). Grab it [here](https://bit.ly/inspirat-chrome).
 
-Also the homepage of [frontlawn.net](https://frontlawn.net).
-
 ## Screenshots
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/441546/46394255-6ca94d80-c69d-11e8-838a-07781fee47ba.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/56105112-8dc1e500-5eef-11e9-8cb3-05eca435247f.png"><br>
   <br>
-  <img src="https://user-images.githubusercontent.com/441546/46394253-6c10b700-c69d-11e8-8ecc-6f3073a95af5.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/56105110-8dc1e500-5eef-11e9-8ede-b289650c57c4.png"><br>
   <br>
-  <img src="https://user-images.githubusercontent.com/441546/46394254-6ca94d80-c69d-11e8-98b2-c3b6c50f69b8.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/56105111-8dc1e500-5eef-11e9-8b80-2e74ea4e7f57.png"><br>
   <br>
-  <img src="https://user-images.githubusercontent.com/441546/46394256-6ca94d80-c69d-11e8-85e1-e9505de17c32.png"><br>
-  <br>
-  <img src="https://user-images.githubusercontent.com/441546/46394258-6d41e400-c69d-11e8-8400-d546cf90b152.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/56105109-8dc1e500-5eef-11e9-98f2-f61c07f105e6.png"><br>
 </p>
 
 ## &nbsp;
