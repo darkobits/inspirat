@@ -33,7 +33,8 @@ module.exports = (async () => {
 
   config.plugins = [
     new webpack.DefinePlugin({
-      'process.env.PACKAGE_VERSION': JSON.stringify(pkg.version)
+      'process.env.PACKAGE_VERSION': JSON.stringify(pkg.version),
+      'process.env.PACKAGE_BUILD_TIMESTAMP': JSON.stringify(new Date().toISOString())
     })
   ];
 

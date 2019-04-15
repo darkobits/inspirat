@@ -56,13 +56,18 @@ export function setCorsHeaders(res: AWSLambdaFunctionResponse) {
 
 
 /**
- * Sets a custom header in the response indicating the package.json version at
- * the time the function was compiled. This assumes a "PACKAGE_VERSION"
- * compile-time constant was set in the project's bundler configuration.
+ * Sets custom headers in the response indicating the package.json version and
+ * timestamp at the time the function was compiled. This assumes there are
+ * "PACKAGE_VERSION" and "PACKAGE_BUILD_TIMESTAMP" compile-time constants that
+ * were declared project's bundler configuration.
  */
 export function setVersionHeader(res: AWSLambdaFunctionResponse) {
   if (process.env.PACKAGE_VERSION) {
     res.headers['X-Function-Version'] = process.env.PACKAGE_VERSION;
+  }
+
+  if (process.env.PACKAGE_BUILD_TIMESTAMP) {
+    res.headers['X-Function-Build-Time'] = process.env.PACKAGE_BUILD_TIMESTAMP;
   }
 }
 
