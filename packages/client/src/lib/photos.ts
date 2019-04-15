@@ -12,7 +12,7 @@ import {LooseObject, UnsplashPhotoResource} from 'etc/types';
 import client from 'lib/client';
 import storage from 'lib/storage';
 import {now, midnight, daysSinceEpoch} from 'lib/time';
-import {greaterOf, modIndex} from 'lib/utils';
+import {greaterOf, ifDev, modIndex} from 'lib/utils';
 
 
 /**
@@ -44,9 +44,7 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
     try {
       const photos = (await client.get('/photos')).data;
 
-      if (process.env.NODE_ENV === 'development') {
-        console.debug(`[getImages] Fetched ${photos.length} images.`);
-      }
+      ifDev(() => console.debug(`[getImages] Fetched ${photos.length} images.`));
 
       const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
 
@@ -64,9 +62,7 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
 
   // If the cache is empty, fetch collection data and cache it.
   if (!storageKeys.includes(COLLECTION_CACHE_KEY)) {
-    if (process.env.NODE_ENV === 'development') {
-      console.debug('[getImages] Cache empty.');
-    }
+    ifDev(() => console.debug('[getImages] Cache empty.'));
 
     photoCollection = (await fetchAndUpdateCollection()).photos;
   } else {
@@ -75,10 +71,7 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
 
     // Then, if the data is stale, update it.
     if ((now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn(`[getImages] Cache is stale, fetching new data. (${ms(now() - cachedData.updatedAt, {long: true})} out of date.).`);
-      }
-
+      ifDev(() => console.warn(`[getImages] Cache is stale, fetching new data. (${ms(now() - cachedData.updatedAt, {long: true})} out of date.).`));
       fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
     }
 
@@ -144,14 +137,15 @@ export async function getPhotoForDayCached(): Promise<UnsplashPhotoResource> {
       const exp = differenceInMinutes(new Date(currentPhoto.expires), now());
       const hoursRemaining = Math.floor(exp / 60);
       const minutesRemaining = exp % 60;
-      console.debug(`[getPhotoForDayCached] Current photo expires in ${hoursRemaining}h ${minutesRemaining}m.`);
+
+      ifDev(() => console.debug(`[getPhotoForDayCached] Current photo expires in ${hoursRemaining}h ${minutesRemaining}m.`));
 
       return currentPhoto.photo;
     }
 
-    console.debug('[getPhotoForDayCached] Cached photo was expired.');
+    ifDev(() => console.debug('[getPhotoForDayCached] Cached photo was expired.'));
   } else {
-    console.debug('[getPhotoForDayCached] Cache did not contain a photo.');
+    ifDev(() => console.debug('[getPhotoForDayCached] Cache did not contain a photo.'));
   }
 
   // Cache did not exist or was expired.

@@ -5,6 +5,8 @@
 
     // Allow imports with side-effects. This is necessary for things like Babel
 		// polyfill and global styles.
-		"no-import-side-effect": false
+    "no-import-side-effect": false,
+
+    "no-void-expression": false
   }
 }

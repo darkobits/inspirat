@@ -23,3 +23,13 @@ export function modIndex(num: number, arr: Array<any>): number {
 export function capitalizeWords(input: string): string {
   return input.split(' ').map(word => `${word.substr(0, 1).toUpperCase()}${word.substr(1).toLowerCase()}`).join(' ');
 }
+
+
+/**
+ * Executes the provided function if NODE_ENV is 'development';
+ */
+export function ifDev(cb: Function) {
+  if (process.env.NODE_ENV === 'development') {
+    cb();
+  }
+}
