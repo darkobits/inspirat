@@ -1,7 +1,8 @@
 import React, {createContext, PropsWithChildren, useEffect, useReducer, useState} from 'react';
 
 import {UnsplashPhotoResource} from 'etc/types';
-import {getFullImageUrl, getPhotos, getPhotoForDay, preloadImage} from 'lib/photos';
+import {getFullImageUrl, getPhotos, getPhotoForDay, getPhotoForDayCached, preloadImage} from 'lib/photos';
+import queryString from 'lib/query';
 
 
 /**
@@ -14,15 +15,25 @@ export interface PhotoProviderContext {
   dayOffset: number;
 
   /**
+   * The photo resource that should be used based on the current day offset.
+   */
+  currentPhoto: UnsplashPhotoResource | undefined;
+
+  /**
+   * The total number of photos in the collection.
+   */
+  numPhotos: number;
+
+  /**
+   * Whether or not we are in "dev mode".
+   */
+  isDevMode: boolean;
+
+  /**
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
   setDayOffset(action: string): void;
-
-  /**
-   * The photo resource that should be used based on the current day offset.
-   */
-  currentPhoto: UnsplashPhotoResource | undefined;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
@@ -35,11 +46,6 @@ export interface PhotoProviderContext {
    * current day offset.
    */
   resetPhoto(): void;
-
-  /**
-   * The total number of photos in the collection.
-   */
-  numPhotos: number;
 }
 
 
@@ -50,6 +56,10 @@ export const Provider = (props: PropsWithChildren<{}>) => {
   const [currentPhotoFromState, setCurrentPhoto] = useState<UnsplashPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = useState(0);
   const [numPhotos, setNumPhotos] = useState(0);
+  const [isDevMode, setIsDevMode] = useState(false);
+
+
+  // ----- Reducer: Increment/Decrement Photo Index ----------------------------
 
   // tslint:disable-next-line no-unnecessary-type-annotation
   const [dayOffset, setDayOffset] = useReducer((state: number, action: string) => {
@@ -63,7 +73,18 @@ export const Provider = (props: PropsWithChildren<{}>) => {
     }
   }, 0);
 
-  // [Effect] Determine Size of Photo Collection
+
+  // ----- Effect: Determine Dev Mode Status -----------------------------------
+
+  useEffect(() => {
+    setIsDevMode(process.env.NODE_ENV === 'development' && queryString().dev === 'true');
+  }, [
+    // Only run this effect when the Context loads for the first time.
+  ]);
+
+
+  // ----- Effect: Determine Size of Photo Collection --------------------------
+
   useEffect(() => {
     // tslint:disable-next-line no-floating-promises
     (async () => {
@@ -73,14 +94,16 @@ export const Provider = (props: PropsWithChildren<{}>) => {
     // Only run this effect when the Context loads for the first time.
   ]);
 
-  // [Effect] Pre-Fetch Photos
+
+  // ----- Effect: Pre-Fetch Photos --------------------------------------------
+
   useEffect(() => {
     // tslint:disable-next-line no-floating-promises
     (async () => {
       const photoFetchPromises = [];
 
       // Get data about the photo for the current day.
-      const currentPhoto = await getPhotoForDay({offset: dayOffset});
+      const currentPhoto = isDevMode ? await getPhotoForDay({offset: dayOffset}) : await getPhotoForDayCached();
 
       // Start pre-loading the photo.
       const currentPhotoFetchPromise = preloadImage(getFullImageUrl(currentPhoto.urls.full));
@@ -119,20 +142,23 @@ export const Provider = (props: PropsWithChildren<{}>) => {
 
       if (process.env.NODE_ENV === 'development') {
         await Promise.all(photoFetchPromises);
-        console.debug('[TestProvider] All photos loaded.');
+        console.debug('[PhotosProvider] All photos loaded.');
       }
     })();
   }, [
     // Re-run this effect when the day offset changes (ie: via the setDayOffset
     // function we export in our context).
     dayOffset,
-    shouldResetPhoto
+    shouldResetPhoto,
+    // Re-run this effect when the status of development mode changes.
+    isDevMode
   ]);
 
   return (
     <Context.Provider value={{
       dayOffset,
       setDayOffset,
+      isDevMode,
       currentPhoto: currentPhotoFromState,
       setCurrentPhoto,
       resetPhoto() {

@@ -11,7 +11,6 @@ import SplashLower from 'components/splash-lower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
 import {UnsplashPhotoResource} from 'etc/types';
 import {getFullImageUrl} from 'lib/photos';
-import queryString from 'lib/query';
 
 
 // ----- Styles ----------------------------------------------------------------

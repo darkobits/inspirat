@@ -1,4 +1,4 @@
-// import {differenceInMinutes} from 'date-fns';
+import {differenceInMinutes} from 'date-fns';
 import ms from 'ms';
 import queryString from 'query-string';
 import * as R from 'ramda';
@@ -11,7 +11,7 @@ import {CACHE_TTL} from 'etc/constants';
 import {LooseObject, UnsplashPhotoResource} from 'etc/types';
 import client from 'lib/client';
 import storage from 'lib/storage';
-import {now, daysSinceEpoch} from 'lib/time';
+import {now, midnight, daysSinceEpoch} from 'lib/time';
 import {greaterOf, modIndex} from 'lib/utils';
 
 
@@ -96,21 +96,6 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
 
 
 /**
- * Storage key used for the current photo.
- */
-// const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
-
-
-/**
- * Shape of the object used to cache the current photo.
- */
-export interface CurrentPhotoStorageItem {
-  photo: UnsplashPhotoResource;
-  expires: number;
-}
-
-
-/**
  * Returns the photo for the current day based on the current photo collection.
  * Multiple calls to this function on the same day may return different results
  * as the cached photo collection is updated. To retrieve a consistent photo
@@ -130,39 +115,54 @@ export async function getPhotoForDay({offset = 0} = {}): Promise<UnsplashPhotoRe
 
 
 /**
+ * Storage key used for the current photo.
+ */
+const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
+
+
+/**
+ * Shape of the object used to cache the current photo.
+ */
+export interface CurrentPhotoStorageItem {
+  photo: UnsplashPhotoResource;
+  expires: number;
+}
+
+
+/**
  * Returns the photo for the current day. Will cache this result for the
  * remainder of the day to prevent photos changing when the collection is
  * updated.
  */
-// export async function getCurrentPhoto(): Promise<UnsplashPhotoResource> {
-//   const storageKeys = await storage.keys();
+export async function getPhotoForDayCached(): Promise<UnsplashPhotoResource> {
+  const storageKeys = await storage.keys();
 
-//   if (storageKeys.includes(CURRENT_PHOTO_CACHE_KEY)) {
-//     const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
+  if (storageKeys.includes(CURRENT_PHOTO_CACHE_KEY)) {
+    const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
 
-//     if (currentPhoto.expires > now()) {
-//       const exp = differenceInMinutes(new Date(currentPhoto.expires), now());
-//       const hoursRemaining = Math.floor(exp / 60);
-//       const minutesRemaining = exp % 60;
-//       console.debug(`[getCurrentPhoto] Current photo expires in ${hoursRemaining} hours and ${minutesRemaining} minutes.`);
+    if (currentPhoto.expires > now()) {
+      const exp = differenceInMinutes(new Date(currentPhoto.expires), now());
+      const hoursRemaining = Math.floor(exp / 60);
+      const minutesRemaining = exp % 60;
+      console.debug(`[getPhotoForDayCached] Current photo expires in ${hoursRemaining}h ${minutesRemaining}m.`);
 
-//       return currentPhoto.photo;
-//     }
+      return currentPhoto.photo;
+    }
 
-//     console.debug('[getCurrentPhot] Cached photo was expired.');
-//   } else {
-//     console.debug('[getCurrentPhoto] Cache did not contain a photo.');
-//   }
+    console.debug('[getPhotoForDayCached] Cached photo was expired.');
+  } else {
+    console.debug('[getPhotoForDayCached] Cache did not contain a photo.');
+  }
 
-//   // Cache did not exist or was expired.
-//   const photo = await getPhotoForDay();
+  // Cache did not exist or was expired.
+  const photo = await getPhotoForDay();
 
-//   // Don't wait for this promise; return immediately and cache the photo
-//   // asynchronously.
-//   storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()}); // tslint:disable-line no-floating-promises
+  // Don't wait for this promise; return immediately and cache the photo
+  // asynchronously.
+  storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()}); // tslint:disable-line no-floating-promises
 
-//   return photo;
-// }
+  return photo;
+}
 
 
 /**
