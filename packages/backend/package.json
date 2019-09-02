@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.13",
-    "@types/node": "^10.12.0",
+    "@types/node": "^12.7.3",
     "@types/parse-link-header": "^1.0.0",
     "@types/pkg-dir": "^2.0.0",
     "@types/ramda": "^0.26.3",
