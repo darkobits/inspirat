@@ -27,7 +27,7 @@
     "@hot-loader/react-dom": "^16.8.4",
     "axios": "^0.18.0",
     "chalk": "^2.4.2",
-    "date-fns": "^1.29.0",
+    "date-fns": "^2.1.0",
     "emotion": "^10.0.9",
     "localforage": "^1.7.2",
     "mousetrap": "^1.6.2",
