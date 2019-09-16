@@ -42,7 +42,7 @@ const SplashLower: FunctionComponent = () => {
   const {currentPhoto} = useContext(PhotoContext);
 
   // Location.
-  const location = R.path(['location', 'title'], currentPhoto);
+  const location = R.path<string>(['location', 'title'], currentPhoto);
 
   // Attribution.
   const name = capitalizeWords(R.pathOr('', ['user', 'name'], currentPhoto));

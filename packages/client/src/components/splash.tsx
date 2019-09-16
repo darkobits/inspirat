@@ -37,7 +37,7 @@ const SplashEl = styled.div<SplashElProps>`
 
   &::before {
     background-attachment: fixed;
-    background-image: url(${R.prop<string, string>('backgroundImage')});
+    background-image: url(${R.prop('backgroundImage')});
     background-position: ${R.propOr('center center', 'backgroundPosition')};
     background-repeat: no-repeat;
     background-size: cover;
@@ -166,8 +166,8 @@ const Splash: FunctionComponent = () => {
 
   // ----- Effect: Create Key-Bindings -----------------------------------------
 
-  if (isDevMode) {
-    useEffect(() => {
+  useEffect(() => {
+    if (isDevMode) {
       mousetrap.bind('left', () => {
         setDayOffset('decrement');
       });
@@ -182,10 +182,11 @@ const Splash: FunctionComponent = () => {
         mousetrap.unbind('left');
         mousetrap.unbind('right');
       };
-    }, [
-      // Only run this effect once, when the component mounts.
-    ]);
-  }
+    }
+  }, [
+    // Run this effect whenever isDevMode changes.
+    isDevMode
+  ]);
 
 
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
