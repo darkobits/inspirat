@@ -26,7 +26,7 @@ async function synchronizeVersions(fromFile: string, toFile: string): Promise<vo
 
   // Add the file to the Git index so that during "bump" commands, this change
   // is not left out of the commit.
-  await execa.shell(`git add ${toFile}`);
+  await execa('git', ['add', toFile]);
 }
 
 
@@ -35,8 +35,13 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module = {rules: []};
   config.plugins = [];
 
-  const {pkg, path: pkgPath} = await readPkgUp();
-  const pkgRoot = path.parse(pkgPath).dir;
+  const pkgInfo = await readPkgUp();
+
+  if (!pkgInfo) {
+    throw new Error('Unable to read package.json.');
+  }
+
+  const pkgRoot = path.dirname(pkgInfo.path);
 
   const PROD_API_URL = 'https://aws.frontlawn.net/inspirat';
   const DEV_API_URL = 'https://aws.frontlawn.net/inspirat-dev';
@@ -152,7 +157,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   config.plugins.push(new webpack.DefinePlugin({
     'process.env.API_URL': JSON.stringify(argv.mode === 'development' ? DEV_API_URL : PROD_API_URL),
-    'process.env.PACKAGE_VERSION': JSON.stringify(pkg.version)
+    'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.package.version)
   }));
 
   config.plugins.push(new HtmlWebpackPlugin({
@@ -245,6 +250,8 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   if (argv.mode === 'production') {
     await synchronizeVersions(path.resolve(pkgRoot, 'package.json'), path.resolve(pkgRoot, 'src', 'manifest.json'));
   }
+
+  config.stats = 'minimal';
 
 
   return config;

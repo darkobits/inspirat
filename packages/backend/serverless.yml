@@ -13,13 +13,13 @@ custom:
   basePaths:
     dev: inspirat-dev
     prod: inspirat
+  # Configuration for the serverless-dotenv plugin.
   dotenv:
     include:
       - UNSPLASH_ACCESS_KEY
       - UNSPLASH_SECRET_KEY
       - UNSPLASH_COLLECTION_ID
-
-  # Configuration for serverless-domain-manager
+  # Configuration for serverless-domain-manager plugin.
   customDomain:
     domainName: aws.frontlawn.net
     endpointType: regional
@@ -66,7 +66,6 @@ functions:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
       UNSPLASH_COLLECTION_ID: ${env:UNSPLASH_COLLECTION_ID}
     timeout: 120
-
   # Periodically checks the SQS queue for messages representing new photos. For
   # each, queries the Unsplash Photos API and adds a record for the photo to the
   # database. This function is run on a schedule rather than via SQS triggers
@@ -82,7 +81,6 @@ functions:
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
     timeout: 120
-
   # Returns all photos from the database. This is the only function exposed via
   # API Gateway.
   get-photos:
@@ -115,7 +113,6 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-
     # Queues
     InspiratQueue:
       Type: AWS::SQS::Queue

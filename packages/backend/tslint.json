@@ -1,5 +1,5 @@
 {
-  "extends": "@darkobits/ts-unified/dist/config/tslint.json",
+  "extends": "../../node_modules/@darkobits/ts-unified/dist/config/tslint.json",
   "rules": {
     "no-unnecessary-type-annotation": false,
     "no-useless-files": false,

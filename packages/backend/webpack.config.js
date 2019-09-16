@@ -5,12 +5,16 @@ const serverlessWebpack = require('serverless-webpack');
 
 
 module.exports = (async () => {
-  const {pkg} = await readPkgUp(__dirname);
+  const pkgInfo = await readPkgUp(__dirname);
+
+  if (!pkgInfo) {
+    throw new Error('Unable to read package.json.');
+  }
 
   const config = {entry: {}};
 
   Object.keys(serverlessWebpack.lib.entries).forEach(key => {
-    config.entry[key] = [path.resolve('src', 'etc', 'source-map-install.js'), serverlessWebpack.lib.entries[key]];
+    config.entry[key] = [path.resolve('etc', 'source-map-install.js'), serverlessWebpack.lib.entries[key]];
   });
 
   config.target = 'node';
@@ -33,7 +37,7 @@ module.exports = (async () => {
 
   config.plugins = [
     new webpack.DefinePlugin({
-      'process.env.PACKAGE_VERSION': JSON.stringify(pkg.version),
+      'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.package.version),
       'process.env.PACKAGE_BUILD_TIMESTAMP': JSON.stringify(new Date().toISOString())
     })
   ];
