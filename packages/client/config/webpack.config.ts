@@ -157,7 +157,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   config.plugins.push(new webpack.DefinePlugin({
     'process.env.API_URL': JSON.stringify(argv.mode === 'development' ? DEV_API_URL : PROD_API_URL),
-    'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.package.version)
+    'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.packageJson.version)
   }));
 
   config.plugins.push(new HtmlWebpackPlugin({

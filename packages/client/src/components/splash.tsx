@@ -90,7 +90,7 @@ const Swatch = styled.div<SwatchProps>`
   width: ${BASIS};
   height: ${BASIS};
   top: 8px;
-  right: 4px;
+  right: 8px;
   z-index: 1;
 `;
 
@@ -101,10 +101,10 @@ const Swatch = styled.div<SwatchProps>`
  */
 const Source = styled.div`
   height: ${BASIS};
-  left: 4px;
+  left: 8px;
   position: absolute;
   top: 8px;
-  width: calc(100% - ${BASIS} - 14px);
+  width: calc(100% - ${BASIS} - 26px);
   z-index: 2;
 
   input {
