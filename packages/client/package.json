@@ -47,7 +47,7 @@
     "@types/webpack-dev-server": "^3.9.0",
     "babel-loader": "^8.0.4",
     "copy-webpack-plugin": "^5.0.5",
-    "execa": "^3.4.0",
+    "execa": "^4.0.0",
     "favicons-webpack-plugin": "^1.0.2",
     "file-loader": "^5.0.2",
     "friendly-errors-webpack-plugin": "^1.7.0",
