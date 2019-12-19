@@ -10,7 +10,7 @@
     "url": "git+https://github.com/darkobits/inspirat.git"
   },
   "dependencies": {
-    "@awspilot/dynamodb": "^1.2.8",
+    "@awspilot/dynamodb": "^2.0.0",
     "@darkobits/env": "^1.0.0",
     "aws-sdk": "^2.580.0",
     "axios": "^0.19.0",
