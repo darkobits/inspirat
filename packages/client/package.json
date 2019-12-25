@@ -39,7 +39,7 @@
     "@types/html-webpack-plugin": "^3.2.0",
     "@types/mousetrap": "^1.6.0",
     "@types/ms": "^0.7.30",
-    "@types/node": "^12.12.14",
+    "@types/node": "^13.1.0",
     "@types/ramda": "^0.26.36",
     "@types/react": "^16.9.13",
     "@types/react-dom": "^16.9.4",
