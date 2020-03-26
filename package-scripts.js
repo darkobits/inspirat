@@ -22,7 +22,7 @@ const backend = {
 // ----- Client Scripts --------------------------------------------------------
 
 const lintClient = `unified.tslint --project ./packages/client/tsconfig.json  --format codeFrame`;
-const buildClient = `${runIn('client')} webpack --mode=production`;
+const buildClient = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
 
 const client = {
   checkDeps: 'npm-check --skip-unused ./packages/client || true',
@@ -58,6 +58,10 @@ module.exports = {
         backend: backend.build,
         client: client.build
       })
+    },
+    bump: {
+      description: 'Bump package versions and generate a tagged commit.',
+      script: 'lerna version'
     },
     deploy: {
       default: {

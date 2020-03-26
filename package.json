@@ -6,6 +6,7 @@
     "build": "nps build",
     "start": "nps start",
     "prepare": "nps prepare",
+    "version": "nps build",
     "help": "nps --scripts"
   },
   "devDependencies": {
