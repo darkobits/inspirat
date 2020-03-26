@@ -1,7 +1,20 @@
-import React, {createContext, PropsWithChildren, useEffect, useReducer, useState} from 'react';
+import mousetrap from 'mousetrap';
+import React, {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useReducer,
+  useState
+} from 'react';
 
 import {UnsplashPhotoResource} from 'etc/types';
-import {getFullImageUrl, getPhotos, getPhotoForDay, getPhotoForDayCached, preloadImage} from 'lib/photos';
+import {
+  getFullImageUrl,
+  getPhotos,
+  getPhotoForDay,
+  getPhotoForDayCached,
+  preloadImage
+} from 'lib/photos';
 import queryString from 'lib/query';
 import {ifDev} from 'lib/utils';
 
@@ -78,29 +91,26 @@ export const Provider = (props: PropsWithChildren<{}>) => {
   // ----- Effect: Determine Dev Mode Status -----------------------------------
 
   useEffect(() => {
-    ifDev(() => setIsDevMode(queryString().dev === 'true'));
-  }, [
-    // Only run this effect when the Context loads for the first time.
-  ]);
+    ifDev(() => setIsDevMode(Object.keys(queryString()).includes('dev')));
+  }, []);
 
 
   // ----- Effect: Determine Size of Photo Collection --------------------------
 
   useEffect(() => {
-    // tslint:disable-next-line no-floating-promises
-    (async () => {
-      setNumPhotos((await getPhotos()).length);
-    })();
-  }, [
-    // Only run this effect when the Context loads for the first time.
-  ]);
+    const setNumPhotosEffect = async () => {
+      const photos = await getPhotos();
+      setNumPhotos(photos.length);
+    };
+
+    setNumPhotosEffect(); // tslint:disable-line no-floating-promises
+  }, []);
 
 
   // ----- Effect: Pre-Fetch Photos --------------------------------------------
 
   useEffect(() => {
-    // tslint:disable-next-line no-floating-promises
-    (async () => {
+    const preFetchPhotos = async () => {
       const photoFetchPromises: Array<Promise<any>> = [];
 
       // Get data about the photo for the current day.
@@ -143,30 +153,70 @@ export const Provider = (props: PropsWithChildren<{}>) => {
 
       ifDev(async () => {
         await Promise.all(photoFetchPromises);
-        console.debug('[PhotosProvider] All photos loaded.');
+        console.debug('[PhotosProvider] Finished downloading adjacent photos.');
       });
-    })();
+    };
+
+    preFetchPhotos(); // tslint:disable-line no-floating-promises
   }, [
     // Re-run this effect when the day offset changes (ie: via the setDayOffset
     // function we export in our context).
     dayOffset,
+    // Re-run this effect whenever the value of shouldResetPhoto changes (ie:
+    // when resetPhot() is called).
     shouldResetPhoto,
     // Re-run this effect when the status of development mode changes.
     isDevMode
   ]);
 
+
+  // ----- Effect: Create Key-Bindings -----------------------------------------
+
+  useEffect(ifDev(() => () => {
+    // // N.B. ifDev (above) is a NODE_ENV check, while isDevMode checks for the
+    // // presence of the 'dev' query string parameter.
+    if (!isDevMode) {
+      return;
+    }
+
+    mousetrap.bind('left', () => {
+      setDayOffset('decrement');
+    });
+
+    mousetrap.bind('right', () => {
+      setDayOffset('increment');
+    });
+
+    console.debug('[Development] Keyboard shortcuts registered.');
+
+    return () => {
+      mousetrap.unbind('left');
+      mousetrap.unbind('right');
+    };
+  }), [
+    // Run this effect whenever isDevMode changes.
+    isDevMode
+  ]);
+
+
+  // ----- Context API ---------------------------------------------------------
+
+  const contextApi = {
+    dayOffset,
+    setDayOffset,
+    isDevMode,
+    currentPhoto: currentPhotoFromState,
+    setCurrentPhoto,
+    resetPhoto() {
+      resetPhoto(shouldResetPhoto + 1);
+    },
+    numPhotos
+  };
+
   return (
-    <Context.Provider value={{
-      dayOffset,
-      setDayOffset,
-      isDevMode,
-      currentPhoto: currentPhotoFromState,
-      setCurrentPhoto,
-      resetPhoto() {
-        resetPhoto(shouldResetPhoto + 1);
-      },
-      numPhotos
-    }}>{props.children}</Context.Provider>
+    <Context.Provider value={contextApi}>
+      {props.children}
+    </Context.Provider>
   );
 };
 

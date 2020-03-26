@@ -9,7 +9,7 @@ const lintBackend = `unified.tslint --project ./packages/backend/tsconfig.json  
 const buildBackend = `${runIn('backend')} serverless webpack`;
 
 const backend = {
-  checkDeps: 'npm-check --skip-unused ./packages/backend',
+  checkDeps: 'npm-check --skip-unused ./packages/backend || true',
   build: npsUtils.series(lintBackend, buildBackend),
   prepare: npsUtils.series(lintBackend, buildBackend),
   deploy: {
@@ -25,7 +25,7 @@ const lintClient = `unified.tslint --project ./packages/client/tsconfig.json  --
 const buildClient = `${runIn('client')} webpack --mode=production`;
 
 const client = {
-  checkDeps: 'npm-check --skip-unused ./packages/client',
+  checkDeps: 'npm-check --skip-unused ./packages/client || true',
   build: npsUtils.series(lintClient, buildClient),
   prepare: npsUtils.series(lintClient, buildClient),
   start: `${runIn('client')} webpack-dev-server --mode=development`

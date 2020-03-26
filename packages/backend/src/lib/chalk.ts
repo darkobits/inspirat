@@ -1,3 +1,3 @@
 import chalk from 'chalk';
 
-export default chalk.constructor({enabled: true, level: 2});
+export default new chalk.Instance({level: 2});

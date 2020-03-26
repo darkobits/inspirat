@@ -11,6 +11,7 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 
 async function synchronizeVersions(fromFile: string, toFile: string): Promise<void> {
@@ -90,10 +91,13 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
       {
         loader: 'babel-loader',
         options: {
-          plugins: [
-            argv.mode === 'development' && 'react-hot-loader/babel'
-          ].filter(Boolean),
           cacheDirectory: true
+        }
+      },
+      {
+        loader: 'linaria/loader',
+        options: {
+          sourceMap: process.env.NODE_ENV !== 'production'
         }
       }
     ]
@@ -103,8 +107,19 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module.rules.push({
     test: /\.css$/,
     use: [
-      {loader: 'style-loader'},
-      {loader: 'css-loader'}
+      {
+        loader: MiniCssExtractPlugin.loader,
+        options: {
+          hmr: process.env.NODE_ENV !== 'production'
+        }
+      },
+      {
+        loader: 'css-loader',
+        options: {
+          modules: false,
+          sourceMap: process.env.NODE_ENV !== 'production'
+        }
+      }
     ]
   });
 
@@ -167,11 +182,13 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   }));
 
   if (argv.mode === 'development') {
-    config.plugins.push(new webpack.HotModuleReplacementPlugin());
+    config.plugins.push(new MiniCssExtractPlugin({filename: 'styles.css'}));
     config.plugins.push(new FriendlyErrorsWebpackPlugin());
   }
 
   if (argv.mode === 'production') {
+    config.plugins.push(new MiniCssExtractPlugin({filename: 'styles-[contenthash].css'}));
+
     config.plugins.push(new CopyWebpackPlugin([
       path.resolve(pkgRoot, 'src', 'manifest.json'),
       path.resolve(pkgRoot, 'assets', 'favicon-16.png'),
@@ -185,9 +202,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
     config.plugins.push(new FaviconsWebpackPlugin({
       logo: path.resolve(pkgRoot, 'assets', 'favicon.png'),
-      persistentCache: true,
-      inject: true,
-      title: 'Front Lawn'
+      inject: true
     }));
   }
 
@@ -195,15 +210,15 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   // ----- Dev Server ----------------------------------------------------------
 
   if (argv.mode === 'development') {
-    const port = await getPort({port: 8080}); // tslint:disable-line await-promise
+    const port = await getPort({port: 8080});
 
     config.devServer = {
       bonjour: true,
       historyApiFallback: true,
       disableHostCheck: true,
       host: '0.0.0.0',
-      hot: true,
       inline: true,
+      hot: false,
       overlay: true,
       quiet: true,
       port

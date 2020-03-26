@@ -30,6 +30,6 @@ export function capitalizeWords(input: string): string {
  */
 export function ifDev(cb: Function) {
   if (process.env.NODE_ENV === 'development') {
-    cb();
+    return cb();
   }
 }

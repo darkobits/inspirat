@@ -1,5 +1,5 @@
-import {SerializedStyles} from '@emotion/core';
-import styled from '@emotion/styled';
+import {cx} from 'linaria';
+import {styled} from 'linaria/react';
 import {rgba} from 'polished';
 import * as R from 'ramda';
 import React, {FunctionComponent, useContext} from 'react';
@@ -11,10 +11,12 @@ import {compositeTextShadow} from 'lib/typography';
 // ----- Types -----------------------------------------------------------------
 
 export interface ImageMetaProps {
-  styles?: SerializedStyles;
+  className?: string;
 }
 
 export interface ImageMetaElProps {
+  // TODO: This shouldn't have to be defined here.
+  className?: string;
   shadowColor?: string;
 }
 
@@ -49,7 +51,7 @@ const ImageMeta: FunctionComponent<ImageMetaProps> = props => {
   const {currentPhoto} = useContext(PhotoContext);
 
   return (
-    <ImageMetaEl css={props.styles} shadowColor={R.propOr(undefined, 'color', currentPhoto)}>
+    <ImageMetaEl className={props.className} shadowColor={R.propOr(undefined, 'color', currentPhoto)}>
       {props.children}
     </ImageMetaEl>
   );

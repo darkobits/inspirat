@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+import {styled} from 'linaria/react';
 import {rgba} from 'polished';
 import * as R from 'ramda';
 import React, {FunctionComponent, useContext, useEffect, useState} from 'react';
@@ -17,7 +17,7 @@ export interface StyledSplashMidProps {
 }
 
 /**
- * Returns a compount text-shadow string based on the swatch color for the
+ * Returns a compound text-shadow string based on the swatch color for the
  * current photo.
  */
 const textShadow = (color: string) => compositeTextShadow([
@@ -79,6 +79,19 @@ const SplashMid: FunctionComponent = () => {
   const {currentPhoto} = useContext(PhotoContext);
   const [name, setName] = useState('');
 
+  /**
+   * Asynchronously fetches the user's name from local storage and set it using
+   * setName.
+   */
+  const getNameFromStorage = async () => {
+    const nameFromStorage = await storage.getItem<string>('name');
+
+    if (nameFromStorage) {
+      setName(nameFromStorage);
+    }
+  };
+
+
   // [Effect] Attach 'setName' to Window
   useEffect(() => {
     Object.defineProperty(window, 'setName', {
@@ -91,24 +104,18 @@ const SplashMid: FunctionComponent = () => {
     return () => {
       Reflect.deleteProperty(window, 'setName');
     };
-  }, [
-    // Only run this effect once, when the component mounts.
-  ]);
+  }, []);
 
-  // [Effect] Asynchronously Get Name From Storage
+
+  // [Effect] Asynchronously Get Name From Storage.
   useEffect(() => {
-    storage.getItem<string>('name').then(nameFromStorage => { // tslint:disable-line no-floating-promises
-      if (nameFromStorage) {
-        setName(nameFromStorage);
-      }
-    });
-  }, [
-    // Only run this effect once, when the component mounts.
-  ]);
+    getNameFromStorage(); // tslint:disable-line no-floating-promises
+  }, []);
+
 
   return (
     <StyledSplashMid color={R.pathOr('black', ['color'], currentPhoto)} opacity={currentPhoto ? 1 : 0}>
-      {name ? `Good ${getPeriodDescriptor()}, ${name}.` : `Good ${getPeriodDescriptor()}.`}
+      {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
     </StyledSplashMid>
   );
 };

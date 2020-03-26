@@ -32,7 +32,7 @@ custom:
 
 provider:
   name: aws
-  runtime: nodejs8.10
+  runtime: nodejs12.x
   region: ${env:AWS_REGION}
   stage: ${self:custom.stage}
   environment:

@@ -1,9 +1,7 @@
-import styled from '@emotion/styled';
-import mousetrap from 'mousetrap';
+import {styled} from 'linaria/react';
 import {mix, rgba} from 'polished';
 import * as R from 'ramda';
-import React, {FunctionComponent, useContext, useEffect} from 'react';
-import {hot} from 'react-hot-loader';
+import React, {FunctionComponent, useContext} from 'react';
 
 import PhotoContext from 'contexts/photo';
 import SplashMid from 'components/splash-mid';
@@ -37,7 +35,13 @@ const SplashEl = styled.div<SplashElProps>`
 
   &::before {
     background-attachment: fixed;
-    background-image: url(${R.prop('backgroundImage')});
+    /**
+     * We can't use an outer url() here due to an idiosyncrasy in how Linaria
+     * handles quotes in url() expressions.
+     *
+     * See: https://github.com/callstack/linaria/issues/368
+     */
+    background-image: ${({backgroundImage}) => backgroundImage && `url(${backgroundImage})`};
     background-position: ${R.propOr('center center', 'backgroundPosition')};
     background-repeat: no-repeat;
     background-size: cover;
@@ -53,7 +57,7 @@ const SplashEl = styled.div<SplashElProps>`
   }
 
   &::after {
-    background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount || 0.2))};
+    background-color: ${({maskColor, maskAmount}) => rgba(mix(0.5, maskColor, 'black'), Number(maskAmount || 0.2))};
     bottom: 0;
     content: ' ';
     display: block;
@@ -156,38 +160,12 @@ const Progress = styled.div<{progress: number; color: string}>`
 const Splash: FunctionComponent = () => {
   const {
     dayOffset,
-    setDayOffset,
     isDevMode,
     currentPhoto,
     setCurrentPhoto,
     resetPhoto,
     numPhotos
   } = useContext(PhotoContext);
-
-  // ----- Effect: Create Key-Bindings -----------------------------------------
-
-  useEffect(() => {
-    if (isDevMode) {
-      mousetrap.bind('left', () => {
-        setDayOffset('decrement');
-      });
-
-      mousetrap.bind('right', () => {
-        setDayOffset('increment');
-      });
-
-      console.debug('[Development] Keyboard shortcuts registered.');
-
-      return () => {
-        mousetrap.unbind('left');
-        mousetrap.unbind('right');
-      };
-    }
-  }, [
-    // Run this effect whenever isDevMode changes.
-    isDevMode
-  ]);
-
 
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
   const color = R.propOr<string, UnsplashPhotoResource | undefined, string>('black', 'color', currentPhoto);
@@ -217,4 +195,4 @@ const Splash: FunctionComponent = () => {
 };
 
 
-export default hot(module)(Splash);
+export default Splash;

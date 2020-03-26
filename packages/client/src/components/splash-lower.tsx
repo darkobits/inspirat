@@ -1,5 +1,5 @@
-import styled from '@emotion/styled';
-import {css} from '@emotion/core';
+import {styled} from 'linaria/react';
+import {css} from 'linaria';
 import * as R from 'ramda';
 import React, {FunctionComponent, useContext} from 'react';
 
@@ -23,7 +23,9 @@ const SplashLowerEl = styled.div<SplashLowerElProps>`
   z-index: 1;
 `;
 
-const locationStyles = css`
+// Custom styling for the left ImageMeta element that will indicate the image's
+// location.
+const locationClassName = css`
   display: none;
 
   @media(min-width: 700px) {
@@ -31,7 +33,9 @@ const locationStyles = css`
   }
 `;
 
-const attributionStyles = css`
+// Custom styling for the right ImageMeta element that will indicate the image's
+// author.
+const attributionClassName = css`
   margin-left: auto;
 `;
 
@@ -52,12 +56,8 @@ const SplashLower: FunctionComponent = () => {
 
   return (
     <SplashLowerEl opacity={currentPhoto ? 1 : 0}>
-      <ImageMeta css={locationStyles}>
-        {location}
-      </ImageMeta>
-      <ImageMeta css={attributionStyles}>
-        {attribution}
-      </ImageMeta>
+      <ImageMeta className={locationClassName}>{location}</ImageMeta>
+      <ImageMeta className={attributionClassName}>{attribution}</ImageMeta>
     </SplashLowerEl>
   );
 };
