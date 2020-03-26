@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.10.2](https://github.com/darkobits/inspirat/compare/v0.10.1...v0.10.2) (2020-03-26)
+
+
+### Bug Fixes
+
+* **client:** Use ifDev in useEffect correctly. ([7cbb02f](https://github.com/darkobits/inspirat/commit/7cbb02faeba378d4904423d5b780e6e40a3ee0a9))
+
+
+
+
+
 ## [0.10.1](https://github.com/darkobits/inspirat/compare/v0.10.0...v0.10.1) (2019-04-15)
 
 
