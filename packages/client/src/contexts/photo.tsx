@@ -90,9 +90,7 @@ export const Provider = (props: PropsWithChildren<{}>) => {
 
   // ----- Effect: Determine Dev Mode Status -----------------------------------
 
-  useEffect(() => {
-    ifDev(() => setIsDevMode(Object.keys(queryString()).includes('dev')));
-  }, []);
+  useEffect(() => ifDev(() => setIsDevMode(Object.keys(queryString()).includes('dev'))), []);
 
 
   // ----- Effect: Determine Size of Photo Collection --------------------------
@@ -172,7 +170,7 @@ export const Provider = (props: PropsWithChildren<{}>) => {
 
   // ----- Effect: Create Key-Bindings -----------------------------------------
 
-  useEffect(ifDev(() => () => {
+  useEffect(() => ifDev(() => {
     // // N.B. ifDev (above) is a NODE_ENV check, while isDevMode checks for the
     // // presence of the 'dev' query string parameter.
     if (!isDevMode) {

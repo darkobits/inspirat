@@ -28,7 +28,7 @@ export function capitalizeWords(input: string): string {
 /**
  * Executes the provided function if NODE_ENV is 'development';
  */
-export function ifDev(cb: Function) {
+export function ifDev(cb: (...args: Array<any>) => any): any {
   if (process.env.NODE_ENV === 'development') {
     return cb();
   }

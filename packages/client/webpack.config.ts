@@ -97,7 +97,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
       {
         loader: 'linaria/loader',
         options: {
-          sourceMap: process.env.NODE_ENV !== 'production'
+          sourceMap: true
         }
       }
     ]
@@ -117,7 +117,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
         loader: 'css-loader',
         options: {
           modules: false,
-          sourceMap: process.env.NODE_ENV !== 'production'
+          sourceMap: true
         }
       }
     ]
