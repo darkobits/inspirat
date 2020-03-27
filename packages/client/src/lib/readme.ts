@@ -16,7 +16,7 @@ export default function printReadme() {
     '',
     `setName(${customChalk.greenBright('\'Alice\'')});`,
     '',
-    'If you experience any issues, head over GitHub:',
+    'If you experience any issues, head over to GitHub:',
     '',
     'https://github.com/darkobits/inspirat/issues'
   ].join('\n');
