@@ -1,4 +1,3 @@
-import {cx} from 'linaria';
 import {styled} from 'linaria/react';
 import {rgba} from 'polished';
 import * as R from 'ramda';
