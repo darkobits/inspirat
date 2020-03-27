@@ -2,6 +2,7 @@ import {styled} from 'linaria/react';
 import {rgba} from 'polished';
 import * as R from 'ramda';
 import React, {FunctionComponent, useContext, useEffect, useState} from 'react';
+import useAsyncEffect from 'use-async-effect';
 
 import PhotoContext from 'contexts/photo';
 import {getPeriodDescriptor} from 'lib/time';
@@ -83,13 +84,13 @@ const SplashMid: FunctionComponent = () => {
    * Asynchronously fetches the user's name from local storage and set it using
    * setName.
    */
-  const getNameFromStorage = async () => {
-    const nameFromStorage = await storage.getItem<string>('name');
+  // const getNameFromStorage = async () => {
+  //   const nameFromStorage = await storage.getItem<string>('name');
 
-    if (nameFromStorage) {
-      setName(nameFromStorage);
-    }
-  };
+  //   if (nameFromStorage) {
+  //     setName(nameFromStorage);
+  //   }
+  // };
 
 
   // [Effect] Attach 'setName' to Window
@@ -107,9 +108,13 @@ const SplashMid: FunctionComponent = () => {
   }, []);
 
 
-  // [Effect] Asynchronously Get Name From Storage.
-  useEffect(() => {
-    getNameFromStorage(); // tslint:disable-line no-floating-promises
+  // [Async Effect] Get user's name from local storage and update greeting.
+  useAsyncEffect(async isMounted => {
+    const nameFromStorage = await storage.getItem<string>('name');
+
+    if (isMounted() && nameFromStorage) {
+      setName(nameFromStorage);
+    }
   }, []);
 
 

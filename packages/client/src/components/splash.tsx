@@ -160,7 +160,7 @@ const Progress = styled.div<{progress: number; color: string}>`
 const Splash: FunctionComponent = () => {
   const {
     dayOffset,
-    isDevMode,
+    showDevTools,
     currentPhoto,
     setCurrentPhoto,
     resetPhoto,
@@ -183,7 +183,7 @@ const Splash: FunctionComponent = () => {
 
   return (
     <SplashEl backgroundImage={currentPhotoUrl} maskColor={color} opacity={opacity} {...overrides}>
-      {isDevMode ? <>
+      {showDevTools ? <>
         <Progress progress={((dayOffset % numPhotos) || 0) / numPhotos} color={color} />
         <Source><input type='text' onChange={onSrcChange} /></Source>
         <Swatch color={color} />

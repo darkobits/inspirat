@@ -6,6 +6,7 @@ import React, {
   useReducer,
   useState
 } from 'react';
+import useAsyncEffect from 'use-async-effect';
 
 import {UnsplashPhotoResource} from 'etc/types';
 import {
@@ -41,7 +42,7 @@ export interface PhotoProviderContext {
   /**
    * Whether or not we are in "dev mode".
    */
-  isDevMode: boolean;
+  showDevTools: boolean;
 
   /**
    * Allows other components to set the day offset to a value by using the
@@ -70,10 +71,10 @@ export const Provider = (props: PropsWithChildren<{}>) => {
   const [currentPhotoFromState, setCurrentPhoto] = useState<UnsplashPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = useState(0);
   const [numPhotos, setNumPhotos] = useState(0);
-  const [isDevMode, setIsDevMode] = useState(false);
+  const [showDevTools, setShowDevTools] = useState(false);
 
 
-  // ----- Reducer: Increment/Decrement Photo Index ----------------------------
+  // ----- [Reducer] Increment/Decrement Photo Index ---------------------------
 
   // tslint:disable-next-line no-unnecessary-type-annotation
   const [dayOffset, setDayOffset] = useReducer((state: number, action: string) => {
@@ -88,92 +89,15 @@ export const Provider = (props: PropsWithChildren<{}>) => {
   }, 0);
 
 
-  // ----- Effect: Determine Dev Mode Status -----------------------------------
+  // ----- [Effect] Determine Dev Tools Visibility -----------------------------
 
-  useEffect(() => ifDev(() => setIsDevMode(Object.keys(queryString()).includes('dev'))), []);
-
-
-  // ----- Effect: Determine Size of Photo Collection --------------------------
-
-  useEffect(() => {
-    const setNumPhotosEffect = async () => {
-      const photos = await getPhotos();
-      setNumPhotos(photos.length);
-    };
-
-    setNumPhotosEffect(); // tslint:disable-line no-floating-promises
-  }, []);
+  useEffect(() => ifDev(() => setShowDevTools(Object.keys(queryString()).includes('dev'))), []);
 
 
-  // ----- Effect: Pre-Fetch Photos --------------------------------------------
-
-  useEffect(() => {
-    const preFetchPhotos = async () => {
-      const photoFetchPromises: Array<Promise<any>> = [];
-
-      // Get data about the photo for the current day.
-      const currentPhoto = isDevMode ? await getPhotoForDay({offset: dayOffset}) : await getPhotoForDayCached();
-
-      // Start pre-loading the photo.
-      const currentPhotoFetchPromise = preloadImage(getFullImageUrl(currentPhoto.urls.full));
-
-      photoFetchPromises.push(currentPhotoFetchPromise);
-
-      // [Development] Log Current Photo Information
-      ifDev(() => {
-        console.groupCollapsed(`[Splash] Current photo ID: "${currentPhoto.id}"`);
-        console.debug(currentPhoto);
-        console.groupEnd();
-      });
-
-      // Pre-Load Next Photo
-      const nextPhoto = await getPhotoForDay({offset: dayOffset + 1});
-      const nextPhotoFetchPromise = preloadImage(getFullImageUrl(nextPhoto.urls.full));
-      photoFetchPromises.push(nextPhotoFetchPromise);
-
-      // [Development] Pre-Load Previous Photo
-      ifDev(async () => {
-        const prevPhoto = await getPhotoForDay({offset: dayOffset - 1});
-        const prevPhotoFetchPromise = preloadImage(getFullImageUrl(prevPhoto.urls.full));
-        photoFetchPromises.push(prevPhotoFetchPromise);
-      });
-
-      // If there is no current photo, or if the current photo does not match
-      // the one in the component's state, update state.
-      if (!currentPhotoFromState || currentPhoto.id !== currentPhotoFromState.id) {
-        // Wait for the photo to download.
-        await currentPhotoFetchPromise;
-
-        // Then, set the photo data. Because the image is already cached, it
-        // will appear immediately.
-        setCurrentPhoto(currentPhoto);
-      }
-
-      ifDev(async () => {
-        await Promise.all(photoFetchPromises);
-        console.debug('[PhotosProvider] Finished downloading adjacent photos.');
-      });
-    };
-
-    preFetchPhotos(); // tslint:disable-line no-floating-promises
-  }, [
-    // Re-run this effect when the day offset changes (ie: via the setDayOffset
-    // function we export in our context).
-    dayOffset,
-    // Re-run this effect whenever the value of shouldResetPhoto changes (ie:
-    // when resetPhot() is called).
-    shouldResetPhoto,
-    // Re-run this effect when the status of development mode changes.
-    isDevMode
-  ]);
-
-
-  // ----- Effect: Create Key-Bindings -----------------------------------------
+  // ----- [Effect] Create Key-Bindings ----------------------------------------
 
   useEffect(() => ifDev(() => {
-    // // N.B. ifDev (above) is a NODE_ENV check, while isDevMode checks for the
-    // // presence of the 'dev' query string parameter.
-    if (!isDevMode) {
+    if (!showDevTools) {
       return;
     }
 
@@ -192,8 +116,75 @@ export const Provider = (props: PropsWithChildren<{}>) => {
       mousetrap.unbind('right');
     };
   }), [
-    // Run this effect whenever isDevMode changes.
-    isDevMode
+    // Run this effect whenever showDevTools changes.
+    showDevTools
+  ]);
+
+
+  // ----- [Async Effect] Determine Size of Photo Collection -------------------
+
+  useAsyncEffect(async () => {
+    const photos = await getPhotos();
+    setNumPhotos(photos.length);
+  }, []);
+
+
+  // ----- [Async Effect] Pre-Fetch Photos -------------------------------------
+
+  useAsyncEffect(async () => {
+    const photoFetchPromises: Array<Promise<any>> = [];
+
+    // Get data about the photo for the current day.
+    const currentPhoto = showDevTools ? await getPhotoForDay({offset: dayOffset}) : await getPhotoForDayCached();
+
+    // Start pre-loading the photo.
+    const currentPhotoFetchPromise = preloadImage(getFullImageUrl(currentPhoto.urls.full));
+
+    photoFetchPromises.push(currentPhotoFetchPromise);
+
+    // [Development] Log Current Photo Information
+    ifDev(() => {
+      console.groupCollapsed(`[Splash] Current photo ID: "${currentPhoto.id}"`);
+      console.debug(currentPhoto);
+      console.groupEnd();
+    });
+
+    // Pre-Load Next Photo
+    const nextPhoto = await getPhotoForDay({offset: dayOffset + 1});
+    const nextPhotoFetchPromise = preloadImage(getFullImageUrl(nextPhoto.urls.full));
+    photoFetchPromises.push(nextPhotoFetchPromise);
+
+    // [Development] Pre-Load Previous Photo
+    ifDev(async () => {
+      const prevPhoto = await getPhotoForDay({offset: dayOffset - 1});
+      const prevPhotoFetchPromise = preloadImage(getFullImageUrl(prevPhoto.urls.full));
+      photoFetchPromises.push(prevPhotoFetchPromise);
+    });
+
+    // If there is no current photo, or if the current photo does not match
+    // the one in the component's state, update state.
+    if (!currentPhotoFromState || currentPhoto.id !== currentPhotoFromState.id) {
+      // Wait for the photo to download.
+      await currentPhotoFetchPromise;
+
+      // Then, set the photo data. Because the image is already cached, it
+      // will appear immediately.
+      setCurrentPhoto(currentPhoto);
+    }
+
+    ifDev(async () => {
+      await Promise.all(photoFetchPromises);
+      console.debug('[PhotosProvider] Finished downloading adjacent photos.');
+    });
+  }, [
+    // Re-run this effect when the day offset changes (ie: via the setDayOffset
+    // function we export in our context).
+    dayOffset,
+    // Re-run this effect whenever the value of shouldResetPhoto changes (ie:
+    // when resetPhot() is called).
+    shouldResetPhoto,
+    // Re-run this effect when the status of development mode changes.
+    showDevTools
   ]);
 
 
@@ -202,7 +193,7 @@ export const Provider = (props: PropsWithChildren<{}>) => {
   const contextApi = {
     dayOffset,
     setDayOffset,
-    isDevMode,
+    showDevTools,
     currentPhoto: currentPhotoFromState,
     setCurrentPhoto,
     resetPhoto() {
