@@ -23,11 +23,15 @@ const backend = {
 
 const lintClient = `unified.tslint --project ./packages/client/tsconfig.json  --format codeFrame`;
 const buildClient = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
+const publishClient = `${runIn('client')} npx babel-node --extensions=.ts --config-file=./babel.config.js ./scripts/publish-extension.ts`
+const syncVersions = `${runIn('client')} npx babel-node --extensions=.ts --config-file=./babel.config.js ./scripts/sync-versions.ts`
 
 const client = {
   checkDeps: 'npm-check --skip-unused ./packages/client || true',
   build: npsUtils.series(lintClient, buildClient),
   prepare: npsUtils.series(lintClient, buildClient),
+  publishClient,
+  syncVersions,
   start: `${runIn('client')} webpack-dev-server --mode=development`
 };
 
@@ -36,7 +40,7 @@ const client = {
 
 module.exports = {
   scripts: {
-    checkDeps: {
+    'check-deps': {
       description: 'Check for outdated dependencies in all packages.',
       script: npsUtils.series(
         client.checkDeps,
@@ -44,26 +48,26 @@ module.exports = {
         'npm-check --skip-unused || true'
       )
     },
-    clean: {
+    'clean': {
       description: 'Remove installed dependencies.',
       script: 'lerna clean --yes && unified.del node_modules'
     },
-    start: {
+    'start': {
       description: 'Start a Webpack development server for the client.',
       script: client.start
     },
-    build: {
+    'build': {
       description: 'Build all packages.',
       script: npsUtils.concurrent({
         backend: backend.build,
         client: client.build
       })
     },
-    bump: {
+    'bump': {
       description: 'Bump package versions and generate a tagged commit.',
       script: 'lerna version'
     },
-    deploy: {
+    'deploy': {
       default: {
         description: 'Deploy the backend to the development stage.',
         script: backend.deploy.dev
@@ -73,7 +77,15 @@ module.exports = {
         script: backend.deploy.prod
       }
     },
-    prepare: {
+    'publish-client': {
+      description: 'Publish a new version of Inspirat to the Chrome Web Store.',
+      script: client.publishClient
+    },
+    'sync-versions': {
+      description: 'Synchronize the client version in manifest.json from package.json.',
+      script: client.syncVersions
+    },
+    'prepare': {
       script: `lerna bootstrap && ${npsUtils.concurrent({
         backend: backend.prepare,
         client: client.prepare

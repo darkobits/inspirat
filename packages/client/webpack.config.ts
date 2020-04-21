@@ -1,7 +1,5 @@
 import path from 'path';
 
-import execa from 'execa';
-import fs from 'fs-extra';
 import getPort from 'get-port';
 import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
@@ -11,23 +9,6 @@ import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-
-
-async function synchronizeVersions(fromFile: string, toFile: string): Promise<void> {
-  const fromJson = await fs.readJson(fromFile);
-
-  if (!fromJson.version) {
-    throw new Error('Source file does not have a "version" property.');
-  }
-
-  const toJson = await fs.readJson(toFile);
-  toJson.version = fromJson.version;
-  await fs.writeJson(toFile, toJson, {spaces: 2});
-
-  // Add the file to the Git index so that during "bump" commands, this change
-  // is not left out of the commit.
-  await execa('git', ['add', toFile]);
-}
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => { // tslint:disable-line no-unused
@@ -266,11 +247,6 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
       }
     }
   };
-
-  // When building, sync the version from package.json to manifest.json.
-  if (argv.mode === 'production') {
-    await synchronizeVersions(path.resolve(pkgRoot, 'package.json'), path.resolve(pkgRoot, 'src', 'manifest.json'));
-  }
 
   config.stats = 'minimal';
 
