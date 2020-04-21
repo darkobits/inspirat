@@ -10,17 +10,16 @@
     "url": "git+https://github.com/darkobits/inspirat.git"
   },
   "dependencies": {
-    "@awspilot/dynamodb": "^1.2.8",
+    "@awspilot/dynamodb": "^2.0.0",
     "@darkobits/env": "^1.0.0",
     "aws-sdk": "^2.580.0",
     "axios": "^0.19.0",
-    "chalk": "^3.0.0",
+    "chalk": "^4.0.0",
     "is-plain-object": "^3.0.0",
     "ramda": "^0.27.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.36",
-    "@types/node": "^12.12.31",
     "@types/parse-link-header": "^1.0.0",
     "@types/ramda": "^0.27.0",
     "@types/webpack": "^4.41.0",

@@ -41,7 +41,7 @@ module.exports = {
       script: npsUtils.series(
         client.checkDeps,
         backend.checkDeps,
-        'npm-check --skip-unused'
+        'npm-check --skip-unused || true'
       )
     },
     clean: {

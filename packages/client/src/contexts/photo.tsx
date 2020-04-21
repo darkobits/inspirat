@@ -48,7 +48,7 @@ export interface PhotoProviderContext {
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
-  setDayOffset(action: string): void;
+  setDayOffset(action: 'increment' | 'decrement'): void;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
@@ -77,7 +77,7 @@ export const Provider = (props: PropsWithChildren<{}>) => {
   // ----- [Reducer] Increment/Decrement Photo Index ---------------------------
 
   // tslint:disable-next-line no-unnecessary-type-annotation
-  const [dayOffset, setDayOffset] = useReducer((state: number, action: string) => {
+  const [dayOffset, setDayOffset] = useReducer((state: number, action: 'increment' | 'decrement') => {
     switch (action) {
       case 'increment':
         return state + 1;
