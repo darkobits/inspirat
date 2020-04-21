@@ -193,7 +193,7 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   log.info('Publishing uploaded archive.');
 
-  // await webStore.publish();
+  await webStore.publish();
 
   log.info(`Successfully published extension version ${log.chalk.yellow(tagVersion)}.`);
 }
