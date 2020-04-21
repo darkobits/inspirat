@@ -1,0 +1,12 @@
+os: linux
+language: node_js
+node_js:
+  - 12
+script:
+  - npm ci --ignore-scripts
+  - npx nps prepare
+cache:
+  directories:
+    - packages/backend/.serverless
+    - packages/backend/.webpack
+    - packages/client/.linaria-cache
