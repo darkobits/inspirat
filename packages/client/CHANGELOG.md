@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.10.3](https://github.com/darkobits/inspirat/compare/v0.10.2...v0.10.3) (2020-04-21)
+
+
+### Bug Fixes
+
+* Use env-ci in extension publisher. ([ac37c63](https://github.com/darkobits/inspirat/commit/ac37c631afed2703773e0c6dbee98f761b64b6ae))
+* **client:** Fix grammar in readme. ([3b1ac66](https://github.com/darkobits/inspirat/commit/3b1ac66cd188649de20980609521e8297bb69bf6))
+
+
+
+
+
 ## [0.10.2](https://github.com/darkobits/inspirat/compare/v0.10.1...v0.10.2) (2020-03-26)
 
 

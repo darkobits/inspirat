@@ -1,6 +1,6 @@
 {
   "name": "Inspirat",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "description": "A minimalistic new tab experience in the style of Momentum.",
   "manifest_version": 2,
   "icons": {
