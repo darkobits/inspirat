@@ -1,4 +1,8 @@
-import {differenceInDays, endOfDay, getHours} from 'date-fns';
+import {
+  differenceInDays,
+  endOfDay,
+  getHours
+} from 'date-fns';
 
 
 /**

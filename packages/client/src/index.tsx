@@ -12,4 +12,5 @@ import setTitle from 'lib/title';
 setTitle();
 printReadme();
 
+
 ReactDOM.render(<PhotoContextProvider><Splash /></PhotoContextProvider>, document.getElementById('root'));

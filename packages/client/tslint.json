@@ -2,11 +2,8 @@
   "extends": "../../node_modules/@darkobits/ts-unified/dist/config/tslint.json",
   "rules": {
     "object-literal-key-quotes": false,
-
-    // Allow imports with side-effects. This is necessary for things like Babel
-		// polyfill and global styles.
-    "no-import-side-effect": false,
-
-    "no-void-expression": false
+    "no-import-side-effect": [true, {"ignore-module": "(\\.css)$"}],
+    "no-void-expression": false,
+    "no-unnecessary-type-annotation": false
   }
 }

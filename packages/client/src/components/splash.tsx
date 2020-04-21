@@ -1,13 +1,11 @@
 import {styled} from 'linaria/react';
 import {mix, rgba} from 'polished';
-import * as R from 'ramda';
-import React, {FunctionComponent, useContext} from 'react';
+import React from 'react';
 
 import PhotoContext from 'contexts/photo';
 import SplashMid from 'components/splash-mid';
 import SplashLower from 'components/splash-lower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
-import {UnsplashPhotoResource} from 'etc/types';
 import {getFullImageUrl} from 'lib/photos';
 
 
@@ -29,7 +27,7 @@ const SplashEl = styled.div<SplashElProps>`
   height: 100%;
   justify-content: center;
   padding: 14px 18px;
-  opacity: ${R.propOr('1', 'opacity')};
+  opacity: ${props => props.opacity || 1};
   width: 100%;
   transition: all 0.4s ease-in;
 
@@ -41,8 +39,8 @@ const SplashEl = styled.div<SplashElProps>`
      *
      * See: https://github.com/callstack/linaria/issues/368
      */
-    background-image: ${({backgroundImage}) => backgroundImage && `url(${backgroundImage})`};
-    background-position: ${R.propOr('center center', 'backgroundPosition')};
+    background-image: ${props => props.backgroundImage && `url(${props.backgroundImage})`};
+    background-position: ${props => props.backgroundPosition || 'center center'};
     background-repeat: no-repeat;
     background-size: cover;
     bottom: 0;
@@ -52,12 +50,12 @@ const SplashEl = styled.div<SplashElProps>`
     position: absolute;
     right: 0;
     top: 0;
-    transform: ${R.propOr('initial', 'transform')};
+    transform: ${props => props.transform || 'initial'};
     z-index: 0;
   }
 
   &::after {
-    background-color: ${({maskColor, maskAmount}) => rgba(mix(0.5, maskColor, 'black'), Number(maskAmount || 0.2))};
+    background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount || 0.2))};
     bottom: 0;
     content: ' ';
     display: block;
@@ -66,7 +64,7 @@ const SplashEl = styled.div<SplashElProps>`
     position: absolute;
     right: 0;
     top: 0;
-    transform: ${R.propOr('initial', 'transform')};
+    transform: ${props => props.transform || 'initial'};
     z-index: 0;
   }
 `;
@@ -157,7 +155,7 @@ const Progress = styled.div<{progress: number; color: string}>`
 
 // ----- Component -------------------------------------------------------------
 
-const Splash: FunctionComponent = () => {
+const Splash: React.FunctionComponent = () => {
   const {
     dayOffset,
     showDevTools,
@@ -165,24 +163,29 @@ const Splash: FunctionComponent = () => {
     setCurrentPhoto,
     resetPhoto,
     numPhotos
-  } = useContext(PhotoContext);
+  } = React.useContext(PhotoContext);
 
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
-  const color = R.propOr<string, UnsplashPhotoResource | undefined, string>('black', 'color', currentPhoto);
+  const color = currentPhoto?.color || 'black';
   const opacity = currentPhoto ? 1 : 0;
   const overrides = currentPhoto ? (BACKGROUND_RULE_OVERRIDES[currentPhoto.id]) : {};
 
-  const onSrcChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const onSrcChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const url = new URL(event.target.value);
       setCurrentPhoto({urls: {full: url.href}} as any);
     } catch {
       resetPhoto();
     }
-  };
+  }, []);
 
   return (
-    <SplashEl backgroundImage={currentPhotoUrl} maskColor={color} opacity={opacity} {...overrides}>
+    <SplashEl
+      backgroundImage={currentPhotoUrl}
+      maskColor={color}
+      opacity={opacity}
+      {...overrides}
+    >
       {showDevTools ? <>
         <Progress progress={((dayOffset % numPhotos) || 0) / numPhotos} color={color} />
         <Source><input type='text' onChange={onSrcChange} /></Source>

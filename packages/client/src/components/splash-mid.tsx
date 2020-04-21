@@ -1,7 +1,6 @@
 import {styled} from 'linaria/react';
 import {rgba} from 'polished';
-import * as R from 'ramda';
-import React, {FunctionComponent, useContext, useEffect, useState} from 'react';
+import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
 import PhotoContext from 'contexts/photo';
@@ -36,9 +35,9 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
   justify-content: center;
   letter-spacing: 1.5px;
   margin-bottom: 8px;
-  opacity: ${R.propOr(1, 'opacity')};
+  opacity: ${props => props.opacity || 1};
   padding-bottom: 1.2em;
-  text-shadow: ${R.pipe(R.prop('color'), textShadow)};
+  text-shadow: ${props => textShadow(props.color)};
   transition: opacity 1.2s ease-in 0.6s;
   user-select: none;
   z-index: 1;
@@ -76,25 +75,12 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
 
 // ----- Component -------------------------------------------------------------
 
-const SplashMid: FunctionComponent = () => {
-  const {currentPhoto} = useContext(PhotoContext);
-  const [name, setName] = useState('');
-
-  /**
-   * Asynchronously fetches the user's name from local storage and set it using
-   * setName.
-   */
-  // const getNameFromStorage = async () => {
-  //   const nameFromStorage = await storage.getItem<string>('name');
-
-  //   if (nameFromStorage) {
-  //     setName(nameFromStorage);
-  //   }
-  // };
-
+const SplashMid: React.FunctionComponent = () => {
+  const {currentPhoto} = React.useContext(PhotoContext);
+  const [name, setName] = React.useState('');
 
   // [Effect] Attach 'setName' to Window
-  useEffect(() => {
+  React.useEffect(() => {
     Object.defineProperty(window, 'setName', {
       value: (newName: string) => {
         storage.setItem('name', newName); // tslint:disable-line no-floating-promises
@@ -119,7 +105,10 @@ const SplashMid: FunctionComponent = () => {
 
 
   return (
-    <StyledSplashMid color={R.pathOr('black', ['color'], currentPhoto)} opacity={currentPhoto ? 1 : 0}>
+    <StyledSplashMid
+      color={currentPhoto?.color || 'black'}
+      opacity={currentPhoto ? 1 : 0}
+    >
       {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
     </StyledSplashMid>
   );

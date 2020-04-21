@@ -1,6 +1,6 @@
 import {styled} from 'linaria/react';
 import * as R from 'ramda';
-import React, {FunctionComponent, useContext} from 'react';
+import React from 'react';
 
 import PhotoContext from 'contexts/photo';
 import ImageMeta from 'components/image-meta';
@@ -41,8 +41,8 @@ const AttributionWrapper = styled.div`
 
 // ----- Component -------------------------------------------------------------
 
-const SplashLower: FunctionComponent = () => {
-  const {currentPhoto} = useContext(PhotoContext);
+const SplashLower: React.FunctionComponent = () => {
+  const {currentPhoto} = React.useContext(PhotoContext);
 
   // Location.
   const location = R.path<string>(['location', 'title'], currentPhoto);
