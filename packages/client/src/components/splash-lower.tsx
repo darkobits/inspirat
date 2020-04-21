@@ -1,5 +1,4 @@
 import {styled} from 'linaria/react';
-import {css} from 'linaria';
 import * as R from 'ramda';
 import React, {FunctionComponent, useContext} from 'react';
 
@@ -25,7 +24,7 @@ const SplashLowerEl = styled.div<SplashLowerElProps>`
 
 // Custom styling for the left ImageMeta element that will indicate the image's
 // location.
-const locationClassName = css`
+const LocationWrapper = styled.div`
   display: none;
 
   @media(min-width: 700px) {
@@ -35,7 +34,7 @@ const locationClassName = css`
 
 // Custom styling for the right ImageMeta element that will indicate the image's
 // author.
-const attributionClassName = css`
+const AttributionWrapper = styled.div`
   margin-left: auto;
 `;
 
@@ -50,14 +49,24 @@ const SplashLower: FunctionComponent = () => {
 
   // Attribution.
   const name = capitalizeWords(R.pathOr('', ['user', 'name'], currentPhoto));
-  const nameHref = R.pathOr('', ['user', 'links', 'html'], currentPhoto);
-  const unsplashHref = R.pathOr('', ['links', 'html'], currentPhoto);
-  const attribution = R.path(['user', 'name'], currentPhoto) ? <span>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></span> : undefined;
+  const nameHref = R.pathOr<string>('', ['user', 'links', 'html'], currentPhoto);
+  const unsplashHref = R.pathOr<string>('', ['links', 'html'], currentPhoto);
+  const attribution = R.path(['user', 'name'], currentPhoto)
+    ? <span>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></span>
+    : undefined;
 
   return (
     <SplashLowerEl opacity={currentPhoto ? 1 : 0}>
-      <ImageMeta className={locationClassName}>{location}</ImageMeta>
-      <ImageMeta className={attributionClassName}>{attribution}</ImageMeta>
+      <LocationWrapper>
+        <ImageMeta>
+          {location}
+        </ImageMeta>
+      </LocationWrapper>
+      <AttributionWrapper>
+        <ImageMeta>
+          {attribution}
+        </ImageMeta>
+      </AttributionWrapper>
     </SplashLowerEl>
   );
 };
