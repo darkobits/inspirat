@@ -2,9 +2,14 @@ os: linux
 language: node_js
 node_js:
   - 12
-script:
+install:
   - npm ci --ignore-scripts
+script:
   - npx nps prepare
+  - npx babel-node
+      --extensions=.ts
+      --config-file=./packages/client/babel.config.js
+      ./packages/client/scripts/publish-extension.ts
 cache:
   directories:
     - packages/backend/.serverless

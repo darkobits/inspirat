@@ -7,7 +7,6 @@ import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
 
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-// @ts-ignore
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
@@ -202,7 +201,14 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
     config.plugins.push(new FaviconsWebpackPlugin({
       logo: path.resolve(pkgRoot, 'assets', 'favicon.png'),
-      inject: true
+      inject: true,
+      favicons: {
+        icons: {
+          android: false,
+          coast: false,
+          yandex: false
+        }
+      }
     }));
   }
 
