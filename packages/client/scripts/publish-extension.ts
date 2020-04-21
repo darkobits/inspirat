@@ -5,6 +5,7 @@ import LogFactory from '@darkobits/log';
 import archiver from 'archiver';
 // @ts-ignore
 import chromeWebstoreUpload from 'chrome-webstore-upload';
+import envCi from 'env-ci';
 import execa from 'execa';
 import fs from 'fs-extra';
 import semver from 'semver';
@@ -27,6 +28,12 @@ async function getTagsAtHead() {
  * Returns the name of the current Git branch.
  */
 async function getCurrentBranch() {
+  const {isCi, branch} = envCi();
+
+  if (isCi && branch) {
+    return branch;
+  }
+
   const result = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
   return result.stdout;
 }
@@ -194,6 +201,8 @@ async function publishExtension(options: PublishExtensionOptions) {
 
 async function main() {
   try {
+    log.info(envCi());
+
     await publishExtension({
       branch: 'master',
       extensionId: process.env.CHROME_WEBSTORE_EXTENSION_ID,
