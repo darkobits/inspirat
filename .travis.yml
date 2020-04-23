@@ -6,10 +6,7 @@ install:
   - npm ci --ignore-scripts
 script:
   - npx nps prepare
-  - npx babel-node
-      --extensions=.ts
-      --config-file=./packages/client/babel.config.js
-      ./packages/client/scripts/publish-extension.ts
+  - npx nps publish-client
 cache:
   directories:
     - packages/backend/.serverless

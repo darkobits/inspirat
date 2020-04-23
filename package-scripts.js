@@ -23,15 +23,13 @@ const backend = {
 
 const lintClient = `unified.tslint --project ./packages/client/tsconfig.json  --format codeFrame`;
 const buildClient = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
-const publishClient = `${runIn('client')} npx babel-node --extensions=.ts --config-file=./babel.config.js ./scripts/publish-extension.ts`
-const syncVersions = `${runIn('client')} npx babel-node --extensions=.ts --config-file=./babel.config.js ./scripts/sync-versions.ts`
+const publishClient = `npx babel-node --extensions=.ts --config-file=./packages/client/babel.config.js ./packages/client/scripts/publish-extension.ts`
 
 const client = {
   checkDeps: 'npm-check --skip-unused ./packages/client || true',
   build: npsUtils.series(lintClient, buildClient),
   prepare: npsUtils.series(lintClient, buildClient),
   publishClient,
-  syncVersions,
   start: `${runIn('client')} webpack-dev-server --mode=development`
 };
 
@@ -80,10 +78,6 @@ module.exports = {
     'publish-client': {
       description: 'Publish a new version of Inspirat to the Chrome Web Store.',
       script: client.publishClient
-    },
-    'sync-versions': {
-      description: 'Synchronize the client version in manifest.json from package.json.',
-      script: client.syncVersions
     },
     'prepare': {
       script: `lerna bootstrap && ${npsUtils.concurrent({
