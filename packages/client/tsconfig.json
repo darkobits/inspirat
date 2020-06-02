@@ -1,34 +1,12 @@
 {
   "extends": "../../node_modules/@darkobits/ts-unified/dist/config/tsconfig.json",
   "compilerOptions": {
-    // Base directory to resolve non-relative module names.
-    "baseUrl": ".",
-
-    // Redirect output structure to this directory.
-    "outDir": "dist",
-
-    // Allow use of JSX.
-    "jsx": "react",
-
-    // Specify a list of built-in API groups to include in the project.
-    "lib": [
-      "esnext",
-      "dom"
-    ],
-
-    // Specify path mapping to be computed relative to baseUrl option.
-    "paths": {
-      "*": [
-        "*",
-        "src/*"
-      ]
-    },
-
-    // Required so that TypeScript can find hoisted @types packages correctly.
-    "moduleResolution": "node",
-
     "plugins": [{
       "name": "typescript-styled-plugin"
-    }]
+    }],
+    "baseUrl": ".",
+    "jsx": "react",
+    "lib": ["dom"],
+    "paths": {"*": ["*", "src/*"]}
   }
 }

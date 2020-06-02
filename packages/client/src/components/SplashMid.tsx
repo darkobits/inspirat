@@ -83,7 +83,7 @@ const SplashMid: React.FunctionComponent = () => {
   React.useEffect(() => {
     Object.defineProperty(window, 'setName', {
       value: (newName: string) => {
-        storage.setItem('name', newName); // tslint:disable-line no-floating-promises
+        void storage.setItem('name', newName);
         setName(newName);
       }
     });
@@ -106,7 +106,7 @@ const SplashMid: React.FunctionComponent = () => {
 
   return (
     <StyledSplashMid
-      color={currentPhoto?.color || 'black'}
+      color={currentPhoto?.color ?? 'black'}
       opacity={currentPhoto ? 1 : 0}
     >
       {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}

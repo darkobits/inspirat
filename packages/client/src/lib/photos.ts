@@ -49,7 +49,7 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
       const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
 
       // Return photos immediately and update storage in the background.
-      storage.setItem(COLLECTION_CACHE_KEY, cacheData); // tslint:disable-line no-floating-promises
+      void storage.setItem(COLLECTION_CACHE_KEY, cacheData);
 
       return cacheData;
     } catch (err) {
@@ -70,9 +70,9 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
     const cachedData = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
 
     // Then, if the data is stale, update it.
-    if ((now() - cachedData.updatedAt) >= ms(CACHE_TTL)) {
+    if (now() - cachedData.updatedAt >= ms(CACHE_TTL)) {
       ifDev(() => console.warn(`[getImages] Cache is stale, fetching new data. (${ms(now() - cachedData.updatedAt, {long: true})} out of date.).`));
-      fetchAndUpdateCollection(); // tslint:disable-line no-floating-promises
+      void fetchAndUpdateCollection();
     }
 
     // Immediately resolve with cached data.
@@ -153,7 +153,7 @@ export async function getPhotoForDayCached(): Promise<UnsplashPhotoResource> {
 
   // Don't wait for this promise; return immediately and cache the photo
   // asynchronously.
-  storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()}); // tslint:disable-line no-floating-promises
+  void storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()});
 
   return photo;
 }
@@ -219,13 +219,13 @@ export async function preloadImage(imgUrl: string): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const img = new Image();
 
-    img.onload = () => {
+    img.addEventListener('load', () => {
       resolve();
-    };
+    });
 
-    img.onerror = event => {
+    img.addEventListener('error', event => {
       reject(event);
-    };
+    });
 
     img.src = imgUrl;
   });

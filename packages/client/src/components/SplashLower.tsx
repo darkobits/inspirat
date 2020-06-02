@@ -3,7 +3,7 @@ import * as R from 'ramda';
 import React from 'react';
 
 import PhotoContext from 'contexts/photo';
-import ImageMeta from 'components/image-meta';
+import ImageMeta from 'components/ImageMeta';
 import {capitalizeWords} from 'lib/utils';
 
 

@@ -1,5 +1,9 @@
-module.exports = require('@darkobits/ts-unified/dist/config/babel')({
+module.exports = {
+  extends: '@darkobits/ts-unified/dist/config/babel',
   presets: [
-    '@babel/preset-react'
+    'linaria/babel'
+  ],
+  plugins: [
+    'react-hot-loader/babel'
   ]
-});
+};

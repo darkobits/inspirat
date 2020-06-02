@@ -21,7 +21,7 @@ export function modIndex(num: number, arr: Array<any>): number {
  * Provided a string, returns a new string with each word capitalized.
  */
 export function capitalizeWords(input: string): string {
-  return input.split(' ').map(word => `${word.substr(0, 1).toUpperCase()}${word.substr(1).toLowerCase()}`).join(' ');
+  return input.split(' ').map(word => `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`).join(' ');
 }
 
 

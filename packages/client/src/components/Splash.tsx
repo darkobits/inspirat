@@ -3,8 +3,8 @@ import {mix, rgba} from 'polished';
 import React from 'react';
 
 import PhotoContext from 'contexts/photo';
-import SplashMid from 'components/splash-mid';
-import SplashLower from 'components/splash-lower';
+import SplashMid from 'components/SplashMid';
+import SplashLower from 'components/SplashLower';
 import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
 import {getFullImageUrl} from 'lib/photos';
 
@@ -40,7 +40,7 @@ const SplashEl = styled.div<SplashElProps>`
      * See: https://github.com/callstack/linaria/issues/368
      */
     background-image: ${props => props.backgroundImage && `url(${props.backgroundImage})`};
-    background-position: ${props => props.backgroundPosition || 'center center'};
+    background-position: ${props => props.backgroundPosition ?? 'center center'};
     background-repeat: no-repeat;
     background-size: cover;
     bottom: 0;
@@ -50,12 +50,12 @@ const SplashEl = styled.div<SplashElProps>`
     position: absolute;
     right: 0;
     top: 0;
-    transform: ${props => props.transform || 'initial'};
+    transform: ${props => props.transform ?? 'initial'};
     z-index: 0;
   }
 
   &::after {
-    background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount || 0.2))};
+    background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount ?? 0.2))};
     bottom: 0;
     content: ' ';
     display: block;
@@ -64,7 +64,7 @@ const SplashEl = styled.div<SplashElProps>`
     position: absolute;
     right: 0;
     top: 0;
-    transform: ${props => props.transform || 'initial'};
+    transform: ${props => props.transform ?? 'initial'};
     z-index: 0;
   }
 `;
@@ -166,9 +166,9 @@ const Splash: React.FunctionComponent = () => {
   } = React.useContext(PhotoContext);
 
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
-  const color = currentPhoto?.color || 'black';
+  const color = currentPhoto?.color ?? 'black';
   const opacity = currentPhoto ? 1 : 0;
-  const overrides = currentPhoto ? (BACKGROUND_RULE_OVERRIDES[currentPhoto.id]) : {};
+  const overrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
 
   const onSrcChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -177,7 +177,10 @@ const Splash: React.FunctionComponent = () => {
     } catch {
       resetPhoto();
     }
-  }, []);
+  }, [
+    resetPhoto,
+    setCurrentPhoto
+  ]);
 
   return (
     <SplashEl
@@ -187,8 +190,8 @@ const Splash: React.FunctionComponent = () => {
       {...overrides}
     >
       {showDevTools ? <>
-        <Progress progress={((dayOffset % numPhotos) || 0) / numPhotos} color={color} />
-        <Source><input type='text' onChange={onSrcChange} /></Source>
+        <Progress progress={(dayOffset % numPhotos || 0) / numPhotos} color={color} />
+        <Source><input type="text" onChange={onSrcChange} /></Source>
         <Swatch color={color} />
       </> : undefined}
       <SplashMid />

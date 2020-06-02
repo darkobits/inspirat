@@ -5,7 +5,7 @@ import * as R from 'ramda';
 
 import {UnsplashCollectionPhotoResource} from 'etc/types';
 import {getQueueHandle} from 'lib/aws-helpers';
-import {AWSLambdaFunction} from 'lib/aws-lambda';
+import {AWSLambdaHandlerFactory} from 'lib/aws-lambda';
 import chalk from 'lib/chalk';
 import {getAllPages, isEmptyObject} from 'lib/utils';
 
@@ -23,8 +23,8 @@ import {getAllPages, isEmptyObject} from 'lib/utils';
  * the database. In a subsequent function call, we update the incomplete record
  * with a response from the /photos API.
  */
-export default AWSLambdaFunction({
-  async handler(res) {
+export default AWSLambdaHandlerFactory({
+  handler: async res => {
     /**
      * Maximum page size allowed by Unsplash.
      */
@@ -45,7 +45,7 @@ export default AWSLambdaFunction({
       }
     });
 
-    if (!unsplashPhotoCollection.length) {
+    if (unsplashPhotoCollection.length === 0) {
       console.warn('[syncCollection] Unsplash did not return any photos.');
 
       res.body = {
@@ -78,8 +78,8 @@ export default AWSLambdaFunction({
 
       // Post a message to our queue indicating that a new photo needs to be
       // added to the database.
+      // @ts-ignore
       await queueHandle.sendMessage({
-        // @ts-ignore
         MessageBody: JSON.stringify({
           id: photo.id
         })

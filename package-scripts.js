@@ -5,11 +5,12 @@ const runIn = package => `lerna exec --scope="*${package}*" --`;
 
 // ----- Backend Scripts -------------------------------------------------------
 
-const lintBackend = `unified.tslint --project ./packages/backend/tsconfig.json  --format codeFrame`;
+const lintBackend = `${runIn('backend')} unified.eslint src`;
 const buildBackend = `${runIn('backend')} serverless webpack`;
 
 const backend = {
   checkDeps: 'npm-check --skip-unused ./packages/backend || true',
+  lint: lintBackend,
   build: npsUtils.series(lintBackend, buildBackend),
   prepare: npsUtils.series(lintBackend, buildBackend),
   deploy: {
@@ -21,12 +22,13 @@ const backend = {
 
 // ----- Client Scripts --------------------------------------------------------
 
-const lintClient = `unified.tslint --project ./packages/client/tsconfig.json  --format codeFrame`;
+const lintClient = `${runIn('client')} unified.eslint src`;
 const buildClient = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
 const publishClient = `npx babel-node --extensions=.ts --config-file=./packages/client/babel.config.js ./packages/client/scripts/publish-extension.ts`
 
 const client = {
   checkDeps: 'npm-check --skip-unused ./packages/client || true',
+  lint: lintClient,
   build: npsUtils.series(lintClient, buildClient),
   prepare: npsUtils.series(lintClient, buildClient),
   publishClient,
@@ -38,13 +40,17 @@ const client = {
 
 module.exports = {
   scripts: {
-    'check-deps': {
+    'checkDeps': {
       description: 'Check for outdated dependencies in all packages.',
       script: npsUtils.series(
         client.checkDeps,
         backend.checkDeps,
         'npm-check --skip-unused || true'
       )
+    },
+    'lint': {
+      description: 'Lint all packages.',
+      script: npsUtils.series(backend.lint, client.lint)
     },
     'clean': {
       description: 'Remove installed dependencies.',

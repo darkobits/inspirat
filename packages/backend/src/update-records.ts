@@ -5,7 +5,7 @@ import {SQS} from 'aws-sdk';
 import axios from 'axios';
 
 import {getQueueHandle} from 'lib/aws-helpers';
-import {AWSLambdaFunction} from 'lib/aws-lambda';
+import {AWSLambdaHandlerFactory} from 'lib/aws-lambda';
 import chalk from 'lib/chalk';
 import {containsErrors} from 'lib/utils';
 
@@ -21,7 +21,7 @@ async function getNumberOfMessagesInQueue(queueHandle: SQS): Promise<number> {
     throw new Error('Unable to retrieve queue attributes.');
   }
 
-  return parseInt(Attributes.ApproximateNumberOfMessages, 10);
+  return Number.parseInt(Attributes.ApproximateNumberOfMessages, 10);
 }
 
 
@@ -32,7 +32,7 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
   // @ts-ignore
   const {Messages} = await queueHandle.receiveMessage({MaxNumberOfMessages: 10}).promise();
 
-  if (!Messages || !Messages.length) {
+  if (!Messages || Messages.length === 0) {
     return;
   }
 
@@ -113,8 +113,8 @@ async function processBatch(queueHandle: SQS, tableHandle: any) {
  * Otherwise, it will continue running until all messages in the queue have been
  * processed.
  */
-export default AWSLambdaFunction({
-  async handler(res) {
+export default AWSLambdaHandlerFactory({
+  handler: async () => {
     // ----- [1] Create Resource Handles ---------------------------------------
 
     const tableHandle = new DynamoDBFactory().table(`inspirat-${env('STAGE', true)}`);
@@ -133,9 +133,5 @@ export default AWSLambdaFunction({
       numMessages = await getNumberOfMessagesInQueue(queueHandle);
       console.log(`[update-records] Messages remaining: ${chalk.green(numMessages.toString())}.`);
     }
-
-    res.body = {
-      message: 'OK'
-    };
   }
 });

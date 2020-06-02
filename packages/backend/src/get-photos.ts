@@ -5,7 +5,7 @@ import {APIGatewayEvent} from 'aws-lambda';
 import * as R from 'ramda';
 
 import {LooseObject} from 'etc/types';
-import {AWSLambdaFunction, setCorsHeaders, setVersionHeader} from 'lib/aws-lambda';
+import {AWSLambdaHandlerFactory, setCorsHeaders, setVersionHeader} from 'lib/aws-lambda';
 
 
 /**
@@ -43,9 +43,9 @@ const assocPhotoPaths = assocAllPaths([
  *
  * This is the only function exposed to the public via API Gateway.
  */
-export default AWSLambdaFunction<APIGatewayEvent>({
+export default AWSLambdaHandlerFactory<APIGatewayEvent>({
   pre: [setCorsHeaders, setVersionHeader],
-  async handler(res) {
+  handler: async res => {
     const table = new DynamoDBFactory().table(`inspirat-${env('STAGE', true)}`);
     const photos = await table.scan();
     res.body = photos.map(assocPhotoPaths);

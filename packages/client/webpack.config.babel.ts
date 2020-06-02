@@ -11,7 +11,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 
 
-export default async (env: string, argv: any): Promise<webpack.Configuration> => { // tslint:disable-line no-unused
+export default async (env: string, argv: any): Promise<webpack.Configuration> => {
   const config: webpack.Configuration = {};
   config.module = {rules: []};
   config.plugins = [];
@@ -31,7 +31,10 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   // ----- Entry / Output ------------------------------------------------------
 
   config.entry = {
-    app: path.resolve(pkgRoot, 'src', 'index.tsx')
+    app: [
+      argv.mode === 'development' ? 'react-hot-loader/patch' : '',
+      path.resolve(pkgRoot, 'src', 'index.tsx')
+    ].filter(Boolean)
   };
 
   config.output = {
@@ -43,25 +46,20 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   // ----- Loaders -------------------------------------------------------------
 
-  // TSLint (Development only).
-  if (argv.mode === 'development') {
-    config.module.rules.push({
-      test: /\.(ts|tsx)$/,
-      exclude: /node_modules/,
-      enforce: 'pre',
-      use: [
-        {
-          loader: 'tslint-loader',
-          options: {
-            configFile: path.resolve(pkgRoot, 'tslint.json'),
-            tsConfigFile: path.resolve(pkgRoot, 'tsconfig.json'),
-            formatter: 'codeFrame',
-            typeCheck: true
-          }
-        }
-      ]
-    });
-  }
+  // ESLint
+  config.module.rules.push({
+    test: /\.(ts|tsx)$/,
+    exclude: /node_modules/,
+    enforce: 'pre',
+    use: [{
+      loader: 'eslint-loader',
+      options: {
+        emitErrors: true,
+        emitWarning: true,
+        failOnError: argv.mode === 'production'
+      }
+    }]
+  });
 
   // TypeScript & JavaScript files.
   config.module.rules.push({
@@ -169,19 +167,21 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   if (argv.mode === 'production') {
     config.plugins.push(new MiniCssExtractPlugin({filename: 'styles-[contenthash].css'}));
 
-    config.plugins.push(new CopyWebpackPlugin([
-      {
-        from: path.resolve(pkgRoot, 'src', 'manifest.json'),
-        transform: (contents: Buffer) => {
-          const manifest = JSON.parse(contents.toString());
-          manifest.version = pkgInfo.packageJson.version;
-          return JSON.stringify(manifest, undefined, 2);
-        }
-      },
-      path.resolve(pkgRoot, 'assets', 'favicon-16.png'),
-      path.resolve(pkgRoot, 'assets', 'favicon-48.png'),
-      path.resolve(pkgRoot, 'assets', 'favicon-128.png')
-    ]));
+    config.plugins.push(new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(pkgRoot, 'src', 'manifest.json'),
+          transform: (contents: Buffer) => {
+            const manifest = JSON.parse(contents.toString());
+            manifest.version = pkgInfo.packageJson.version;
+            return JSON.stringify(manifest, undefined, 2);
+          }
+        },
+        path.resolve(pkgRoot, 'assets', 'favicon-16.png'),
+        path.resolve(pkgRoot, 'assets', 'favicon-48.png'),
+        path.resolve(pkgRoot, 'assets', 'favicon-128.png')
+      ]
+    }));
 
     config.plugins.push(new webpack.LoaderOptionsPlugin({
       minimize: true
@@ -207,12 +207,11 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     const port = await getPort({port: 8080});
 
     config.devServer = {
-      bonjour: true,
       historyApiFallback: true,
       disableHostCheck: true,
       host: '0.0.0.0',
       inline: true,
-      hot: false,
+      hot: true,
       overlay: true,
       quiet: true,
       port
@@ -240,13 +239,13 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     splitChunks: {
       cacheGroups: {
         vendor: {
-          test: /[\\/]node_modules[\\/]/,
+          test: /[/\\]node_modules[/\\]/,
           name: 'vendor',
           chunks: 'all',
           minChunks: 1
         },
         data: {
-          test: /src\/data.*.txt$/,
+          test: /src\/data.+txt$/,
           name: 'data',
           chunks: 'all',
           minChunks: 1

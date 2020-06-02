@@ -16,11 +16,11 @@ export interface AmazonResourceName {
  * resource.
  */
 export function parseArn(arn: string): AmazonResourceName {
-  if (typeof arn !== 'string' || !arn.startsWith('arn:')) { // tslint:disable-line strict-type-predicates
+  if (typeof arn !== 'string' || !arn.startsWith('arn:')) {
     throw new Error('Invalid ARN.');
   }
 
-  const [, partition, service, region, accountId, resourceOrResourceType, resource, qualifier] = arn.split(/[:\/]/);
+  const [, partition, service, region, accountId, resourceOrResourceType, resource, qualifier] = arn.split(/[/:]/);
 
   if (!partition) {
     throw new Error('Invalid ARN; no partition.');
@@ -63,10 +63,12 @@ export function parseArn(arn: string): AmazonResourceName {
 /**
  * Provided a queue name, returns an SQS instance "bound" to the queue.
  */
-export async function getQueueHandle(QueueName: string, params?: any): Promise<SQS> {
+export async function getQueueHandle(queueName: string, params?: any): Promise<SQS> {
   const sqs = new SQS();
 
-  const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise();
+  const {QueueUrl} = await sqs.getQueueUrl({
+    QueueName: queueName
+  }).promise();
 
   return new SQS({
     params: {

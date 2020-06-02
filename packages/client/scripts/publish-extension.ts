@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /**
  * ===== Chrome Extension Publisher ============================================
  *
@@ -42,7 +44,7 @@ import path from 'path';
 import env from '@darkobits/env';
 import createLogger from '@darkobits/log';
 import bytes from 'bytes';
-// @ts-ignore
+// @ts-ignore (No type definitions exist for this module.)
 import chromeWebstoreUpload from 'chrome-webstore-upload';
 import envCi from 'env-ci';
 import fs from 'fs-extra';
@@ -101,7 +103,7 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   try {
     await fs.access(publishRoot);
-  } catch (err) {
+  } catch  {
     throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}`);
   }
 
@@ -128,7 +130,7 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   try {
     await fs.access(publishRoot);
-  } catch (err) {
+  } catch  {
     throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}.`);
   }
 
@@ -168,6 +170,10 @@ async function publishExtension(options: PublishExtensionOptions) {
 }
 
 
+/**
+ * NOTE: This function should be factored-out of this module in a future update,
+ * as its primary role is to invoke `publishExtension`.
+ */
 async function main() {
   try {
     log.verbose(envCi());
@@ -176,13 +182,13 @@ async function main() {
       extensionId: env<string>('CHROME_WEBSTORE_EXTENSION_ID'),
       clientId: env<string>('CHROME_WEBSTORE_CLIENT_ID'),
       clientSecret: env<string>('CHROME_WEBSTORE_CLIENT_SECRET'),
-      refreshToken: env<string>('CHROME_WEBSTORE_REFRESH_TOKEN'),
+      refreshToken: env<string>('CHROME_WEBSTORE_REFRESH_TOKEN')
     };
 
     await publishExtension({
       publishRoot: path.resolve(__dirname, '..', 'dist'),
       ...chromeWebStoreConfig,
-      shouldPublish: ({branch, tags, semver, manifest}) => { // tslint:disable-line no-shadowed-variable
+      shouldPublish: ({branch, tags, semver, manifest}) => {
         if (branch !== 'master') {
           return 'not on "master"';
         }
@@ -191,7 +197,7 @@ async function main() {
           return 'no Git tags at current commit';
         }
 
-        if (typeof manifest.version !== 'string') { // tslint:disable-line strict-type-predicates
+        if (typeof manifest.version !== 'string') {
           return `expected type of manifest version to be "string", got "${typeof manifest.version}`;
         }
 

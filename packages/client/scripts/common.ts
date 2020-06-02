@@ -41,7 +41,7 @@ export async function readExtensionManifest(extensionRoot: string): Promise<Read
   if (results.length > 1) {
     const message = [
       `Multiple manifest.json files found in ${log.chalk.green(extensionRoot)}:`,
-      ...results.map(result => `- ${log.chalk.green(path.relative(extensionRoot, result))}`)
+      ...results.map((result: string) => `- ${log.chalk.green(path.relative(extensionRoot, result))}`)
     ].join(os.EOL);
 
     throw new Error(message);
@@ -88,6 +88,6 @@ export async function zipFolder(folderPath: string) {
 
     archive.pipe(outputHandle);
     archive.glob('**', {cwd: folderPath});
-    archive.finalize(); // tslint:disable-line no-floating-promises
+    void archive.finalize();
   });
 }

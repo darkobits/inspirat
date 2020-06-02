@@ -41,9 +41,9 @@ export function getPeriodDescriptor() {
     case 0:
     case 1:
     case 2:
-     return 'evening';
+      return 'evening';
 
-     // 3:00AM - 11:59AM
+    // 3:00AM - 11:59AM
     case 3:
     case 4:
     case 5:

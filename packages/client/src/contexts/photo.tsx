@@ -67,7 +67,7 @@ export interface PhotoProviderContext {
 const Context = createContext<PhotoProviderContext>({} as any);
 
 
-export const Provider = (props: PropsWithChildren<{}>) => {
+export const Provider = (props: PropsWithChildren<React.ReactNode>) => {
   const [currentPhotoFromState, setCurrentPhoto] = useState<UnsplashPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = useState(0);
   const [numPhotos, setNumPhotos] = useState(0);
@@ -76,7 +76,6 @@ export const Provider = (props: PropsWithChildren<{}>) => {
 
   // ----- [Reducer] Increment/Decrement Photo Index ---------------------------
 
-  // tslint:disable-next-line no-unnecessary-type-annotation
   const [dayOffset, setDayOffset] = useReducer((state: number, action: 'increment' | 'decrement') => {
     switch (action) {
       case 'increment':
@@ -196,7 +195,7 @@ export const Provider = (props: PropsWithChildren<{}>) => {
     showDevTools,
     currentPhoto: currentPhotoFromState,
     setCurrentPhoto,
-    resetPhoto() {
+    resetPhoto: () => {
       resetPhoto(shouldResetPhoto + 1);
     },
     numPhotos
