@@ -17,7 +17,7 @@ const SplashLowerEl = styled.div<SplashLowerElProps>`
   display: flex;
   justify-content: space-between;
   opacity: ${R.prop('opacity')};
-  transition: opacity 1.2s ease-in 1.2s;
+  transition: opacity 1.2s ease-in 0.8s;
   width: 100%;
   z-index: 1;
 `;

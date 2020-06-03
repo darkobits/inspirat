@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import App from 'components/App';
-import 'etc/global-style.css';
+import 'etc/global-styles';
 import printReadme from 'lib/readme';
 import setTitle from 'lib/title';
 

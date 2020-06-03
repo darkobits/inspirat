@@ -1,5 +1,6 @@
 import {styled} from 'linaria/react';
 import {rgba} from 'polished';
+import * as R from 'ramda';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
@@ -26,7 +27,7 @@ const textShadow = (color: string) => compositeTextShadow([
   [0, 0, 96, rgba(color, 0.6)]
 ]);
 
-const StyledSplashMid = styled.div<StyledSplashMidProps>`
+const SplashMidEl = styled.div<StyledSplashMidProps>`
   align-items: center;
   display: flex;
   flex-grow: 1;
@@ -35,12 +36,13 @@ const StyledSplashMid = styled.div<StyledSplashMidProps>`
   justify-content: center;
   letter-spacing: 1.5px;
   margin-bottom: 8px;
-  opacity: ${props => props.opacity || 1};
   padding-bottom: 1.2em;
   text-shadow: ${props => textShadow(props.color)};
-  transition: opacity 1.2s ease-in 0.6s;
   user-select: none;
   z-index: 1;
+
+  opacity: ${R.prop('opacity')};
+  transition: opacity 1.2s ease-in 0.4s;
 
   * {
     font-size: inherit;
@@ -104,13 +106,15 @@ const SplashMid: React.FunctionComponent = () => {
   }, []);
 
 
+  console.debug('[SplashMid] Opacity:', currentPhoto ? 1 : 0);
+
   return (
-    <StyledSplashMid
+    <SplashMidEl
       color={currentPhoto?.color ?? 'black'}
       opacity={currentPhoto ? 1 : 0}
     >
       {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
-    </StyledSplashMid>
+    </SplashMidEl>
   );
 };
 

@@ -129,10 +129,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module.rules.push({
     test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
     use: [{
-      loader: 'url-loader',
-      options: {
-        limit: 10000
-      }
+      loader: 'file-loader'
     }]
   });
 
