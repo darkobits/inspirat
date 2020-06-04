@@ -70,6 +70,9 @@ const log = createLogger({heading: 'publish-extension'});
  * complete.
  */
 async function publishExtension(options: PublishExtensionOptions) {
+  log.silly('Options:', options);
+
+
   // ----- [1] Validate Web Store Credentials ----------------------------------
 
   const {extensionId, clientId, clientSecret, refreshToken} = options;
@@ -94,7 +97,10 @@ async function publishExtension(options: PublishExtensionOptions) {
   // ----- [2] Compute Git Branch & Tags ---------------------------------------
 
   const {branch} = envCi();
+  log.silly(`Git branch from env-ci: ${branch}`);
+
   const tags = await getTagsAtHead();
+  log.silly(`Git tags: "${tags.join('", "')}"`);
 
 
   // ----- [3] Verify Publish Root & Manifest ----------------------------------
@@ -114,6 +120,7 @@ async function publishExtension(options: PublishExtensionOptions) {
   // ----- [4] Determine Publish Eligibility -----------------------------------
 
   const shouldPublish = await options.shouldPublish({branch, manifest, semver, tags});
+  log.silly(`Should publish: ${shouldPublish}`);
 
   if (shouldPublish === false || shouldPublish === undefined) {
     log.warn('Skipping extension publish.');
@@ -127,12 +134,6 @@ async function publishExtension(options: PublishExtensionOptions) {
 
 
   // ----- [5] Compress Artifacts ----------------------------------------------
-
-  try {
-    await fs.access(publishRoot);
-  } catch  {
-    throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}.`);
-  }
 
   const archivePath = await zipFolder(publishRoot);
   log.info(`Created archive from ${log.chalk.green(publishRoot)}.`);
@@ -150,9 +151,11 @@ async function publishExtension(options: PublishExtensionOptions) {
   const archiveStream = fs.createReadStream(archivePath);
   const uploadResult: ChromeWebstoreUploadResult = await webStore.uploadExisting(archiveStream);
 
-  log.verbose('Upload result:', uploadResult);
+  log.silly('Upload result:', uploadResult);
 
   if (uploadResult.uploadState === 'FAILURE' && uploadResult.itemError) {
+    log.silly('Archive upload failed:', uploadResult);
+
     throw new Error([
       'Archive upload failed:',
       ...uploadResult.itemError.map(error => `- ${error.error_detail}`)
@@ -172,7 +175,8 @@ async function publishExtension(options: PublishExtensionOptions) {
 
 /**
  * NOTE: This function should be factored-out of this module in a future update,
- * as its primary role is to invoke `publishExtension`.
+ * as its primary role is to gather configuration specific to this project and
+ * invoke `publishExtension`.
  */
 async function main() {
   try {
