@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 
 import App from 'components/App';
 import 'etc/global-styles';
-import printReadme from 'lib/readme';
+import printReadme from 'etc/print-readme';
 import setTitle from 'lib/title';
 
 
