@@ -1,11 +1,5 @@
 import mousetrap from 'mousetrap';
-import React, {
-  createContext,
-  PropsWithChildren,
-  useEffect,
-  useReducer,
-  useState
-} from 'react';
+import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
 import {UnsplashPhotoResource} from 'etc/types';
@@ -17,6 +11,7 @@ import {
   preloadImage
 } from 'lib/photos';
 import queryString from 'lib/query';
+import storage from 'lib/storage';
 import {ifDev} from 'lib/utils';
 
 
@@ -45,6 +40,11 @@ export interface PhotoProviderContext {
   showDevTools: boolean;
 
   /**
+   * Current name that the user has set, persisted in local storage.
+   */
+  name?: string;
+
+  /**
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
@@ -64,19 +64,20 @@ export interface PhotoProviderContext {
 }
 
 
-const Context = createContext<PhotoProviderContext>({} as any);
+const Context = React.createContext<PhotoProviderContext>({} as any);
 
 
-export const Provider = (props: PropsWithChildren<React.ReactNode>) => {
-  const [currentPhotoFromState, setCurrentPhoto] = useState<UnsplashPhotoResource>();
-  const [shouldResetPhoto, resetPhoto] = useState(0);
-  const [numPhotos, setNumPhotos] = useState(0);
-  const [showDevTools, setShowDevTools] = useState(false);
+export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
+  const [currentPhotoFromState, setCurrentPhoto] = React.useState<UnsplashPhotoResource>();
+  const [shouldResetPhoto, resetPhoto] = React.useState(0);
+  const [numPhotos, setNumPhotos] = React.useState(0);
+  const [showDevTools, setShowDevTools] = React.useState(false);
+  const [name, setName] = React.useState('');
 
 
   // ----- [Reducer] Increment/Decrement Photo Index ---------------------------
 
-  const [dayOffset, setDayOffset] = useReducer((state: number, action: 'increment' | 'decrement') => {
+  const [dayOffset, setDayOffset] = React.useReducer((state: number, action: 'increment' | 'decrement') => {
     switch (action) {
       case 'increment':
         return state + 1;
@@ -87,15 +88,41 @@ export const Provider = (props: PropsWithChildren<React.ReactNode>) => {
     }
   }, 0);
 
+  // ----- [Effect] Fetch Name from Storage ------------------------------------
+
+  useAsyncEffect(async isMounted => {
+    const nameFromStorage = await storage.getItem<string>('name');
+
+    if (isMounted() && nameFromStorage) {
+      setName(nameFromStorage);
+    }
+  }, []);
+
+
+  // ----- [Effect] Create setName Method --------------------------------------
+
+  React.useEffect(() => {
+    Reflect.defineProperty(window, 'setName', {
+      value: (newName: string) => {
+        void storage.setItem('name', newName);
+        setName(newName);
+      }
+    });
+
+    return () => {
+      Reflect.deleteProperty(window, 'setName');
+    };
+  }, []);
+
 
   // ----- [Effect] Determine Dev Tools Visibility -----------------------------
 
-  useEffect(() => ifDev(() => setShowDevTools(Object.keys(queryString()).includes('dev'))), []);
+  React.useEffect(() => ifDev(() => setShowDevTools(Object.keys(queryString()).includes('dev'))), []);
 
 
-  // ----- [Effect] Create Key-Bindings ----------------------------------------
+  // ----- [Effect] Create Dev Tools Key-Bindings ------------------------------
 
-  useEffect(() => ifDev(() => {
+  React.useEffect(() => ifDev(() => {
     if (!showDevTools) {
       return;
     }
@@ -114,10 +141,7 @@ export const Provider = (props: PropsWithChildren<React.ReactNode>) => {
       mousetrap.unbind('left');
       mousetrap.unbind('right');
     };
-  }), [
-    // Run this effect whenever showDevTools changes.
-    showDevTools
-  ]);
+  }), [showDevTools]);
 
 
   // ----- [Async Effect] Determine Size of Photo Collection -------------------
@@ -176,13 +200,8 @@ export const Provider = (props: PropsWithChildren<React.ReactNode>) => {
       console.debug('[PhotosProvider] Finished downloading adjacent photos.');
     });
   }, [
-    // Re-run this effect when the day offset changes (ie: via the setDayOffset
-    // function we export in our context).
     dayOffset,
-    // Re-run this effect whenever the value of shouldResetPhoto changes (ie:
-    // when resetPhot() is called).
     shouldResetPhoto,
-    // Re-run this effect when the status of development mode changes.
     showDevTools
   ]);
 
@@ -193,6 +212,7 @@ export const Provider = (props: PropsWithChildren<React.ReactNode>) => {
     dayOffset,
     setDayOffset,
     showDevTools,
+    name,
     currentPhoto: currentPhotoFromState,
     setCurrentPhoto,
     resetPhoto: () => {

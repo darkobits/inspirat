@@ -2,11 +2,9 @@ import {styled} from 'linaria/react';
 import {rgba} from 'polished';
 import * as R from 'ramda';
 import React from 'react';
-import useAsyncEffect from 'use-async-effect';
 
 import PhotoContext from 'contexts/photo';
 import {getPeriodDescriptor} from 'lib/time';
-import storage from 'lib/storage';
 import {compositeTextShadow} from 'lib/typography';
 
 
@@ -75,44 +73,13 @@ const SplashMidEl = styled.div<StyledSplashMidProps>`
 `;
 
 
-// ----- Component -------------------------------------------------------------
+// ----- Splash Mid ------------------------------------------------------------
 
 const SplashMid: React.FunctionComponent = () => {
-  const {currentPhoto} = React.useContext(PhotoContext);
-  const [name, setName] = React.useState('');
-
-  // [Effect] Attach 'setName' to Window
-  React.useEffect(() => {
-    Object.defineProperty(window, 'setName', {
-      value: (newName: string) => {
-        void storage.setItem('name', newName);
-        setName(newName);
-      }
-    });
-
-    return () => {
-      Reflect.deleteProperty(window, 'setName');
-    };
-  }, []);
-
-
-  // [Async Effect] Get user's name from local storage and update greeting.
-  useAsyncEffect(async isMounted => {
-    const nameFromStorage = await storage.getItem<string>('name');
-
-    if (isMounted() && nameFromStorage) {
-      setName(nameFromStorage);
-    }
-  }, []);
-
-
-  console.debug('[SplashMid] Opacity:', currentPhoto ? 1 : 0);
+  const {currentPhoto, name} = React.useContext(PhotoContext);
 
   return (
-    <SplashMidEl
-      color={currentPhoto?.color ?? 'black'}
-      opacity={currentPhoto ? 1 : 0}
-    >
+    <SplashMidEl color={currentPhoto?.color ?? 'black'} opacity={currentPhoto ? 1 : 0}>
       {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
     </SplashMidEl>
   );
