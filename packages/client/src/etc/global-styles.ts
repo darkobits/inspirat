@@ -93,21 +93,14 @@ export default css`
     src: url('${JosefinSansThinItalic}') format('woff');
   }
 
-  :global(html) {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-
+  :global() {
     * {
       box-sizing: border-box;
       color: white;
       font-family: Josefin Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
-      font-weight: 300;
-      font-size: 16px;
     }
 
-    body {
+    html, body {
       height: 100%;
       margin: 0;
       padding: 0;

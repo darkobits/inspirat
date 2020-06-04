@@ -26,6 +26,8 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
   display: flex;
   text-shadow: ${R.pipe(R.propOr('black', 'shadowColor'), textShadow)};
   user-select: none;
+  font-weight: 400;
+  letter-spacing: 0.4px;
 
   & a {
     color: rgb(255, 255, 255, 0.96);
