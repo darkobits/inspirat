@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.10.7](https://github.com/darkobits/inspirat/compare/v0.10.6...v0.10.7) (2020-06-04)
+
+
+### Bug Fixes
+
+* Add font-size to ImageMeta. ([aca9ef6](https://github.com/darkobits/inspirat/commit/aca9ef6c8fddd8b9b7bc0dab675301d26303f309))
+
+
+
+
+
 ## [0.10.6](https://github.com/darkobits/inspirat/compare/v0.10.5...v0.10.6) (2020-06-04)
 
 **Note:** Version bump only for package inspirat-client
