@@ -73,7 +73,46 @@ async function publishExtension(options: PublishExtensionOptions) {
   log.silly('Options:', options);
 
 
-  // ----- [1] Validate Web Store Credentials ----------------------------------
+  // ----- [1] Compute Git Branch & Tags ---------------------------------------
+
+  const {branch} = envCi();
+  log.silly(`Git branch from env-ci: ${branch}`);
+
+  const tags = await getTagsAtHead();
+  log.silly(`Git tags: "${tags.join('", "')}"`);
+
+
+  // ----- [2] Verify Publish Root & Manifest ----------------------------------
+
+  const {publishRoot} = options;
+
+  try {
+    await fs.access(publishRoot);
+  } catch  {
+    throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}`);
+  }
+
+  const {manifest, path: manifestPath} = await readExtensionManifest(publishRoot);
+  log.info(`Using manifest at ${log.chalk.green(path.relative(publishRoot, manifestPath))}.`);
+
+
+  // ----- [3] Determine Publish Eligibility -----------------------------------
+
+  const shouldPublish = await options.shouldPublish({branch, manifest, semver, tags});
+  log.silly(`Should publish: ${shouldPublish}`);
+
+  if (shouldPublish === false || shouldPublish === undefined) {
+    log.warn('Skipping extension publish.');
+    return;
+  }
+
+  if (typeof shouldPublish === 'string') {
+    log.warn(`Skipping extension publish; ${shouldPublish}`);
+    return;
+  }
+
+
+  // ----- [4] Validate Web Store Credentials ----------------------------------
 
   const {extensionId, clientId, clientSecret, refreshToken} = options;
 
@@ -91,45 +130,6 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   if (!refreshToken) {
     throw new Error('refresh token not set');
-  }
-
-
-  // ----- [2] Compute Git Branch & Tags ---------------------------------------
-
-  const {branch} = envCi();
-  log.silly(`Git branch from env-ci: ${branch}`);
-
-  const tags = await getTagsAtHead();
-  log.silly(`Git tags: "${tags.join('", "')}"`);
-
-
-  // ----- [3] Verify Publish Root & Manifest ----------------------------------
-
-  const {publishRoot} = options;
-
-  try {
-    await fs.access(publishRoot);
-  } catch  {
-    throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}`);
-  }
-
-  const {manifest, path: manifestPath} = await readExtensionManifest(publishRoot);
-  log.info(`Using manifest at ${log.chalk.green(path.relative(publishRoot, manifestPath))}.`);
-
-
-  // ----- [4] Determine Publish Eligibility -----------------------------------
-
-  const shouldPublish = await options.shouldPublish({branch, manifest, semver, tags});
-  log.silly(`Should publish: ${shouldPublish}`);
-
-  if (shouldPublish === false || shouldPublish === undefined) {
-    log.warn('Skipping extension publish.');
-    return;
-  }
-
-  if (typeof shouldPublish === 'string') {
-    log.warn(`Skipping extension publish; ${shouldPublish}`);
-    return;
   }
 
 
