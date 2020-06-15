@@ -80,7 +80,7 @@ const SplashMid: React.FunctionComponent = () => {
 
   return (
     <SplashMidEl color={currentPhoto?.color ?? 'black'} opacity={currentPhoto ? 1 : 0}>
-      {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
+      {`Have a wonderful ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
     </SplashMidEl>
   );
 };
