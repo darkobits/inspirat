@@ -1,4 +1,5 @@
 import {styled} from 'linaria/react';
+import ms from 'ms';
 import {rgba} from 'polished';
 import * as R from 'ramda';
 import React from 'react';
@@ -77,10 +78,22 @@ const SplashMidEl = styled.div<StyledSplashMidProps>`
 
 const SplashMid: React.FunctionComponent = () => {
   const {currentPhoto, name} = React.useContext(PhotoContext);
+  const [period, setPeriod] = React.useState(getPeriodDescriptor());
+
+  /**
+   * Update period every minute.
+   */
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setPeriod(getPeriodDescriptor());
+    }, ms('1 minute'));
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <SplashMidEl color={currentPhoto?.color ?? 'black'} opacity={currentPhoto ? 1 : 0}>
-      {`Good ${getPeriodDescriptor()}${name ? `, ${name}` : ''}.`}
+      {`Good ${period}${name ? `, ${name}` : ''}.`}
     </SplashMidEl>
   );
 };
