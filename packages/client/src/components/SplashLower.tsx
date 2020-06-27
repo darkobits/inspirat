@@ -4,6 +4,7 @@ import React from 'react';
 
 import PhotoContext from 'contexts/photo';
 import ImageMeta from 'components/ImageMeta';
+import useQuery from 'hooks/use-query';
 import {capitalizeWords} from 'lib/utils';
 
 
@@ -43,6 +44,14 @@ const AttributionWrapper = styled.div`
 
 const SplashLower: React.FunctionComponent = () => {
   const {currentPhoto} = React.useContext(PhotoContext);
+  const query = useQuery();
+
+  /**
+   * If we have a `meta=false` query param, hide image metadata.
+   */
+  if (query.get('meta') && query.get('meta') === 'false') {
+    return null;
+  }
 
   // Location.
   const location = R.path<string>(['location', 'title'], currentPhoto);
