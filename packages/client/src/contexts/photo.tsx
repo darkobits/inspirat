@@ -48,19 +48,19 @@ export interface PhotoProviderContext {
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
-  setDayOffset(action: 'increment' | 'decrement'): void;
+  setDayOffset: (action: 'increment' | 'decrement') => void;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
    * would be displayed based on the current day offset.
    */
-  setCurrentPhoto(photo: UnsplashPhotoResource | undefined): void;
+  setCurrentPhoto: (photo: UnsplashPhotoResource | undefined) => void;
 
   /**
    * Resets the current photo to the photo that should be displayed based on the
    * current day offset.
    */
-  resetPhoto(): void;
+  resetPhoto: () => void;
 }
 
 

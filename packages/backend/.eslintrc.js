@@ -6,8 +6,8 @@ module.exports = {
     project: `${__dirname}/tsconfig.json`
   },
   rules: {
-    // Rationale: This project logs to the browser's console for various
-    // debugging purposes.
+    // Rationale: This project logs to the console for various debugging
+    // purposes.
     'no-console': 'off'
   }
 };
