@@ -1,3 +1,6 @@
+import queryString from 'query-string';
+
+
 /**
  * Custom hook for introspecting URL query parameters.
  *
@@ -7,5 +10,5 @@
  * query.get('foo');
  */
 export default function useQuery() {
-  return new URLSearchParams(window.location.search);
+  return queryString.parse(window.location.search);
 }

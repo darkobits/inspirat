@@ -3,6 +3,7 @@ import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
 import {UnsplashPhotoResource} from 'etc/types';
+import useQuery from 'hooks/use-query';
 import {
   getFullImageUrl,
   getPhotos,
@@ -10,7 +11,6 @@ import {
   getPhotoForDayCached,
   preloadImage
 } from 'lib/photos';
-import queryString from 'lib/query';
 import storage from 'lib/storage';
 import {ifDev} from 'lib/utils';
 
@@ -73,6 +73,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
   const [name, setName] = React.useState('');
+  const query = useQuery();
 
 
   // ----- [Reducer] Increment/Decrement Photo Index ---------------------------
@@ -117,7 +118,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
 
   // ----- [Effect] Determine Dev Tools Visibility -----------------------------
 
-  React.useEffect(() => ifDev(() => setShowDevTools(Object.keys(queryString()).includes('dev'))), []);
+  React.useEffect(() => ifDev(() => setShowDevTools(Object.keys(query).includes('dev'))), []);
 
 
   // ----- [Effect] Create Dev Tools Key-Bindings ------------------------------

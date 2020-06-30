@@ -46,10 +46,11 @@ const SplashLower: React.FunctionComponent = () => {
   const {currentPhoto} = React.useContext(PhotoContext);
   const query = useQuery();
 
+
   /**
    * If we have a `meta=false` query param, hide image metadata.
    */
-  if (query.get('meta') && query.get('meta') === 'false') {
+  if (query?.meta === 'false') {
     return null;
   }
 
