@@ -45,6 +45,11 @@ export interface PhotoProviderContext {
   name?: string;
 
   /**
+   * Sets the user's name.
+   */
+  setName: (value: string) => void;
+
+  /**
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
@@ -72,7 +77,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
-  const [name, setName] = React.useState('');
+  const [name, setNameLocal] = React.useState('');
   const query = useQuery();
 
 
@@ -95,25 +100,17 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     const nameFromStorage = await storage.getItem<string>('name');
 
     if (isMounted() && nameFromStorage) {
-      setName(nameFromStorage);
+      setNameLocal(nameFromStorage);
     }
   }, []);
 
 
-  // ----- [Effect] Create setName Method --------------------------------------
+  // ----- Set Name Method -----------------------------------------------------
 
-  React.useEffect(() => {
-    Reflect.defineProperty(window, 'setName', {
-      value: (newName: string) => {
-        void storage.setItem('name', newName);
-        setName(newName);
-      }
-    });
-
-    return () => {
-      Reflect.deleteProperty(window, 'setName');
-    };
-  }, []);
+  const setName = (value: string) => {
+    void storage.setItem('name', value);
+    setNameLocal(value);
+  };
 
 
   // ----- [Effect] Determine Dev Tools Visibility -----------------------------
@@ -214,6 +211,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     setDayOffset,
     showDevTools,
     name,
+    setName,
     currentPhoto: currentPhotoFromState,
     setCurrentPhoto,
     resetPhoto: () => {

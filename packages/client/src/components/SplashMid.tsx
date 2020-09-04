@@ -28,6 +28,7 @@ const textShadow = (color: string) => compositeTextShadow([
 
 const SplashMidEl = styled.div<StyledSplashMidProps>`
   align-items: center;
+  color: white;
   display: flex;
   flex-grow: 1;
   font-size: 28px;

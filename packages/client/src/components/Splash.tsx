@@ -12,6 +12,10 @@ import {getFullImageUrl} from 'lib/photos';
 
 // ----- Styles ----------------------------------------------------------------
 
+export interface SplashProps {
+  onMouseDown?: React.EventHandler<React.MouseEvent>;
+}
+
 export interface SplashElProps {
   backgroundImage: string;
   maskColor: string;
@@ -82,7 +86,7 @@ const SplashEl = styled.div<SplashElProps>`
 
 // ----- Component -------------------------------------------------------------
 
-const Splash: React.FunctionComponent = () => {
+const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
   const {currentPhoto} = React.useContext(PhotoContext);
   const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
   const color = currentPhoto?.color ?? 'black';
@@ -94,6 +98,7 @@ const Splash: React.FunctionComponent = () => {
       backgroundImage={currentPhotoUrl}
       maskColor={color}
       opacity={opacity}
+      onMouseDown={onMouseDown}
       {...overrides}
     >
       <DevTools />

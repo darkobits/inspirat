@@ -96,7 +96,6 @@ export default css`
   :global() {
     * {
       box-sizing: border-box;
-      color: white;
       font-family: Josefin Sans, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
     }
 
@@ -109,6 +108,10 @@ export default css`
 
     a {
       text-decoration: none;
+
+      &:hover {
+        text-decoration: none;
+      }
     }
 
     #root {
