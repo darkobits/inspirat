@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.11.1](https://github.com/darkobits/inspirat/compare/v0.11.0...v0.11.1) (2020-09-04)
+
+
+### Bug Fixes
+
+* Revert chrome-webstore-upload version. ([0932645](https://github.com/darkobits/inspirat/commit/09326456025f690da05e249d6eeaf594d23d9966))
+
+
+
+
+
 # [0.11.0](https://github.com/darkobits/inspirat/compare/v0.10.7...v0.11.0) (2020-09-04)
 
 
