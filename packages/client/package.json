@@ -54,7 +54,7 @@
     "archiver": "^5.0.0",
     "babel-loader": "^8.0.4",
     "bytes": "^3.1.0",
-    "chrome-webstore-upload": "^0.4.0",
+    "chrome-webstore-upload": "^0.2.2",
     "copy-webpack-plugin": "^6.0.1",
     "css-loader": "^4.2.2",
     "env-ci": "^5.0.2",
