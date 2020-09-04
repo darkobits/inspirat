@@ -3,6 +3,24 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.11.0](https://github.com/darkobits/inspirat/compare/v0.10.7...v0.11.0) (2020-09-04)
+
+
+### Bug Fixes
+
+* **publish-script:** Check for credentials only after a publish should happen. ([e8486d3](https://github.com/darkobits/inspirat/commit/e8486d33c7c8b4ed0c47e97a0135d360e2da0ac9))
+
+
+### Features
+
+* Add 'meta' URL param. ([3687cc7](https://github.com/darkobits/inspirat/commit/3687cc7332b28a2e2499af29c4ca4071d6f8efa0))
+* Add Settings modal. ([309e712](https://github.com/darkobits/inspirat/commit/309e712a200a33cd9ffeb5e1a9b22e3c88316f4e))
+* Automatically update period. ([d62f935](https://github.com/darkobits/inspirat/commit/d62f9357d83719d96bf0cdd7afe741267e91766c))
+
+
+
+
+
 ## [0.10.7](https://github.com/darkobits/inspirat/compare/v0.10.6...v0.10.7) (2020-06-04)
 
 

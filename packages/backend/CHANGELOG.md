@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.11.0](https://github.com/darkobits/inspirat/compare/v0.10.7...v0.11.0) (2020-09-04)
+
+
+### Features
+
+* Add Settings modal. ([309e712](https://github.com/darkobits/inspirat/commit/309e712a200a33cd9ffeb5e1a9b22e3c88316f4e))
+
+
+
+
+
 ## [0.10.4](https://github.com/darkobits/inspirat/compare/v0.10.3...v0.10.4) (2020-06-02)
 
 **Note:** Version bump only for package inspirat-backend
