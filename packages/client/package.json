@@ -1,7 +1,7 @@
 {
   "name": "inspirat-client",
   "description": "Front-end for Inspirat.",
-  "version": "0.11.1",
+  "version": "0.11.2",
   "private": true,
   "author": "darkobits",
   "license": "WTFPL",

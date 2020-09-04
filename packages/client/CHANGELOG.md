@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.11.2](https://github.com/darkobits/inspirat/compare/v0.11.1...v0.11.2) (2020-09-04)
+
+
+### Bug Fixes
+
+* Settings defaults to closed. ([3ffc996](https://github.com/darkobits/inspirat/commit/3ffc9967f80041417294e8a14648e01d237674a2))
+
+
+
+
+
 ## [0.11.1](https://github.com/darkobits/inspirat/compare/v0.11.0...v0.11.1) (2020-09-04)
 
 
