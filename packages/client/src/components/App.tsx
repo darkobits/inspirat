@@ -23,7 +23,7 @@ const onClickAndHold = (threshold: number, cb: GenericFunction) => (e: React.Mou
 };
 
 const App: React.FunctionComponent = () => {
-  const [showSettings, setShowSettings] = React.useState(true);
+  const [showSettings, setShowSettings] = React.useState(false);
 
   const handleClickAndHold = React.useCallback(() => {
     setShowSettings(true);
