@@ -8,6 +8,11 @@ import { Provider as PhotoContextProvider } from 'contexts/photo';
 type GenericFunction = (...args: Array<any>) => any;
 
 const onClickAndHold = (threshold: number, cb: GenericFunction) => (e: React.MouseEvent) => {
+  // This was not a primary click, bail.
+  if (e.button !== 0 || e.ctrlKey) {
+    return;
+  }
+
   const target = e.currentTarget;
 
   if (target) {

@@ -31,6 +31,7 @@ const SplashMidEl = styled.div<StyledSplashMidProps>`
   color: white;
   display: flex;
   flex-grow: 1;
+  font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
   font-size: 28px;
   font-weight: 300;
   justify-content: center;

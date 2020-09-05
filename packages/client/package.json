@@ -10,6 +10,7 @@
     "url": "git+https://github.com/darkobits/inspirat.git"
   },
   "dependencies": {
+    "animate.css": "^4.1.0",
     "axios": "^0.20.0",
     "bootstrap": "^4.5.2",
     "boxen": "^4.2.0",

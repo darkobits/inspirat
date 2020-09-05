@@ -24,9 +24,10 @@ const textShadow = (color: string) => compositeTextShadow([
 const ImageMetaEl = styled.div<ImageMetaElProps>`
   color: rgb(255, 255, 255, 0.96);
   display: flex;
+  font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
+  font-weight: 600;
   font-size: 16px;
-  font-weight: 400;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.35px;
   text-shadow: ${R.pipe(R.propOr('black', 'shadowColor'), textShadow)};
   user-select: none;
 
