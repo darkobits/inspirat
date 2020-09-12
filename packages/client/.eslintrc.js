@@ -20,6 +20,7 @@ module.exports = {
     '@typescript-eslint/indent': ['error', 2, {
       SwitchCase: 1
     }],
-    '@typescript-eslint/restrict-template-expressions': 'off'
+    '@typescript-eslint/restrict-template-expressions': 'off',
+    'unicorn/no-useless-undefined': 'off'
   }
 };

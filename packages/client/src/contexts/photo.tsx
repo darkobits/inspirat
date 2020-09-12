@@ -4,6 +4,7 @@ import useAsyncEffect from 'use-async-effect';
 
 import {UnsplashPhotoResource} from 'etc/types';
 import useQuery from 'hooks/use-query';
+import useStorageItem from 'hooks/use-storage-item';
 import {
   getFullImageUrl,
   getPhotos,
@@ -11,7 +12,6 @@ import {
   getPhotoForDayCached,
   preloadImage
 } from 'lib/photos';
-import storage from 'lib/storage';
 import {ifDev} from 'lib/utils';
 
 
@@ -19,6 +19,16 @@ import {ifDev} from 'lib/utils';
  * Shape of the object provided by this Context.
  */
 export interface PhotoProviderContext {
+  /**
+   * Whether the user has seen the introduction modal.
+   */
+  hasSeenIntroduction: boolean | undefined;
+
+  /**
+   * Sets the above flag.
+   */
+  setHasSeenIntroduction: (value: boolean) => void;
+
   /**
    * Tracks the current day offset (starts at 0) when in development mode.
    */
@@ -77,7 +87,8 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
-  const [name, setNameLocal] = React.useState('');
+  const [name, setName] = useStorageItem<string>('name');
+  const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean>('hasSeenIntroduction');
   const query = useQuery();
 
 
@@ -94,24 +105,6 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     }
   }, 0);
 
-  // ----- [Effect] Fetch Name from Storage ------------------------------------
-
-  useAsyncEffect(async isMounted => {
-    const nameFromStorage = await storage.getItem<string>('name');
-
-    if (isMounted() && nameFromStorage) {
-      setNameLocal(nameFromStorage);
-    }
-  }, []);
-
-
-  // ----- Set Name Method -----------------------------------------------------
-
-  const setName = (value: string) => {
-    void storage.setItem('name', value);
-    setNameLocal(value);
-  };
-
 
   // ----- [Effect] Determine Dev Tools Visibility -----------------------------
 
@@ -120,6 +113,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
 
   // ----- [Effect] Create Dev Tools Key-Bindings ------------------------------
 
+  // TODO: Move to DevTools component.
   React.useEffect(() => ifDev(() => {
     if (!showDevTools) {
       return;
@@ -207,6 +201,8 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   // ----- Context API ---------------------------------------------------------
 
   const contextApi = {
+    hasSeenIntroduction,
+    setHasSeenIntroduction,
     dayOffset,
     setDayOffset,
     showDevTools,

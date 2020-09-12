@@ -65,64 +65,54 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module.rules.push({
     test: /\.(ts|tsx|js|jsx)$/,
     exclude: /node_modules/,
-    use: [
-      {
-        loader: 'babel-loader',
-        options: {
-          cacheDirectory: true
-        }
-      },
-      {
-        loader: 'linaria/loader',
-        options: {
-          sourceMap: true
-        }
+    use: [{
+      loader: 'babel-loader',
+      options: {
+        cacheDirectory: true
       }
-    ]
+    }, {
+      loader: 'linaria/loader',
+      options: {
+        sourceMap: true
+      }
+    }]
   });
 
   // Stylesheets.
   config.module.rules.push({
     test: /\.css$/,
-    use: [
-      {
-        loader: MiniCssExtractPlugin.loader,
-        options: {
-          hmr: process.env.NODE_ENV !== 'production'
-        }
-      },
-      {
-        loader: 'css-loader',
-        options: {
-          modules: false,
-          sourceMap: true
-        }
+    use: [{
+      loader: MiniCssExtractPlugin.loader,
+      options: {
+        hmr: process.env.NODE_ENV !== 'production'
       }
-    ]
+    }, {
+      loader: 'css-loader',
+      options: {
+        modules: false,
+        sourceMap: true
+      }
+    }]
   });
 
   // Images.
   config.module.rules.push({
     test: /\.(png|jpg|gif|svg)$/,
-    use: [
-      {
-        loader: 'url-loader',
-        options: {
-          limit: 10000,
-          name: 'assets/[name].[hash].[ext]'
-        }
+    use: [{
+      loader: 'url-loader',
+      options: {
+        limit: 10000,
+        name: 'assets/[name].[hash].[ext]'
       }
-    ]
+    }]
   });
 
   // Text.
   config.module.rules.push({
     test: /\.txt$/,
-    use: [
-      {
-        loader: 'raw-loader'
-      }
-    ]
+    use: [{
+      loader: 'raw-loader'
+    }]
   });
 
   // Fonts.

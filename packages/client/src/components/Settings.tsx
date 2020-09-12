@@ -1,16 +1,9 @@
-import { css } from 'linaria';
+import { cx } from 'linaria';
 import React from 'react';
 import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
 
 import PhotoContext from 'contexts/photo';
-import setupShowHideAnimation, { AnimateDescriptor } from 'lib/animate';
-
-
-// ----- Styles ----------------------------------------------------------------
-
-const modalStyles = css`
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
-`;
+import useHideCallback from 'hooks/use-hide-callback';
 
 
 // ----- Props -----------------------------------------------------------------
@@ -23,54 +16,10 @@ export interface SettingsProps {
 
 // ----- Settings --------------------------------------------------------------
 
+
 const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => {
   const { name, setName } = React.useContext(PhotoContext);
   const [tempName, setTempName] = React.useState<string | undefined>();
-  const [animateBackdrop, setAnimateBackdrop] = React.useState<AnimateDescriptor>();
-  const [animateModal, setAnimateModal] = React.useState<AnimateDescriptor>();
-
-  /**
-   * [Effect] Setup animation on mount.
-   *
-   * TODO: Create a custom hook for this so its less verbose.
-   */
-  React.useEffect(() => {
-    setAnimateBackdrop(setupShowHideAnimation({
-      // in: 'fadeIn',
-      // out: 'fadeOut'
-      speed: 'faster',
-      initialState: show ? 'show' : 'hide'
-    }, document.querySelector<HTMLDivElement>('.modal-backdrop')));
-
-    setAnimateModal(setupShowHideAnimation({
-      in: 'zoomIn',
-      out: 'zoomOut',
-      speed: 'faster',
-      initialState: show ? 'show' : 'hide'
-    }, document.querySelector<HTMLDivElement>('.modal')));
-  }, []);
-
-
-  /**
-   * [Effect] Run custom show/hide animations when 'show' changes.
-   */
-  React.useEffect(() => {
-    if (!animateBackdrop || !animateModal) {
-      return;
-    }
-
-    if (show) {
-      animateBackdrop.show();
-      animateModal.show();
-    } else {
-      animateBackdrop.hide();
-      animateModal.hide();
-    }
-  }, [
-    animateBackdrop,
-    animateModal,
-    show
-  ]);
 
 
   /**
@@ -78,35 +27,54 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
    */
   React.useEffect(() => {
     setTempName(name);
-  }, [name]);
+  }, [
+    name
+  ]);
 
 
   /**
-   * [Callback] Updates name globally, then calls the provided onClose handler.
+   * [Callback] Sets the new name, waits 500ms, then invokes onClose.
    */
-  const handleClose = React.useCallback(() => {
-    setName(tempName ?? '');
-
-    if (onClose) {
-      onClose();
+  const [isHiding, handleClose] = useHideCallback({
+    hideTime: 500,
+    onBeginHide: () => {
+      setName(tempName ?? '');
+    },
+    onEndHide: () => {
+      if (onClose) {
+        onClose();
+      }
     }
-  }, [onClose, setName, tempName]);
+  }, [
+    onClose,
+    setName,
+    tempName
+  ]);
 
 
   return (
     <Modal
-      size="lg"
-      centered
-      show
-      onHide={handleClose}
-      className={modalStyles}
       animation={false}
+      centered
+      onHide={handleClose}
+      show={show}
+      size="lg"
+      backdropClassName={cx('animate__animated', isHiding && 'animate__fadeOut')}
+      className={cx('animate__animated', 'animate__faster', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
     >
       <Modal.Body className="bg-dark text-light shadow-lg">
-        <h1 className="text-light mb-4 mt-1 ml-2 font-weight-light" style={{ letterSpacing: '1px' }}>
-          Inspirat
+        <h1
+          className="d-flex align-items-end justify-content-between mb-3 mx-2 text-light font-weight-light"
+          style={{ letterSpacing: '1px' }}
+        >
+          <div>
+            Inspirat
+          </div>
+          <div className="text-muted" style={{ fontSize: '14px', lineHeight: '26px' }}>
+            {process.env.PACKAGE_VERSION}
+          </div>
         </h1>
-        <hr className="bg-secondary mb-4" />
+        <hr className="bg-secondary mb-5 mx-2" />
         <Form noValidate>
           <Form.Group as={Row} controlId="name">
             <Form.Label column="lg" sm={{ span: 2, offset: 2 }}>

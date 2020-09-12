@@ -1,8 +1,9 @@
 import {hot} from 'react-hot-loader/root';
 import React from 'react';
 
-import Splash from 'components/Splash';
+import Introduction from 'components/Introduction';
 import Settings from 'components/Settings';
+import Splash from 'components/Splash';
 import { Provider as PhotoContextProvider } from 'contexts/photo';
 
 type GenericFunction = (...args: Array<any>) => any;
@@ -30,18 +31,23 @@ const onClickAndHold = (threshold: number, cb: GenericFunction) => (e: React.Mou
 const App: React.FunctionComponent = () => {
   const [showSettings, setShowSettings] = React.useState(false);
 
-  const handleClickAndHold = React.useCallback(() => {
+  const handleShowSettings = React.useCallback(() => {
     setShowSettings(true);
+  }, []);
+
+  const handleHideSettings = React.useCallback(() => {
+    setShowSettings(false);
   }, []);
 
   return (
     <PhotoContextProvider>
+      <Introduction />
       <Settings
         show={showSettings}
-        onClose={() => setShowSettings(false)}
+        onClose={handleHideSettings}
       />
       <Splash
-        onMouseDown={onClickAndHold(750, handleClickAndHold)}
+        onMouseDown={onClickAndHold(750, handleShowSettings)}
       />
     </PhotoContextProvider>
   );
