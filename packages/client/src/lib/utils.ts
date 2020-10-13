@@ -1,3 +1,6 @@
+import { GenericFunction } from 'etc/types';
+
+
 /**
  * Returns the greater of the two values provided.
  */
@@ -32,4 +35,44 @@ export function ifDev(cb: (...args: Array<any>) => any): any {
   if (process.env.NODE_ENV === 'development') {
     return cb();
   }
+}
+
+
+/**
+ * Returns true if we are running as a Chrome extension.
+ */
+export function isChromeExtension() {
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
+  return window.location.href.startsWith('chrome-extension://');
+}
+
+
+/**
+ * Provided a "hold" threshold and a callback, returns a click handler that,
+ * when invoked, will call the provided callback if the mouse is not released
+ * before the "hold" threshold is reached.
+ */
+export function onClickAndHold(threshold: number, cb: GenericFunction) {
+  return (e: React.MouseEvent) => {
+    // This was not a primary click, bail.
+    if (e.button !== 0 || e.ctrlKey) {
+      return;
+    }
+
+    const target = e.currentTarget;
+
+    if (target) {
+      const timeoutHandle = setTimeout(() => cb(target), threshold);
+
+      const onMouseUp = () => {
+        clearTimeout(timeoutHandle);
+        target.removeEventListener('mouseup', onMouseUp);
+      };
+
+      target.addEventListener('mouseup', onMouseUp);
+    }
+  };
 }

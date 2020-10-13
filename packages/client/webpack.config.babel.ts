@@ -143,7 +143,10 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.plugins.push(new HtmlWebpackPlugin({
     filename: 'index.html',
     template: path.resolve(pkgRoot, 'src', 'index.html'),
-    inject: true
+    inject: true,
+    data: {
+      title: process.env.DOCUMENT_TITLE ?? 'New Tab'
+    }
   }));
 
   if (argv.mode === 'development') {

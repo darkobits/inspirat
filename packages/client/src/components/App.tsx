@@ -5,28 +5,8 @@ import Introduction from 'components/Introduction';
 import Settings from 'components/Settings';
 import Splash from 'components/Splash';
 import { Provider as PhotoContextProvider } from 'contexts/photo';
+import { isChromeExtension, onClickAndHold } from 'lib/utils';
 
-type GenericFunction = (...args: Array<any>) => any;
-
-const onClickAndHold = (threshold: number, cb: GenericFunction) => (e: React.MouseEvent) => {
-  // This was not a primary click, bail.
-  if (e.button !== 0 || e.ctrlKey) {
-    return;
-  }
-
-  const target = e.currentTarget;
-
-  if (target) {
-    const timeoutHandle = setTimeout(() => cb(target), threshold);
-
-    const onMouseUp = () => {
-      clearTimeout(timeoutHandle);
-      target.removeEventListener('mouseup', onMouseUp);
-    };
-
-    target.addEventListener('mouseup', onMouseUp);
-  }
-};
 
 const App: React.FunctionComponent = () => {
   const [showSettings, setShowSettings] = React.useState(false);
@@ -41,7 +21,7 @@ const App: React.FunctionComponent = () => {
 
   return (
     <PhotoContextProvider>
-      <Introduction />
+      {isChromeExtension && <Introduction />}
       <Settings
         show={showSettings}
         onClose={handleHideSettings}

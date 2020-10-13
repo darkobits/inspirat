@@ -3,6 +3,9 @@ export interface LooseObject {
 }
 
 
+export type GenericFunction = (...args: Array<any>) => any;
+
+
 /**
  * Shape of the background image overrides object defined in etc/constants.
  * Informed by the props of the Splash component.
