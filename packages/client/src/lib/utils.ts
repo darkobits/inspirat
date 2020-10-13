@@ -43,10 +43,13 @@ export function ifDev(cb: (...args: Array<any>) => any): any {
  */
 export function isChromeExtension() {
   if (process.env.NODE_ENV === 'development') {
+    console.debug('[isChromeExtension] true (dev)');
     return true;
   }
 
-  return window.location.href.startsWith('chrome-extension://');
+  const res = window.location.href.startsWith('chrome-extension://');
+  console.debug('[isChromeExtension]', res);
+  return res;
 }
 
 

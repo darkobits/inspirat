@@ -21,7 +21,7 @@ const App: React.FunctionComponent = () => {
 
   return (
     <PhotoContextProvider>
-      {isChromeExtension && <Introduction />}
+      {isChromeExtension() && <Introduction />}
       <Settings
         show={showSettings}
         onClose={handleHideSettings}
