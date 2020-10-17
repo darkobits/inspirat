@@ -222,7 +222,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     child_process: 'empty'
   };
 
-  config.devtool = argv.mode === 'development' ? '#eval-source-map' : '#source-map';
+  config.devtool = argv.mode === 'development' ? '#eval-source-map' : '#inline-source-map';
 
   config.optimization = {
     minimize: argv.mode === 'production',
