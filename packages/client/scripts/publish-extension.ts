@@ -82,16 +82,16 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   const { manifest, path: manifestPath } = await readExtensionManifest(publishRoot);
   log.info(`Determining publish eligibility for Chrome extension ${log.chalk.bold(manifest.name)}.`);
-  log.silly(`Extension manifest path: ${log.chalk.green(manifestPath)}.`);
+  log.verbose(`Extension manifest path: ${log.chalk.green(manifestPath)}`);
 
 
   // ----- [2] Compute Git Branch & Tags ---------------------------------------
 
   const { branch } = envCi();
-  log.info(`Git branch: ${branch}`);
+  log.verbose(`Git branch: ${log.chalk.green(branch)}`);
 
   const tags = await getTagsAtHead();
-  log.info(`Git tag(s): ${tags.join(', ')}`);
+  log.verbose(`Git tag(s): ${tags.map(log.chalk.green).join(', ')}`);
 
 
   // ----- [3] Determine Publish Eligibility -----------------------------------
@@ -110,7 +110,7 @@ async function publishExtension(options: PublishExtensionOptions) {
     return;
   }
 
-  log.info(`Preparing to publish ${log.chalk.bold(manifest.name)} ${log.chalk.green(`v${manifest.version}`)}.`);
+  log.info(`Preparing to publish ${log.chalk.bold(manifest.name)} ${log.chalk.green(`v${manifest.version}`)} from branch ${log.chalk.green(branch)}.`);
 
 
   // ----- [4] Validate Web Store Credentials ----------------------------------
@@ -162,7 +162,7 @@ async function publishExtension(options: PublishExtensionOptions) {
     ].join(os.EOL));
   }
 
-  log.info('Uploaded artifact.');
+  log.verbose('Uploaded artifact.');
 
 
   // ----- [7] Publish Extension & Clean Up ------------------------------------
@@ -184,12 +184,6 @@ async function publishExtension(options: PublishExtensionOptions) {
  */
 async function main() {
   try {
-    const envInfo: any = envCi();
-
-    // log.verbose(envCi());
-
-    log.info(`Detected environment ${envInfo.name}.`);
-
     await publishExtension({
       publishRoot: path.resolve(__dirname, '..', 'dist'),
       extensionId: env<string>('CHROME_WEBSTORE_EXTENSION_ID'),

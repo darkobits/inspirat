@@ -9,7 +9,7 @@ import globby from 'globby';
 import tempy from 'tempy';
 
 
-import {ChromeExtensionManifestV2} from './types';
+import { ChromeExtensionManifestV2 } from './types';
 
 
 const log = LogFactory();
