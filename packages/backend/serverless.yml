@@ -89,7 +89,6 @@ functions:
           method: GET
           path: photos
           cors: true
-          origin: '*'
     handler: src/get-photos.default
 
 

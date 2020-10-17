@@ -15,7 +15,6 @@
     "aws-sdk": "^2.707.0",
     "axios": "^0.20.0",
     "chalk": "^4.0.0",
-    "is-plain-object": "^4.1.1",
     "ramda": "^0.27.0"
   },
   "devDependencies": {
@@ -27,8 +26,8 @@
     "p-series": "^2.1.0",
     "parse-link-header": "^1.0.1",
     "read-pkg-up": "^7.0.0",
-    "serverless": "^1.74.1",
-    "serverless-domain-manager": "^4.1.1",
+    "serverless": "^2.8.0",
+    "serverless-domain-manager": "^5.0.0",
     "serverless-dotenv-plugin": "^3.0.0",
     "serverless-webpack": "^5.2.0",
     "source-map-support": "^0.5.19",
