@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.12.0](https://github.com/darkobits/inspirat/compare/v0.11.3...v0.12.0) (2020-10-17)
+
+**Note:** Version bump only for package inspirat-backend
+
+
+
+
+
 # [0.11.0](https://github.com/darkobits/inspirat/compare/v0.10.7...v0.11.0) (2020-09-04)
 
 

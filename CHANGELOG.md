@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.12.0](https://github.com/darkobits/inspirat/compare/v0.11.3...v0.12.0) (2020-10-17)
+
+
+### Features
+
+* Add Introduction modal. ([647f2a6](https://github.com/darkobits/inspirat/commit/647f2a61ab7f264a8b73553b81607a5260808a0a))
+
+
+
+
+
 ## [0.11.3](https://github.com/darkobits/inspirat/compare/v0.11.2...v0.11.3) (2020-09-05)
 
 **Note:** Version bump only for package inspirat
