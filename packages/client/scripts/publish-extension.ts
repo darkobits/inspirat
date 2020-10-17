@@ -70,21 +70,9 @@ const log = createLogger({heading: 'publish-extension'});
  * complete.
  */
 async function publishExtension(options: PublishExtensionOptions) {
-  log.silly('Options:', options);
+  // ----- [1] Verify Publish Root & Manifest ----------------------------------
 
-
-  // ----- [1] Compute Git Branch & Tags ---------------------------------------
-
-  const {branch} = envCi();
-  log.silly(`Git branch from env-ci: ${branch}`);
-
-  const tags = await getTagsAtHead();
-  log.silly(`Git tags: "${tags.join('", "')}"`);
-
-
-  // ----- [2] Verify Publish Root & Manifest ----------------------------------
-
-  const {publishRoot} = options;
+  const { publishRoot } = options;
 
   try {
     await fs.access(publishRoot);
@@ -92,24 +80,37 @@ async function publishExtension(options: PublishExtensionOptions) {
     throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}`);
   }
 
-  const {manifest, path: manifestPath} = await readExtensionManifest(publishRoot);
-  log.info(`Using manifest at ${log.chalk.green(path.relative(publishRoot, manifestPath))}.`);
+  const { manifest, path: manifestPath } = await readExtensionManifest(publishRoot);
+  log.info(`Determining publish eligibility for Chrome extension ${log.chalk.bold(manifest.name)}.`);
+  log.silly(`Extension manifest path: ${log.chalk.green(manifestPath)}.`);
+
+
+  // ----- [2] Compute Git Branch & Tags ---------------------------------------
+
+  const { branch } = envCi();
+  log.info(`Git branch: ${branch}`);
+
+  const tags = await getTagsAtHead();
+  log.info(`Git tag(s): ${tags.join(', ')}`);
 
 
   // ----- [3] Determine Publish Eligibility -----------------------------------
 
-  const shouldPublish = await options.shouldPublish({branch, manifest, semver, tags});
-  log.silly(`Should publish: ${shouldPublish}`);
+  const shouldPublishResult = await options.shouldPublish({branch, manifest, semver, tags});
 
-  if (shouldPublish === false || shouldPublish === undefined) {
-    log.warn('Skipping extension publish.');
+  // Not publishing with a reason provided.
+  if (typeof shouldPublishResult === 'string') {
+    log.warn(`Skipping publish of extension ${log.chalk.bold(manifest.name)}; ${shouldPublishResult}`);
     return;
   }
 
-  if (typeof shouldPublish === 'string') {
-    log.warn(`Skipping extension publish; ${shouldPublish}`);
+  // Not publishing without a reason provided.
+  if (shouldPublishResult === false || shouldPublishResult === undefined) {
+    log.warn(`Skipping publish of extension ${log.chalk.bold(manifest.name)}.`);
     return;
   }
+
+  log.info(`Preparing to publish ${log.chalk.bold(manifest.name)} ${log.chalk.green(`v${manifest.version}`)}.`);
 
 
   // ----- [4] Validate Web Store Credentials ----------------------------------
@@ -135,11 +136,12 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   // ----- [5] Compress Artifacts ----------------------------------------------
 
-  const archivePath = await zipFolder(publishRoot);
-  log.info(`Created archive from ${log.chalk.green(publishRoot)}.`);
+  const artifactPath = await zipFolder(publishRoot);
+  const artifactSize = bytes((await fs.stat(artifactPath)).size);
+  log.info(`Creating artifact from ${log.chalk.green(publishRoot)} ${log.chalk.dim(`(${artifactSize})`)}.`);
 
 
-  // ----- [6] Upload Archive --------------------------------------------------
+  // ----- [6] Upload Artifacts ------------------------------------------------
 
   const webStore = chromeWebstoreUpload({
     extensionId,
@@ -148,28 +150,30 @@ async function publishExtension(options: PublishExtensionOptions) {
     refreshToken
   });
 
-  const archiveStream = fs.createReadStream(archivePath);
-  const uploadResult: ChromeWebstoreUploadResult = await webStore.uploadExisting(archiveStream);
-
-  log.silly('Upload result:', uploadResult);
+  const artifactStream = fs.createReadStream(artifactPath);
+  const uploadResult: ChromeWebstoreUploadResult = await webStore.uploadExisting(artifactStream);
 
   if (uploadResult.uploadState === 'FAILURE' && uploadResult.itemError) {
-    log.silly('Archive upload failed:', uploadResult);
+    log.silly('Artifact upload failed:', uploadResult);
 
     throw new Error([
-      'Archive upload failed:',
+      'Artifact upload failed:',
       ...uploadResult.itemError.map(error => `- ${error.error_detail}`)
     ].join(os.EOL));
   }
 
+  log.info('Uploaded artifact.');
+
 
   // ----- [7] Publish Extension & Clean Up ------------------------------------
 
+  log.info('Publishing extension.');
   await webStore.publish();
-  const archiveSize = bytes((await fs.stat(archivePath)).size);
-  await fs.unlink(archivePath);
 
-  log.info(`Successfully published extension version ${log.chalk.green(manifest.version)} ${log.chalk.dim(`(${archiveSize})`)}.`);
+  log.verbose('Cleaning up.');
+  await fs.unlink(artifactPath);
+
+  log.info(`Successfully published ${log.chalk.bold(manifest.name)} ${log.chalk.green(`v${manifest.version}`)} ${log.chalk.dim(`(${artifactSize})`)}.`);
 }
 
 
@@ -180,18 +184,18 @@ async function publishExtension(options: PublishExtensionOptions) {
  */
 async function main() {
   try {
-    log.verbose(envCi());
+    const envInfo: any = envCi();
 
-    const chromeWebStoreConfig = {
-      extensionId: env<string>('CHROME_WEBSTORE_EXTENSION_ID'),
-      clientId: env<string>('CHROME_WEBSTORE_CLIENT_ID'),
-      clientSecret: env<string>('CHROME_WEBSTORE_CLIENT_SECRET'),
-      refreshToken: env<string>('CHROME_WEBSTORE_REFRESH_TOKEN')
-    };
+    // log.verbose(envCi());
+
+    log.info(`Detected environment ${envInfo.name}.`);
 
     await publishExtension({
       publishRoot: path.resolve(__dirname, '..', 'dist'),
-      ...chromeWebStoreConfig,
+      extensionId: env<string>('CHROME_WEBSTORE_EXTENSION_ID'),
+      clientId: env<string>('CHROME_WEBSTORE_CLIENT_ID'),
+      clientSecret: env<string>('CHROME_WEBSTORE_CLIENT_SECRET'),
+      refreshToken: env<string>('CHROME_WEBSTORE_REFRESH_TOKEN'),
       shouldPublish: ({branch, tags, semver, manifest}) => {
         if (branch !== 'master') {
           return 'not on "master"';
