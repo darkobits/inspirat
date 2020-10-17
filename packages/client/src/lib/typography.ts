@@ -1,3 +1,7 @@
+/**
+ * Tuple describing the amount of horizontal shadow, vertical shadow, blur, and
+ * color for a CSS text-shadow rule.
+ */
 export type TextShadow = [number, number, number, string];
 
 

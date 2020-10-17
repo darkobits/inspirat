@@ -1,12 +1,12 @@
-import {styled} from 'linaria/react';
+import { styled } from 'linaria/react';
 import ms from 'ms';
-import {rgba} from 'polished';
+import { rgba } from 'polished';
 import * as R from 'ramda';
 import React from 'react';
 
-import PhotoContext from 'contexts/photo';
-import {getPeriodDescriptor} from 'lib/time';
-import {compositeTextShadow} from 'lib/typography';
+import InspiratContext from 'contexts/Inspirat';
+import { getPeriodDescriptor } from 'lib/time';
+import { compositeTextShadow } from 'lib/typography';
 
 
 // ----- Styles ----------------------------------------------------------------
@@ -76,10 +76,10 @@ const SplashMidEl = styled.div<StyledSplashMidProps>`
 `;
 
 
-// ----- Splash Mid ------------------------------------------------------------
+// ----- Splash (Mid) ----------------------------------------------------------
 
 const SplashMid: React.FunctionComponent = () => {
-  const {currentPhoto, name} = React.useContext(PhotoContext);
+  const { currentPhoto, name } = React.useContext(InspiratContext);
   const [period, setPeriod] = React.useState(getPeriodDescriptor());
 
   /**

@@ -43,6 +43,8 @@ export interface BackgroundImageOverrides {
 }
 
 
+// ----- Unsplash API Responses ------------------------------------------------
+
 /**
  * Represents a user object from Unsplash.
  *
@@ -124,7 +126,7 @@ export interface UnsplashPhotoResource {
   color: string;
 
   /**
-   * Description of the ptoto.
+   * Description of the photo.
    */
   description: string;
 
@@ -217,4 +219,24 @@ export interface UnsplashPhotoResource {
     focal_length: string;
     iso: string;
   };
+}
+
+
+// ----- Photo & Storage Resources ---------------------------------------------
+
+/**
+ * Shape of the object used to cache the photo collection.
+ */
+export interface PhotoCollectionStorageItem {
+  photos: Array<UnsplashPhotoResource>;
+  updatedAt: number;
+}
+
+
+/**
+ * Shape of the object used to cache the current photo.
+ */
+export interface CurrentPhotoStorageItem {
+  photo: UnsplashPhotoResource;
+  expires: number;
 }

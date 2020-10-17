@@ -14,6 +14,18 @@ export const CACHE_TTL = '1 day';
 
 
 /**
+ * Storage key used to cache the photo collection.
+ */
+export const COLLECTION_CACHE_KEY = 'photoCollection';
+
+
+/**
+ * Storage key used for the current photo.
+ */
+export const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
+
+
+/**
  * Default font family string to use.
  */
 export const DEFAULT_FONTS = [
@@ -24,6 +36,9 @@ export const DEFAULT_FONTS = [
   'Arial',
   'sans-serif'
 ];
+
+
+// ----- Image Tuning Overrides ------------------------------------------------
 
 export interface BackgroundImageOverride {
   maskColor: string;

@@ -1,20 +1,23 @@
-import {styled} from 'linaria/react';
-import {mix, rgba} from 'polished';
+import { styled } from 'linaria/react';
+import { mix, rgba } from 'polished';
 import React from 'react';
 
-import PhotoContext from 'contexts/photo';
+import InspiratContext from 'contexts/Inspirat';
 import DevTools from 'components/DevTools';
 import SplashMid from 'components/SplashMid';
 import SplashLower from 'components/SplashLower';
-import {BACKGROUND_RULE_OVERRIDES} from 'etc/constants';
-import {getFullImageUrl} from 'lib/photos';
+import { BACKGROUND_RULE_OVERRIDES } from 'etc/constants';
+import { updateImgixQueryParams } from 'lib/utils';
 
 
-// ----- Styles ----------------------------------------------------------------
+// ----- Props -----------------------------------------------------------------
 
 export interface SplashProps {
   onMouseDown?: React.EventHandler<React.MouseEvent>;
 }
+
+
+// ----- Styles ----------------------------------------------------------------
 
 export interface SplashElProps {
   backgroundImage: string;
@@ -66,7 +69,7 @@ const SplashEl = styled.div<SplashElProps>`
   /**
    * This pseudo-element is where we will render an overlay that will sit on top
    * of the background image. The settings for this overlay vary from image to
-   * image, and are defined in etc/constants.ts.
+   * image, and are defined in etc/constants.
    */
   &::after {
     background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount ?? 0.2))};
@@ -84,11 +87,12 @@ const SplashEl = styled.div<SplashElProps>`
 `;
 
 
-// ----- Component -------------------------------------------------------------
+// ----- Splash ----------------------------------------------------------------
 
 const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
-  const {currentPhoto} = React.useContext(PhotoContext);
-  const currentPhotoUrl = currentPhoto ? getFullImageUrl(currentPhoto.urls.full) : '';
+  const { currentPhoto } = React.useContext(InspiratContext);
+
+  const currentPhotoUrl = currentPhoto ? updateImgixQueryParams(currentPhoto.urls.full) : '';
   const color = currentPhoto?.color ?? 'black';
   const opacity = currentPhoto ? 1 : 0;
   const overrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};

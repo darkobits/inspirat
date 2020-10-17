@@ -1,11 +1,11 @@
-import {styled} from 'linaria/react';
+import { styled } from 'linaria/react';
 import * as R from 'ramda';
 import React from 'react';
 
-import PhotoContext from 'contexts/photo';
+import InspiratContext from 'contexts/Inspirat';
 import ImageMeta from 'components/ImageMeta';
 import useQuery from 'hooks/use-query';
-import {capitalizeWords} from 'lib/utils';
+import { capitalizeWords } from 'lib/utils';
 
 
 // ----- Styles ----------------------------------------------------------------
@@ -40,16 +40,13 @@ const AttributionWrapper = styled.div`
 `;
 
 
-// ----- Component -------------------------------------------------------------
+// ----- Splash (Lower) --------------------------------------------------------
 
 const SplashLower: React.FunctionComponent = () => {
-  const {currentPhoto} = React.useContext(PhotoContext);
+  const { currentPhoto } = React.useContext(InspiratContext);
   const query = useQuery();
 
-
-  /**
-   * If we have a `meta=false` query param, hide image metadata.
-   */
+  // If we have a `meta=false` query param, hide image metadata.
   if (query?.meta === 'false') {
     return null;
   }

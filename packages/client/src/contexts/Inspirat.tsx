@@ -1,4 +1,4 @@
-import mousetrap from 'mousetrap';
+// import objectHash from 'object-hash';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
@@ -6,19 +6,21 @@ import {UnsplashPhotoResource} from 'etc/types';
 import useQuery from 'hooks/use-query';
 import useStorageItem from 'hooks/use-storage-item';
 import {
-  getFullImageUrl,
   getPhotos,
-  getPhotoForDay,
-  getPhotoForDayCached,
-  preloadImage
+  getCurrentPhotoFromCollection,
+  getCurrentPhotoFromCache
 } from 'lib/photos';
-import {ifDev} from 'lib/utils';
+import {
+  ifDebug,
+  preloadImage,
+  updateImgixQueryParams
+} from 'lib/utils';
 
 
 /**
  * Shape of the object provided by this Context.
  */
-export interface PhotoProviderContext {
+export interface InspiratContext {
   /**
    * Whether the user has seen the introduction modal.
    */
@@ -79,7 +81,7 @@ export interface PhotoProviderContext {
 }
 
 
-const Context = React.createContext<PhotoProviderContext>({} as any);
+const Context = React.createContext<InspiratContext>({} as any);
 
 
 export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
@@ -108,32 +110,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
 
   // ----- [Effect] Determine Dev Tools Visibility -----------------------------
 
-  React.useEffect(() => ifDev(() => setShowDevTools(Object.keys(query).includes('dev'))), []);
-
-
-  // ----- [Effect] Create Dev Tools Key-Bindings ------------------------------
-
-  // TODO: Move to DevTools component.
-  React.useEffect(() => ifDev(() => {
-    if (!showDevTools) {
-      return;
-    }
-
-    mousetrap.bind('left', () => {
-      setDayOffset('decrement');
-    });
-
-    mousetrap.bind('right', () => {
-      setDayOffset('increment');
-    });
-
-    console.debug('[Development] Keyboard shortcuts registered.');
-
-    return () => {
-      mousetrap.unbind('left');
-      mousetrap.unbind('right');
-    };
-  }), [showDevTools]);
+  React.useEffect(() => ifDebug(() => setShowDevTools(Object.keys(query).includes('dev'))), []);
 
 
   // ----- [Async Effect] Determine Size of Photo Collection -------------------
@@ -150,29 +127,29 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     const photoFetchPromises: Array<Promise<any>> = [];
 
     // Get data about the photo for the current day.
-    const currentPhoto = showDevTools ? await getPhotoForDay({offset: dayOffset}) : await getPhotoForDayCached();
+    const currentPhoto = showDevTools ? await getCurrentPhotoFromCollection({offset: dayOffset}) : await getCurrentPhotoFromCache();
 
     // Start pre-loading the photo.
-    const currentPhotoFetchPromise = preloadImage(getFullImageUrl(currentPhoto.urls.full));
+    const currentPhotoFetchPromise = preloadImage(updateImgixQueryParams(currentPhoto.urls.full));
 
     photoFetchPromises.push(currentPhotoFetchPromise);
 
     // [Development] Log Current Photo Information
-    ifDev(() => {
+    ifDebug(() => {
       console.groupCollapsed(`[Splash] Current photo ID: "${currentPhoto.id}"`);
       console.debug(currentPhoto);
       console.groupEnd();
     });
 
     // Pre-Load Next Photo
-    const nextPhoto = await getPhotoForDay({offset: dayOffset + 1});
-    const nextPhotoFetchPromise = preloadImage(getFullImageUrl(nextPhoto.urls.full));
+    const nextPhoto = await getCurrentPhotoFromCollection({offset: dayOffset + 1});
+    const nextPhotoFetchPromise = preloadImage(updateImgixQueryParams(nextPhoto.urls.full));
     photoFetchPromises.push(nextPhotoFetchPromise);
 
     // [Development] Pre-Load Previous Photo
-    ifDev(async () => {
-      const prevPhoto = await getPhotoForDay({offset: dayOffset - 1});
-      const prevPhotoFetchPromise = preloadImage(getFullImageUrl(prevPhoto.urls.full));
+    ifDebug(async () => {
+      const prevPhoto = await getCurrentPhotoFromCollection({offset: dayOffset - 1});
+      const prevPhotoFetchPromise = preloadImage(updateImgixQueryParams(prevPhoto.urls.full));
       photoFetchPromises.push(prevPhotoFetchPromise);
     });
 
@@ -187,7 +164,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
       setCurrentPhoto(currentPhoto);
     }
 
-    ifDev(async () => {
+    ifDebug(async () => {
       await Promise.all(photoFetchPromises);
       console.debug('[PhotosProvider] Finished downloading adjacent photos.');
     });

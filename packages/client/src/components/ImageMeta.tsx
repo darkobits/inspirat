@@ -1,10 +1,10 @@
-import {styled} from 'linaria/react';
-import {rgba} from 'polished';
+import { styled } from 'linaria/react';
+import { rgba } from 'polished';
 import * as R from 'ramda';
 import React from 'react';
 
-import PhotoContext from 'contexts/photo';
-import {compositeTextShadow} from 'lib/typography';
+import InspiratContext from 'contexts/Inspirat';
+import { compositeTextShadow } from 'lib/typography';
 
 
 // ----- Types -----------------------------------------------------------------
@@ -45,7 +45,7 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
 // ----- Component -------------------------------------------------------------
 
 const ImageMeta: React.FunctionComponent = props => {
-  const {currentPhoto} = React.useContext(PhotoContext);
+  const { currentPhoto } = React.useContext(InspiratContext);
 
   return (
     <ImageMetaEl shadowColor={R.propOr(undefined, 'color', currentPhoto)}>

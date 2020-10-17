@@ -1,8 +1,14 @@
 import { cx } from 'linaria';
 import React from 'react';
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import {
+  Button,
+  Col,
+  Form,
+  Modal,
+  Row
+} from 'react-bootstrap';
 
-import PhotoContext from 'contexts/photo';
+import InspiratContext from 'contexts/Inspirat';
 import useHideCallback from 'hooks/use-hide-callback';
 
 
@@ -16,14 +22,14 @@ export interface SettingsProps {
 
 // ----- Settings --------------------------------------------------------------
 
-
 const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => {
-  const { name, setName } = React.useContext(PhotoContext);
+  const { name, setName } = React.useContext(InspiratContext);
   const [tempName, setTempName] = React.useState<string | undefined>();
 
 
   /**
-   * [Effect] One-time LocalStorage -> Input sync.
+   * [Effect] LocalStorage -> Input sync. This _should_ only happen once, when
+   * the component mounts.
    */
   React.useEffect(() => {
     setTempName(name);
@@ -75,12 +81,17 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
           </div>
         </h1>
         <hr className="bg-secondary mb-5 mx-2" />
-        <Form noValidate>
+        <Form
+          noValidate
+          onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
+            e.preventDefault();
+          }}
+        >
           <Form.Group as={Row} controlId="name">
-            <Form.Label column="lg" sm={{ span: 2, offset: 2 }}>
+            <Form.Label column="lg" sm={{ span: 2, offset: 1 }} lg={{ span: 2, offset: 2 }}>
               Name
             </Form.Label>
-            <Col sm="6">
+            <Col sm="8" lg="6">
               <Form.Control
                 type="text"
                 className="bg-dark text-light"

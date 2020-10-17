@@ -1,8 +1,10 @@
 import {styled} from 'linaria/react';
+import mousetrap from 'mousetrap';
 import {rgba} from 'polished';
 import React from 'react';
 
-import PhotoContext from 'contexts/photo';
+import InspiratContext from 'contexts/Inspirat';
+import { ifDebug } from 'lib/utils';
 
 
 // ----- Styles ----------------------------------------------------------------
@@ -102,12 +104,40 @@ const DevTools: React.FunctionComponent = () => {
     showDevTools,
     currentPhoto,
     setCurrentPhoto,
+    setDayOffset,
     resetPhoto,
     numPhotos
-  } = React.useContext(PhotoContext);
+  } = React.useContext(InspiratContext);
 
-  const color = currentPhoto?.color ?? 'black';
 
+  /*
+   * [Effect] Create Dev Tools key bindings.
+   */
+  React.useEffect(() => ifDebug(() => {
+    if (!showDevTools) {
+      return;
+    }
+
+    mousetrap.bind('left', () => {
+      setDayOffset('decrement');
+    });
+
+    mousetrap.bind('right', () => {
+      setDayOffset('increment');
+    });
+
+    console.debug('[Development] Keyboard shortcuts registered.');
+
+    return () => {
+      mousetrap.unbind('left');
+      mousetrap.unbind('right');
+    };
+  }), [showDevTools]);
+
+
+  /**
+   * [Callback] Handle updates to the image source field.
+   */
   const onSrcChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       const url = new URL(event.target.value);
@@ -120,9 +150,14 @@ const DevTools: React.FunctionComponent = () => {
     setCurrentPhoto
   ]);
 
+
   if (!showDevTools) {
     return null;
   }
+
+
+  const color = currentPhoto?.color ?? 'black';
+
 
   return (<>
     <Progress

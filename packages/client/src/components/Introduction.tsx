@@ -2,14 +2,15 @@ import { cx } from 'linaria';
 import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 
-import PhotoContext from 'contexts/photo';
+import InspiratContext from 'contexts/Inspirat';
 import useHideCallback from 'hooks/use-hide-callback';
+import { isChromeExtension } from 'lib/utils';
 
 
 // ----- Introduction ----------------------------------------------------------
 
 const Introduction: React.FunctionComponent = () => {
-  const { hasSeenIntroduction, setHasSeenIntroduction } = React.useContext(PhotoContext);
+  const { hasSeenIntroduction, setHasSeenIntroduction } = React.useContext(InspiratContext);
 
 
   /**
@@ -34,6 +35,11 @@ const Introduction: React.FunctionComponent = () => {
       Unsplash
     </a>
   ), []);
+
+
+  if (!isChromeExtension()) {
+    return null;
+  }
 
 
   return (

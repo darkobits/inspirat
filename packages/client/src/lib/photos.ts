@@ -1,33 +1,23 @@
-import {differenceInMinutes} from 'date-fns';
+import { differenceInMinutes } from 'date-fns';
 import ms from 'ms';
-import queryString from 'query-string';
 import * as R from 'ramda';
 // @ts-ignore
 import shuffleSeed from 'shuffle-seed';
-// @ts-ignore
-import urlParseLax from 'url-parse-lax';
 
-import {CACHE_TTL} from 'etc/constants';
-import {LooseObject, UnsplashPhotoResource} from 'etc/types';
+import {
+  CACHE_TTL,
+  COLLECTION_CACHE_KEY,
+  CURRENT_PHOTO_CACHE_KEY
+} from 'etc/constants';
+import {
+  CurrentPhotoStorageItem,
+  PhotoCollectionStorageItem,
+  UnsplashPhotoResource
+} from 'etc/types';
 import client from 'lib/client';
 import storage from 'lib/storage';
-import {now, midnight, daysSinceEpoch} from 'lib/time';
-import {greaterOf, ifDev, modIndex} from 'lib/utils';
-
-
-/**
- * Storage key used to cache the photo collection.
- */
-const COLLECTION_CACHE_KEY = 'photoCollection';
-
-
-/**
- * Shape of the object used to cache the photo collection.
- */
-interface PhotoCollectionStorageItem {
-  photos: Array<UnsplashPhotoResource>;
-  updatedAt: number;
-}
+import { now, midnight, daysSinceEpoch } from 'lib/time';
+import { ifDebug, modIndex } from 'lib/utils';
 
 
 /**
@@ -36,15 +26,13 @@ interface PhotoCollectionStorageItem {
  * updated in the background.
  */
 export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
-  let photoCollection;
-
   // Sub-routine that fetches up-to-date image collection data, immediately
   // resolves with it, then caches it to local storage.
-  const fetchAndUpdateCollection = async (): Promise<PhotoCollectionStorageItem> => {
+  const fetchAndUpdateCollection = async (): Promise<PhotoCollectionStorageItem | null> => {
     try {
       const photos = (await client.get('/photos')).data;
 
-      ifDev(() => console.debug(`[getImages] Fetched ${photos.length} images.`));
+      ifDebug(() => console.debug(`[getImages] Fetched ${photos.length} images.`));
 
       const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
 
@@ -53,51 +41,56 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
 
       return cacheData;
     } catch (err) {
-      console.error('Unable to fetch photos:', err.message);
-      return {photos: [], updatedAt: -1};
+      console.error('[getPhotos] Error fetching photo collection:', err.message);
+      return null;
     }
   };
 
-  const storageKeys = await storage.keys();
+  let photoCache = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
 
-  // If the cache is empty, fetch collection data and cache it.
-  if (!storageKeys.includes(COLLECTION_CACHE_KEY)) {
-    ifDev(() => console.debug('[getImages] Cache empty.'));
+  // If the cache is empty, fetch photos from Unsplash and cache them.
+  if (!photoCache) {
+    ifDebug(() => console.debug('[getImages] Cache is empty. Fetching collection.'));
+    // eslint-disable-next-line require-atomic-updates
+    photoCache = await fetchAndUpdateCollection();
+  } else if (now() - photoCache.updatedAt >= ms(CACHE_TTL)) {
+    // If the cached collection is stale, re-fetch it.
+    ifDebug(() => console.warn(`[getImages] Cache is stale, re-fetching. (${ms(now() - (photoCache?.updatedAt ?? 0), {long: true})} out of date.).`));
+    // eslint-disable-next-line require-atomic-updates
+    photoCache = await fetchAndUpdateCollection();
+  }
 
-    photoCollection = (await fetchAndUpdateCollection()).photos;
-  } else {
-    // Otherwise, get data from the cache.
-    const cachedData = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
-
-    // Then, if the data is stale, update it.
-    if (now() - cachedData.updatedAt >= ms(CACHE_TTL)) {
-      ifDev(() => console.warn(`[getImages] Cache is stale, fetching new data. (${ms(now() - cachedData.updatedAt, {long: true})} out of date.).`));
-      void fetchAndUpdateCollection();
-    }
-
-    // Immediately resolve with cached data.
-    photoCollection = cachedData.photos;
+  // If photoCache is still null at this point, we had no cached data and the
+  // fetch attempt failed.
+  if (!photoCache) {
+    throw new Error('[getPhotos] Photo collection cache was empty and an error occurred while trying to fetch it.');
   }
 
   // Get the current 'name' from storage.
   const name = await storage.getItem<string>('name');
 
   // First sort photos by their ID to ensure consistent initial ordering. Then,
-  // use the 'name' to deterministically shuffle the collection.
-  return shuffleSeed.shuffle(R.sortBy(R.prop<any, any>('id'), photoCollection), name);
+  // use the user's 'name' to deterministically shuffle the collection.
+  return shuffleSeed.shuffle(R.sortBy(R.prop('id'), photoCache.photos), name);
 }
 
 
 /**
- * Returns the photo for the current day based on the current photo collection.
+ * Returns the photo for the current day (since the Unix epoch) from the photo
+ * collection.
+ *
+ * Note: This function uses the current value of the cached photo collection as
+ * its source of truth. Therefore, this function may return different results on
+ * the same day if the collection is updated between calls. To
+ *
  * Multiple calls to this function on the same day may return different results
- * as the cached photo collection is updated. To retrieve a consistent photo
- * for the current day regardless of the state of the photo collection, use
- * getCurrentPhoto below.
+ * as the cached photo collection is updated in the background. To retrieve a
+ * consistent photo for the current day regardless of the state of the photo
+ * collection, use getCurrentPhoto below.
  *
  * If a day argument is provided, will return the photo for the provided day.
  */
-export async function getPhotoForDay({offset = 0} = {}): Promise<UnsplashPhotoResource> {
+export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<UnsplashPhotoResource> {
   const day = daysSinceEpoch() + offset;
   const photos = await getPhotos();
 
@@ -108,125 +101,39 @@ export async function getPhotoForDay({offset = 0} = {}): Promise<UnsplashPhotoRe
 
 
 /**
- * Storage key used for the current photo.
+ * Returns the photo for the current day. If a photo has not been set for the
+ * current day, this function will look-up the photo for the current day, then
+ * persist it to Local Storage. Subsequent calls to this function on the same
+ * day will then use the value from storage rather than re-computing the current
+ * photo against the photo collection. This ensures that if the photo collection
+ * is updated in the background between calls to this function, the value it
+ * returns will not change.
  */
-const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
+export async function getCurrentPhotoFromCache(): Promise<UnsplashPhotoResource> {
+  const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
 
-
-/**
- * Shape of the object used to cache the current photo.
- */
-export interface CurrentPhotoStorageItem {
-  photo: UnsplashPhotoResource;
-  expires: number;
-}
-
-
-/**
- * Returns the photo for the current day. Will cache this result for the
- * remainder of the day to prevent photos changing when the collection is
- * updated.
- */
-export async function getPhotoForDayCached(): Promise<UnsplashPhotoResource> {
-  const storageKeys = await storage.keys();
-
-  if (storageKeys.includes(CURRENT_PHOTO_CACHE_KEY)) {
-    const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
-
+  if (currentPhoto) {
     if (currentPhoto.expires > now()) {
       const exp = differenceInMinutes(new Date(currentPhoto.expires), now());
       const hoursRemaining = Math.floor(exp / 60);
       const minutesRemaining = exp % 60;
 
-      ifDev(() => console.debug(`[getPhotoForDayCached] Current photo expires in ${hoursRemaining}h ${minutesRemaining}m.`));
+      ifDebug(() => console.debug(`[getCurrentPhotoFromCache] Current photo expires in ${hoursRemaining}h ${minutesRemaining}m.`));
 
       return currentPhoto.photo;
     }
 
-    ifDev(() => console.debug('[getPhotoForDayCached] Cached photo was expired.'));
+    ifDebug(() => console.debug('[getCurrentPhotoFromCache] Cached photo was expired.'));
   } else {
-    ifDev(() => console.debug('[getPhotoForDayCached] Cache did not contain a photo.'));
+    ifDebug(() => console.debug('[getCurrentPhotoFromCache] Cache did not contain a photo.'));
   }
 
   // Cache did not exist or was expired.
-  const photo = await getPhotoForDay();
+  const photo = await getCurrentPhotoFromCollection();
 
   // Don't wait for this promise; return immediately and cache the photo
   // asynchronously.
   void storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()});
 
   return photo;
-}
-
-
-/**
- * Returns the current viewport width or viewport height, whichever is greater,
- * adjusted for the device's pixel ratio. At a pixel ratio of 1 or 2, the
- * dimension is returned as-is. For each pixel ratio above 2, the dimension is
- * increased by 50%.
- */
-export function getScreenSize() {
-  // window.devicePixelRatio;
-  return greaterOf(window.screen.availWidth, window.screen.availHeight);
-}
-
-
-/**
- * Unsplash uses Imgix for dynamic image processing. These parameters ensure we
- * fetch an image that is appropriately sized for the current viewport.
- *
- * See: https://docs.imgix.com/apis/url
- */
-export function buildOptions(base?: LooseObject, overrides?: LooseObject): string {
-  const params = {
-    ...base,
-    // Sets several baseline parameters.
-    auto: 'format',
-    // Fit the image to the provided width/height without cropping and while
-    // maintaining its aspect ratio.
-    fit: 'max',
-    // Image width.
-    w: getScreenSize(),
-    // Image height.
-    h: getScreenSize(),
-    // Image quality.
-    q: 80,
-    // Apply any provided overrides.
-    ...overrides
-  };
-
-  return queryString.stringify(params);
-}
-
-
-/**
- * Provided a base URL for an Unsplash image, returns a URL with Imgix query
- * params added/modified.
- */
-export function getFullImageUrl(baseUrl: string, options?: LooseObject) {
-  const {protocol, host, pathname, query} = urlParseLax(baseUrl);
-  const parsedQuery = queryString.parse(query);
-  const updatedQuery = buildOptions(parsedQuery, options);
-  return `${protocol}//${host}${pathname}?${updatedQuery}`;
-}
-
-
-/**
- * Asynchronously pre-loads the image at the provided URL and returns a promise
- * that resolves when the image has finished loading.
- */
-export async function preloadImage(imgUrl: string): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    const img = new Image();
-
-    img.addEventListener('load', () => {
-      resolve();
-    });
-
-    img.addEventListener('error', event => {
-      reject(event);
-    });
-
-    img.src = imgUrl;
-  });
 }
