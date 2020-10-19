@@ -28,6 +28,7 @@ const assocAllPaths = R.curry((paths: Array<Array<string>>, srcObj: LooseObject,
 const assocPhotoPaths = assocAllPaths([
   ['id'],
   ['color'],
+  ['blur_hash'],
   ['links', 'html'],
   ['location', 'title'],
   ['urls', 'full'],
@@ -46,7 +47,8 @@ const assocPhotoPaths = assocAllPaths([
 export default AWSLambdaHandlerFactory<APIGatewayEvent>({
   pre: [setCorsHeaders, setVersionHeader],
   handler: async res => {
-    const table = new DynamoDBFactory().table(`inspirat-${env('STAGE', true)}`);
+    const stage = env<string>('STAGE', true);
+    const table = new DynamoDBFactory().table(`inspirat-${stage}`);
     const photos = await table.scan();
     res.body = photos.map(assocPhotoPaths);
   }

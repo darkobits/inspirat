@@ -13,7 +13,7 @@ import {getAllPages, isEmptyObject} from 'lib/utils';
 // ----- Sync Collection -------------------------------------------------------
 
 /**
- * This function queries the /collections API with our Unsplashcollection ID,
+ * This function queries the /collections API with our Unsplash collection ID,
  * which will give us a list of all photos in our collection on Unsplash. This
  * API is paginated (with a max page size of 30) so any collection of
  * non-trivial size will require several API requests.
@@ -33,12 +33,15 @@ export default AWSLambdaHandlerFactory({
 
     // ----- [1] Get Unsplash Collection ---------------------------------------
 
+    const collectionId = env<string>('UNSPLASH_COLLECTION_ID', true);
+    const accessKey = env<string>('UNSPLASH_ACCESS_KEY', true);
+
     const unsplashPhotoCollection: Array<UnsplashCollectionPhotoResource> = await getAllPages({
       method: 'GET',
-      url: `https://api.unsplash.com/collections/${env('UNSPLASH_COLLECTION_ID', true)}/photos`,
+      url: `https://api.unsplash.com/collections/${collectionId}/photos`,
       headers: {
         'Accept-Version': 'v1',
-        'Authorization': `Client-ID ${env('UNSPLASH_ACCESS_KEY', true)}`
+        'Authorization': `Client-ID ${accessKey}`
       },
       params: {
         per_page: MAX_PAGE_SIZE
@@ -60,8 +63,9 @@ export default AWSLambdaHandlerFactory({
 
     // ----- [2] Create Resource Handles ---------------------------------------
 
-    const table = new DynamoDBFactory().table(`inspirat-${env('STAGE', true)}`);
-    const queueHandle = await getQueueHandle(`inspirat-${env('STAGE', true)}`);
+    const stage = env<string>('STAGE', true);
+    const table = new DynamoDBFactory().table(`inspirat-${stage}`);
+    const queueHandle = await getQueueHandle(`inspirat-${stage}`);
 
 
     // ----- [3] Handle Additions ----------------------------------------------
@@ -78,7 +82,8 @@ export default AWSLambdaHandlerFactory({
 
       // Post a message to our queue indicating that a new photo needs to be
       // added to the database.
-      // @ts-ignore
+      // @ts-ignore Typings here require a QueueUrl even though we have
+      // pre-bound that param when creating our queue handle.
       await queueHandle.sendMessage({
         MessageBody: JSON.stringify({
           id: photo.id
