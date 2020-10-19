@@ -9,6 +9,7 @@
       "hoist": true
     },
     "version": {
+      "allowBranch": "master",
       "message": "chore(release): %v",
       "conventionalCommits": true,
       "gitTagVersion": true,

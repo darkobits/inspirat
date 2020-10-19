@@ -46,8 +46,9 @@ scripts.backend = {
 // ----- Client Scripts ----------------------------------------------------
 
 const lintClientCommand = `${runIn('client')} unified.eslint src`;
+const lintClientStylesCommand = `${runIn('client')} stylelint src/**/*.{ts,tsx,js,jsx,css}`;
 const buildClientCommand = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
-const publishClientCommand = `npx babel-node --extensions=.ts --config-file=./packages/client/babel.config.js ./packages/client/scripts/publish-extension.ts`
+const publishClientCommand = `npx babel-node --extensions=.ts --config-file=./packages/client/babel.config.js ./packages/client/scripts/publish-bin.ts`
 
 
 scripts.client = {
@@ -57,7 +58,10 @@ scripts.client = {
   },
   lint: {
     description: 'Lints the client package.',
-    script: lintClientCommand
+    script: lintClientCommand,
+    styles: {
+      script: lintClientStylesCommand
+    }
   },
   build: {
     description: 'Lints and builds the client package',

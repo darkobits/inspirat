@@ -1,6 +1,5 @@
 {
   "name": "inspirat",
-  "description": "A new tab experience for Chrome in the style of Momentum.",
   "private": true,
   "scripts": {
     "build": "nps build",

@@ -1,5 +1,6 @@
 import path from 'path';
 
+import bytes from 'bytes';
 import getPort from 'get-port';
 import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
@@ -9,6 +10,7 @@ import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import StylelintWebpackPlugin from 'stylelint-webpack-plugin';
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => {
@@ -127,7 +129,12 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   // ----- Module Resolution ---------------------------------------------------
 
   config.resolve = {
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+    alias: {
+      // Use the @hot-loader variant of react-dom in development to avoid this
+      // issue: https://github.com/gatsbyjs/gatsby/issues/11934#issuecomment-469046186
+      'react-dom': argv.mode === 'production' ? 'react-dom' : '@hot-loader/react-dom'
+    }
   };
 
 
@@ -147,6 +154,15 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     data: {
       title: process.env.DOCUMENT_TITLE ?? 'New Tab'
     }
+  }));
+
+  config.plugins.push(new StylelintWebpackPlugin({
+    files: '**/*.{ts,tsx,js,jsx,css}',
+    lintDirtyModulesOnly: argv.mode === 'development',
+    emitWarning: true,
+    failOnWarning: argv.mode === 'production',
+    emitError: true,
+    failOnError: argv.mode === 'production'
   }));
 
   if (argv.mode === 'development') {
@@ -197,6 +213,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     const port = await getPort({port: 8080});
 
     config.devServer = {
+      clientLogLevel: 'warn',
       historyApiFallback: true,
       disableHostCheck: true,
       host: '0.0.0.0',
@@ -222,7 +239,12 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     child_process: 'empty'
   };
 
-  config.devtool = argv.mode === 'development' ? '#eval-source-map' : '#inline-source-map';
+  config.devtool = argv.mode === 'development' ? '#inline-source-map' : undefined;
+
+  config.performance = {
+    maxAssetSize: bytes('300kb'),
+    maxEntrypointSize: bytes('600kb')
+  };
 
   config.optimization = {
     minimize: argv.mode === 'production',
