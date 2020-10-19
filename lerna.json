@@ -5,7 +5,7 @@
   ],
   "command": {
     "bootstrap": {
-      "ci": false,
+      "ci": true,
       "hoist": true
     },
     "version": {

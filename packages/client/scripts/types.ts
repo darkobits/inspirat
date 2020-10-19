@@ -1,5 +1,98 @@
 import type semver from 'semver';
 
+
+/**
+ * Shape of the object we get back from chrome-webstore-upload requests.
+ */
+export interface ChromeWebstoreUploadResult {
+  kind: string;
+  id: string;
+  uploadState: string;
+  itemError?: Array<{
+    error_code: string;
+    error_detail: string;
+  }>;
+}
+
+
+/**
+ * Shape of the object provided to `shouldPublish` callbacks.
+ */
+export interface PublishContext {
+  branch: string | undefined;
+  manifest: ChromeExtensionManifestV2;
+  semver: typeof semver;
+  tags: Array<string>;
+}
+
+
+/**
+ * Shape of the object accepted by publishExtension.
+ */
+export interface PublishExtensionOptions {
+  /**
+   * Chrome Web Store extension ID of the extension to be published.
+   */
+  extensionId: string | undefined;
+
+  /**
+   * Root directory containing extension artifacts to be published. This
+   * directory should contain a manifest.json file.
+   */
+  publishRoot: string;
+
+  /**
+   * Limits which branches in the repository to publish from. A string may be
+   * used to indicate a single branch, a regular expression may be used to
+   * indicate a pattern to match against
+   */
+  requireGitBranch?: string | RegExp;
+
+  /**
+   * Limits which commits in the repository to publish from by checking for a
+   * Git tag pointing to the current commit matching the provided pattern.
+   *
+   * For example, this can be used to determine if the current commit is a
+   * "release commit".
+   *
+   * If the repository uses semantic versioning, the 'semver' shorthand may be
+   * provided, and any tag pointing to the current commit that is a valid
+   * semantic version will be considered eligible.
+   */
+  requireGitTagPattern?: 'semver' | RegExp;
+
+  /**
+   * If set to `true`, will require that there are no un-committed changes in
+   * the Git index.
+   */
+  requireCleanWorkingDirectory?: boolean;
+
+  /**
+   * Synchronizes the "version" field in `<publishRoot>manifest.json`. If set to
+   * 'pkg', the "version" field from the nearest package.json will be used. If
+   * set to 'tag' and the 'requireGitTagPattern' option is set, the Git tag will
+   * be used.
+   */
+  syncManifestVersion?: 'pkgJson' | 'gitTag';
+
+  /**
+   * If set to `true`, will perform all local actions but skip uploading and
+   * publishing the extension bundle.
+   */
+  dryRun?: boolean;
+
+  /**
+   * OAuth 2.0 authorization details used when uploading extension artifacts.
+   * These can be created in the Google Developer Console.
+   */
+  auth: {
+    clientId?: string;
+    clientSecret: string | undefined;
+    refreshToken: string | undefined;
+  };
+}
+
+
 /**
  * Chrome Extension Manifest.
  *
@@ -343,71 +436,4 @@ export interface ChromeExtensionManifestV2 {
    * See: https://developer.chrome.com/extensions/manifest/web_accessible_resources
    */
   web_accessible_resources?: Array<string>;
-}
-
-/**
- * Shape of the object we get back from chrome-webstore-upload requests.
- */
-export interface ChromeWebstoreUploadResult {
-  kind: string;
-  id: string;
-  uploadState: string;
-  itemError?: Array<{
-    error_code: string;
-    error_detail: string;
-  }>;
-}
-
-
-/**
- * Shape of the object provided to `shouldPublish` callbacks.
- */
-export interface PublishContext {
-  branch: string | undefined;
-  manifest: ChromeExtensionManifestV2;
-  semver: typeof semver;
-  tags: Array<string>;
-}
-
-
-/**
- * Shape of the object accepted by publishExtension.
- */
-export interface PublishExtensionOptions {
-  /**
-   * Root directory containing extension artifacts to be published. This
-   * directory should contain a manifest.json file.
-   */
-  publishRoot: string;
-
-  /**
-   * Chrome Web Store extension ID of the extension to be published.
-   */
-  extensionId: string | undefined;
-
-  /**
-   * OAuth 2.0 client ID as created via the Google Developer Console.
-   */
-  clientId: string | undefined;
-
-  /**
-   * OAuth 2.0 client secret as created via the Google Developer Console.
-   */
-  clientSecret: string | undefined;
-
-  /**
-   * OAuth 2.0 refresh token obtained via the Google Developer Console.
-   */
-  refreshToken: string | undefined;
-
-  /**
-   * Callback that will be invoked with a PublishContext object and should
-   * return or resolve with either:
-   *
-   * - `true` to proceed with publishing.
-   * - `undefined` to skip publishing without a reason.
-   * - `false` to skip publishing without a reason.
-   * - A `string` to skip publishing and indicate the reason for skipping.
-   */
-  shouldPublish(context: PublishContext): boolean | string | undefined | Promise<boolean | string | undefined>;
 }

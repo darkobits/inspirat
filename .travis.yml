@@ -6,7 +6,8 @@ install:
   - npm ci --ignore-scripts
 script:
   - npx nps prepare
-  - npx nps publish-client
+  - git status
+  - npx nps client.publish
 cache:
   directories:
     - packages/backend/.serverless

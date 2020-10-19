@@ -55,11 +55,33 @@ export async function readExtensionManifest(extensionRoot: string): Promise<Read
 
 
 /**
+ * Returns the current Git branch name.
+ */
+export async function getBranchName() {
+  const { stdout } = await execa('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
+  return stdout;
+}
+
+
+/**
  * Returns an array of all Git tags that point to the current HEAD.
  */
 export async function getTagsAtHead() {
-  const result = await execa('git', ['tag', '--points-at', 'HEAD']);
-  return result.stdout.split(os.EOL).filter(Boolean);
+  const { stdout } = await execa('git', ['tag', '--points-at', 'HEAD']);
+  return stdout.split(os.EOL).filter(Boolean);
+}
+
+
+/**
+ * Returns a Promise that resolves with `true` if the Git index is clean, or
+ * `false` otherwise.
+ */
+export async function isWorkingDirectoryClean() {
+  const { exitCode } = await execa('git', ['diff-index', '--quiet', 'HEAD'], {
+    reject: false
+  });
+
+  return !exitCode;
 }
 
 
@@ -90,4 +112,43 @@ export async function zipFolder(folderPath: string) {
     archive.glob('**', {cwd: folderPath});
     void archive.finalize();
   });
+}
+
+
+/**
+ * Tests whether the provided string is a valid Chrome Extension version
+ * identifier.
+ *
+ * See: https://developer.chrome.com/extensions/manifest/version
+ */
+export function isValidChromeExtensionVersion(versionStr: string) {
+  return /^\d+(\.\d+)?(\.\d+)?(\.\d+)?$/.test(versionStr);
+}
+
+
+/**
+ * Provided two arrays, returns a new array by matching equally-positioned
+ * elements from each.
+ */
+export function zip(a: Array<any>, b: Array<any>) {
+  const acc = [];
+
+  for (let i = 0, l = Math.max(a.length, b.length); i < l; i++) {
+    acc.push(a[i]);
+    acc.push(b[i]);
+  }
+
+  return acc;
+}
+
+
+/**
+ * Template literal tag that converts a multi-line string to a single line
+ * string. Any sequence of more than 1 white-space character will be replaced
+ * with a single space.
+ *
+ * To force a newline in the resulting string, use the token '%n'.
+ */
+export function toSingle(strings: TemplateStringsArray, ...values: Array<any>) {
+  return zip([...strings], values).join('').replace(/\s+/g, ' ').trim().replace(/%n/g, os.EOL);
 }

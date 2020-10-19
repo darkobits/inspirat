@@ -71,7 +71,7 @@ scripts.client = {
     description: 'Prepares the client package for development or building.',
     script: npsUtils.series(lintClientCommand, buildClientCommand)
   },
-  publishClient: {
+  publish: {
     description: 'Publish a new version of the client package to the Chrome Web Store.',
     script: publishClientCommand
   },
@@ -127,7 +127,5 @@ scripts.bump = {
 // Hoisted scripts.
 scripts.deploy = scripts.backend.deploy;
 scripts.start = scripts.client.start;
-scripts.publishClient = scripts.client.publishClient;
-
 
 module.exports = {scripts};

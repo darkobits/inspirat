@@ -39,20 +39,24 @@
  * - https://circleci.com/blog/continuously-deploy-a-chrome-extension/
  */
 import os from 'os';
-import path from 'path';
 
-import env from '@darkobits/env';
 import createLogger from '@darkobits/log';
 import bytes from 'bytes';
 // @ts-ignore (No type definitions exist for this module.)
 import chromeWebstoreUpload from 'chrome-webstore-upload';
 import envCi from 'env-ci';
 import fs from 'fs-extra';
+import ow from 'ow';
+import readPkgUp from 'read-pkg-up';
 import semver from 'semver';
 
 import {
+  getBranchName,
   getTagsAtHead,
+  isValidChromeExtensionVersion,
+  isWorkingDirectoryClean,
   readExtensionManifest,
+  toSingle,
   zipFolder
 } from './common';
 import {
@@ -61,87 +65,235 @@ import {
 } from './types';
 
 
-const log = createLogger({heading: 'publish-extension'});
+const log = createLogger({heading: 'pubby'});
+
+const logMessages: Array<() => void> = [];
+
+function prependLogMessage(cb: () => void) {
+  logMessages.unshift(cb);
+}
+
+function appendLogMessage(cb: () => void) {
+  logMessages.push(cb);
+}
+
+function writeLogMessages() {
+  logMessages.forEach(cb => cb());
+}
 
 
 /**
  * Provided a PublishExtensionOptions, archives, uploads, and publishes a
  * Chrome Extension and returns a Promise that resolves when the operation is
  * complete.
+ *
+ * TODO: Move all checks for environment variables to AFTER we have determined
+ * release eligibility, as they might not be exposed on non-release branches.
  */
 async function publishExtension(options: PublishExtensionOptions) {
-  // ----- [1] Verify Publish Root & Manifest ----------------------------------
+  // ----- [1] Validate Options ------------------------------------------------
 
-  const { publishRoot } = options;
+  ow(options, ow.object.exactShape({
+    extensionId: ow.string,
+    publishRoot: ow.string,
+    requireGitBranch: ow.optional.any(ow.string, ow.regExp),
+    requireGitTagPattern: ow.optional.any(ow.string.equals('semver'), ow.regExp),
+    requireCleanWorkingDirectory: ow.optional.boolean,
+    syncManifestVersion: ow.optional.any(ow.string.equals('pkgJson'), ow.string.equals('gitTag')),
+    dryRun: ow.optional.boolean,
+    auth: {
+      clientId: ow.string,
+      clientSecret: ow.string,
+      refreshToken: ow.string
+    }
+  }));
 
+
+  // ----- [2] Ensure Clean Working Directory ----------------------------------
+
+  if (options.requireCleanWorkingDirectory) {
+    if (await isWorkingDirectoryClean()) {
+      appendLogMessage(() => log.verbose('- Working directory is clean.'));
+    } else {
+      throw new Error('Working directory is not clean.');
+    }
+  }
+
+
+  // ----- [3] Determine Branch Eligibility ------------------------------------
+
+  // Many CI systems will clone repositories in a way that prevents us from
+  // determining the current branch name using Git. They do, however, provide
+  // an environment variable containing the current branch name. So, when
+  // in a CI environment, prefer reading from the environment variable.
+  const { isCi, branch: branchFromCi } = envCi();
+  const branch = isCi && branchFromCi ? branchFromCi : await getBranchName();
+
+  if (options.requireGitBranch) {
+    let isEligibleBranch: boolean;
+
+    if (typeof options.requireGitBranch === 'string') {
+      isEligibleBranch = branch === options.requireGitBranch;
+    } else {
+      isEligibleBranch = options.requireGitBranch.test(branch);
+    }
+
+    if (!isEligibleBranch) {
+      appendLogMessage(() => log.info(toSingle`
+        ${log.chalk.yellow.bold('Skipping publish:')} Branch ${log.chalk.bold(branch)} is not
+        eligible for publishing.
+      `));
+
+      return;
+    }
+
+    if (typeof options.requireGitBranch === 'string') {
+      appendLogMessage(() => log.verbose(`- On release branch ${log.chalk.bold(branch)}.`));
+    } else {
+      appendLogMessage(() => log.verbose(toSingle`
+        - Branch ${log.chalk.bold(branch)} satisfies pattern
+          ${log.chalk.blue(options.requireGitBranch)}.
+      `));
+    }
+  }
+
+
+  // ----- [4] Determine Tag Eligibility ---------------------------------------
+
+  let tag = '';
+
+  if (options.requireGitTagPattern) {
+    const gitTags = await getTagsAtHead();
+
+    const eligibleTag = gitTags.find(curTag => {
+      if (options.requireGitTagPattern === 'semver') {
+        return semver.valid(curTag) && curTag;
+      }
+
+      return options.requireGitTagPattern?.test(curTag);
+    });
+
+    if (!eligibleTag) {
+      appendLogMessage(() => log.info(toSingle`
+        - ${log.chalk.yellow.bold('Skipping publish:')} No eligible tags point to the current commit.
+      `));
+
+      return;
+    }
+
+    tag = eligibleTag;
+    appendLogMessage(() => log.verbose(`- Using tag ${log.chalk.green(tag)}.`));
+  }
+
+
+  // ----- [5] Verify Publish Root ---------------------------------------------
+
+  // Ensure directory can be read from.
   try {
-    await fs.access(publishRoot);
+    await fs.access(options.publishRoot);
   } catch  {
-    throw new Error(`extension artifacts not present at ${log.chalk.green(publishRoot)}`);
+    throw new Error(`Unable to read from publish root ${log.chalk.green(options.publishRoot)}.`);
   }
 
-  const { manifest, path: manifestPath } = await readExtensionManifest(publishRoot);
-  log.info(`Determining publish eligibility for Chrome extension ${log.chalk.bold(manifest.name)}.`);
-  log.verbose(`Extension manifest path: ${log.chalk.green(manifestPath)}`);
+  // Ensure directory is not empty.
+  const files = await fs.readdir(options.publishRoot);
 
-
-  // ----- [2] Compute Git Branch & Tags ---------------------------------------
-
-  const { branch } = envCi();
-  log.verbose(`Git branch: ${log.chalk.green(branch)}`);
-
-  const tags = await getTagsAtHead();
-  log.verbose(`Git tag(s): ${tags.map(log.chalk.green).join(', ')}`);
-
-
-  // ----- [3] Determine Publish Eligibility -----------------------------------
-
-  const shouldPublishResult = await options.shouldPublish({branch, manifest, semver, tags});
-
-  // Not publishing with a reason provided.
-  if (typeof shouldPublishResult === 'string') {
-    log.warn(`Skipping publish of extension ${log.chalk.bold(manifest.name)}; ${shouldPublishResult}`);
-    return;
+  if (files.length === 0) {
+    throw new Error(`Found empty directory at publish root: ${log.chalk.green(options.publishRoot)}.`);
   }
 
-  // Not publishing without a reason provided.
-  if (shouldPublishResult === false || shouldPublishResult === undefined) {
-    log.warn(`Skipping publish of extension ${log.chalk.bold(manifest.name)}.`);
-    return;
+  appendLogMessage(() => log.verbose(`- Publishing from ${log.chalk.green(options.publishRoot)}.`));
+
+
+  // ----- [6] Read Manifest & Sync Manifest Version ---------------------------
+
+  const { manifest, path: manifestPath } = await readExtensionManifest(options.publishRoot);
+
+  if (options.syncManifestVersion === 'pkgJson') {
+    const pkgInfo = await readPkgUp({ cwd: options.publishRoot });
+
+    if (!pkgInfo) {
+      throw new Error(toSingle`
+        Option ${log.chalk.bold('syncManifestVersion')} is set to "pkgJson", but no package.json
+        was found.
+      `);
+    }
+
+    if (!pkgInfo.packageJson.version) {
+      throw new Error(`
+        Option ${log.chalk.bold('syncManifestVersion')} is set to "pkgJson", but package.json does not
+        contain a "version" field.
+      `);
+    }
+
+    // Versions in package.json are assumed to be valid semver strings, but if
+    // they contain things like pre-release identifiers, they are not valid
+    // Chrome Extension versions.
+    if (!isValidChromeExtensionVersion(pkgInfo.packageJson.version)) {
+      throw new Error(toSingle`
+        Manifest version cannot be synchronized from package.json version
+        ${log.chalk.green(pkgInfo.packageJson.version)} because it is not a valid Chrome Extension
+        version identifier.%n
+        For more information see: https://developer.chrome.com/extensions/manifest/version
+      `);
+    }
+
+    manifest.version = pkgInfo.packageJson.version;
+    await fs.writeJson(manifestPath, manifest);
+
+    appendLogMessage(() => log.info(toSingle`
+      - Manifest version synchronized from package.json version
+        ${log.chalk.green(pkgInfo.packageJson.version)}.
+    `));
+  } else if (options.syncManifestVersion === 'gitTag') {
+    if (!options.requireGitTagPattern) {
+      throw new Error(toSingle`
+        Option ${log.chalk.bold('requireGitTagPattern')} must be set when option
+        ${log.chalk.bold('syncManifestVersion')} is set to "gitTag".
+      `);
+    }
+
+    // If the user configured requireGitTagPattern to expect a semver tag, use
+    // semver.valid here to strip any leading 'v' (or other prefixes) from the
+    // tag, as these will result in an invalid version identifier.
+    const strippedTag = options.requireGitTagPattern === 'semver' ? semver.valid(tag) as string : tag;
+
+    // Stripped tags that are valid semver strings may still be invalid Chrome
+    // Extension versions if they contain things like pre-release identifiers.
+    if (!isValidChromeExtensionVersion(strippedTag)) {
+      throw new Error(toSingle`
+        Manifest version cannot be synchronized from Git tag ${log.chalk.green(tag)} because it is not a
+        valid Chrome Extension version identifier.%n
+        For more information, see: https://developer.chrome.com/extensions/manifest/version
+      `);
+    }
+
+    manifest.version = strippedTag;
+    await fs.writeJson(manifestPath, manifest);
+
+    appendLogMessage(() => log.info(toSingle`
+      - Manifest version synchronized to ${log.chalk.green(strippedTag)} from Git tag
+        ${log.chalk.green(tag)}.
+    `));
   }
 
-  log.info(`Preparing to publish ${log.chalk.bold(manifest.name)} ${log.chalk.green(`v${manifest.version}`)} from branch ${log.chalk.green(branch)}.`);
+  prependLogMessage(() => log.info(`Publishing Chrome extension ${log.chalk.bold(manifest.name)}.`));
 
 
-  // ----- [4] Validate Web Store Credentials ----------------------------------
+  // ----- [7] Create Archive --------------------------------------------------
 
-  const {extensionId, clientId, clientSecret, refreshToken} = options;
+  const archivePath = await zipFolder(options.publishRoot);
+  const archiveSize = bytes((await fs.stat(archivePath)).size);
 
-  if (!extensionId) {
-    throw new Error('extension ID not set');
-  }
-
-  if (!clientId) {
-    throw new Error('client ID not set');
-  }
-
-  if (!clientSecret) {
-    throw new Error('client secret not set');
-  }
-
-  if (!refreshToken) {
-    throw new Error('refresh token not set');
-  }
+  appendLogMessage(() => log.verbose(`- Archive path: ${log.chalk.green(archivePath)}`));
+  appendLogMessage(() => log.info(toSingle`
+    - Created bundle from ${log.chalk.green(options.publishRoot)} ${log.chalk.dim(`(${archiveSize})`)}.
+  `));
 
 
-  // ----- [5] Compress Artifacts ----------------------------------------------
+  // ----- [8] Upload Artifacts ------------------------------------------------
 
-  const artifactPath = await zipFolder(publishRoot);
-  const artifactSize = bytes((await fs.stat(artifactPath)).size);
-  log.info(`Creating artifact from ${log.chalk.green(publishRoot)} ${log.chalk.dim(`(${artifactSize})`)}.`);
-
-
-  // ----- [6] Upload Artifacts ------------------------------------------------
+  const { extensionId, auth: { clientId, clientSecret, refreshToken } } = options;
 
   const webStore = chromeWebstoreUpload({
     extensionId,
@@ -150,85 +302,59 @@ async function publishExtension(options: PublishExtensionOptions) {
     refreshToken
   });
 
-  const artifactStream = fs.createReadStream(artifactPath);
-  const uploadResult: ChromeWebstoreUploadResult = await webStore.uploadExisting(artifactStream);
+  if (!options.dryRun) {
+    const artifactStream = fs.createReadStream(archivePath);
+    const uploadResult: ChromeWebstoreUploadResult = await webStore.uploadExisting(artifactStream);
 
-  if (uploadResult.uploadState === 'FAILURE' && uploadResult.itemError) {
-    log.silly('Artifact upload failed:', uploadResult);
-
-    throw new Error([
-      'Artifact upload failed:',
-      ...uploadResult.itemError.map(error => `- ${error.error_detail}`)
-    ].join(os.EOL));
-  }
-
-  log.verbose('Uploaded artifact.');
-
-
-  // ----- [7] Publish Extension & Clean Up ------------------------------------
-
-  log.info('Publishing extension.');
-  await webStore.publish();
-
-  log.verbose('Cleaning up.');
-  await fs.unlink(artifactPath);
-
-  log.info(`Successfully published ${log.chalk.bold(manifest.name)} ${log.chalk.green(`v${manifest.version}`)} ${log.chalk.dim(`(${artifactSize})`)}.`);
-}
-
-
-/**
- * NOTE: This function should be factored-out of this module in a future update,
- * as its primary role is to gather configuration specific to this project and
- * invoke `publishExtension`.
- */
-async function main() {
-  try {
-    await publishExtension({
-      publishRoot: path.resolve(__dirname, '..', 'dist'),
-      extensionId: env<string>('CHROME_WEBSTORE_EXTENSION_ID'),
-      clientId: env<string>('CHROME_WEBSTORE_CLIENT_ID'),
-      clientSecret: env<string>('CHROME_WEBSTORE_CLIENT_SECRET'),
-      refreshToken: env<string>('CHROME_WEBSTORE_REFRESH_TOKEN'),
-      shouldPublish: ({branch, tags, semver, manifest}) => {
-        if (branch !== 'master') {
-          return 'not on "master"';
-        }
-
-        if (tags.length === 0) {
-          return 'no Git tags at current commit';
-        }
-
-        if (typeof manifest.version !== 'string') {
-          return `expected type of manifest version to be "string", got "${typeof manifest.version}`;
-        }
-
-        if (!semver.valid(manifest.version)) {
-          return `manifest version ${log.chalk.green(manifest.version)} is not a valid semantic version`;
-        }
-
-        // Attempt to find a Git tag that is a valid semantic version that
-        // matches the extension's current manifest version.
-        const tag = tags.find(curTag => semver.valid(curTag) && semver.eq(curTag, manifest.version));
-
-        if (!tag) {
-          return `no Git tags match the current manifest version "${manifest.version}"`;
-        }
-
-        return true;
-      }
-    });
-  } catch (err) {
-    log.error(`Skipping extension publish; ${err.message}.`);
-    log.verbose(err.stack);
-
-    if (err.isNonCritical) {
-      process.exit(0);
-    } else {
-      process.exit(1);
+    if (uploadResult.uploadState === 'FAILURE' && uploadResult.itemError) {
+      throw new Error(`
+        Artifact upload failed:%n
+        ${uploadResult.itemError.map(error => `- ${error.error_detail}`).join('%n')}
+      `);
     }
+  } else {
+    appendLogMessage(() => log.info(log.chalk.gray(toSingle`
+      - Option ${log.chalk.bold('dryRun')} is set, skipping bundle upload.
+    `)));
+  }
+
+
+  // ----- [9] Publish Extension & Clean Up ------------------------------------
+
+  if (!options.dryRun) {
+    await webStore.publish();
+  } else {
+    appendLogMessage(() => log.info(log.chalk.gray(toSingle`
+      - Option ${log.chalk.bold('dryRun')} is set, skipping extension publish.
+    `)));
+  }
+
+  await fs.unlink(archivePath);
+
+  if (!options.dryRun) {
+    appendLogMessage(() => log.info(toSingle`
+      - Successfully published ${log.chalk.bold(manifest.name)}
+        ${log.chalk.green(`v${manifest.version}`)} ${log.chalk.dim(`(${archiveSize})`)}.
+    `));
+  } else {
+    appendLogMessage(() => log.info(toSingle`
+      - Successfully completed dry run for ${log.chalk.bold(manifest.name)}
+        ${log.chalk.green(`v${manifest.version}`)}.
+    `));
   }
 }
 
 
-export default main();
+export default async function publishExtensionRunner(options: PublishExtensionOptions) {
+  try {
+    const timer = log.createTimer();
+    await publishExtension(options);
+    writeLogMessages();
+    log.info(`Done in ${timer}.`);
+  } catch (err) {
+    log.error(err.message);
+    // Remove all lines that are in the error's message from the error's stack.
+    log.verbose(err.stack.split(os.EOL).slice(err.message.split(os.EOL).length).join(os.EOL));
+    throw err;
+  }
+}
