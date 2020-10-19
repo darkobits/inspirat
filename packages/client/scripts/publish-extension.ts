@@ -91,25 +91,7 @@ function writeLogMessages() {
  * release eligibility, as they might not be exposed on non-release branches.
  */
 async function publishExtension(options: PublishExtensionOptions) {
-  // ----- [1] Validate Options ------------------------------------------------
-
-  ow(options, ow.object.exactShape({
-    extensionId: ow.string,
-    publishRoot: ow.string,
-    requireGitBranch: ow.optional.any(ow.string, ow.regExp),
-    requireGitTagPattern: ow.optional.any(ow.string.equals('semver'), ow.regExp),
-    requireCleanWorkingDirectory: ow.optional.boolean,
-    syncManifestVersion: ow.optional.any(ow.string.equals('pkgJson'), ow.string.equals('gitTag')),
-    dryRun: ow.optional.boolean,
-    auth: {
-      clientId: ow.string,
-      clientSecret: ow.string,
-      refreshToken: ow.string
-    }
-  }));
-
-
-  // ----- [2] Ensure Clean Working Directory ----------------------------------
+  // ----- [1] Ensure Clean Working Directory ----------------------------------
 
   if (options.requireCleanWorkingDirectory) {
     if (await isWorkingDirectoryClean()) {
@@ -120,7 +102,7 @@ async function publishExtension(options: PublishExtensionOptions) {
   }
 
 
-  // ----- [3] Determine Branch Eligibility ------------------------------------
+  // ----- [2] Determine Branch Eligibility ------------------------------------
 
   // Many CI systems will clone repositories in a way that prevents us from
   // determining the current branch name using Git. They do, however, provide
@@ -158,7 +140,7 @@ async function publishExtension(options: PublishExtensionOptions) {
   }
 
 
-  // ----- [4] Determine Tag Eligibility ---------------------------------------
+  // ----- [3] Determine Tag Eligibility ---------------------------------------
 
   let tag = '';
 
@@ -184,6 +166,30 @@ async function publishExtension(options: PublishExtensionOptions) {
     tag = eligibleTag;
     appendLogMessage(() => log.verbose(`- Using tag ${log.chalk.green(tag)}.`));
   }
+
+
+  // ----- [4] Validate Options ------------------------------------------------
+
+  // N.B. We validate options after determining eligibility because it is likely
+  // that several of the more sensitive options are provided as environment
+  // variables and, depending on how the user has configured their CI system,
+  // may only be exposed to eligible branches. Therefore, trying to validate our
+  // options too early would cause us to throw an Error, resulting in a failed
+  // build.
+  ow(options, ow.object.exactShape({
+    extensionId: ow.string,
+    publishRoot: ow.string,
+    requireGitBranch: ow.optional.any(ow.string, ow.regExp),
+    requireGitTagPattern: ow.optional.any(ow.string.equals('semver'), ow.regExp),
+    requireCleanWorkingDirectory: ow.optional.boolean,
+    syncManifestVersion: ow.optional.any(ow.string.equals('pkgJson'), ow.string.equals('gitTag')),
+    dryRun: ow.optional.boolean,
+    auth: {
+      clientId: ow.string,
+      clientSecret: ow.string,
+      refreshToken: ow.string
+    }
+  }));
 
 
   // ----- [5] Verify Publish Root ---------------------------------------------
