@@ -1,4 +1,5 @@
 import queryString from 'query-string';
+import * as R from 'ramda';
 // @ts-ignore
 import urlParseLax from 'url-parse-lax';
 
@@ -14,14 +15,15 @@ export function greaterOf(a: number, b: number): number {
 
 
 /**
- * Provided an integer and an array, returns the index in that array computed
- * by dividing the integer by the length of the array and using the remainder as
- * the index. This allows a counter to start at 0 and increase indefinitely,
- * looping over the array as it does.
+ * Provided an integer and an array or a length param, returns an index in that
+ * array computed by dividing the integer by the length of the array and using
+ * the remainder as the result. This allows a counter to start at 0 and increase
+ * indefinitely, looping over the array as it does.
  */
-export function modIndex(num: number, arr: Array<any>): number {
-  const index = num % arr.length;
-  return index < 0 ? index + arr.length : index;
+export function modIndex(num: number, arrOrLength: Array<any> | number): number {
+  const length = Array.isArray(arrOrLength) ? arrOrLength.length : arrOrLength;
+  const index = num % length;
+  return index < 0 ? index + length : index;
 }
 
 
@@ -34,12 +36,56 @@ export function capitalizeWords(input: string): string {
 
 
 /**
+ * Tracks debug callbacks provided to ifDebug.
+ */
+const debugOnceStatements: Array<string | Array<any>> = [];
+
+
+/**
+ * @private
+ *
+ * Invokes the provided callback and, if it makes any calls to console.debug,
+ * will only log the debug statement if it has not already been seen. If key is
+ * of type string, it will be used to make this determination. Otherwise, the
+ * arguments provided to console.debug will be used.
+ */
+function debugOnce(key: boolean | string, cb: GenericFunction) {
+  const origDebug = console.debug;
+
+  console.debug = (...args: Array<any>) => {
+    const id = typeof key === 'string' ? key : args;
+
+    if (!R.includes(id, debugOnceStatements)) {
+      Reflect.apply(origDebug, console, args);
+      debugOnceStatements.push(id);
+    }
+  };
+
+  cb();
+
+  console.debug = origDebug;
+}
+
+
+/**
+ * Optional options object accepted by ifDebug.
+ */
+export interface IfDebugOptions {
+  once?: boolean | string;
+}
+
+
+/**
  * Executes the provided function if NODE_ENV is 'development' or if the 'debug'
  * query string param has been set.
  */
-export function ifDebug(cb: (...args: Array<any>) => any): any {
+export function ifDebug(cb: GenericFunction, options?: IfDebugOptions) {
   if (process.env.NODE_ENV === 'development' || queryString.parse(location.search).debug === 'true')  {
-    return cb();
+    if (options?.once) {
+      debugOnce(options.once, cb);
+    } else {
+      cb();
+    }
   }
 }
 
@@ -72,12 +118,14 @@ export function onClickAndHold(interval: number, cb: GenericFunction) {
 
     const timeoutHandle = setTimeout(() => cb(target), interval);
 
-    const onMouseUp = () => {
-      clearTimeout(timeoutHandle);
-      target.removeEventListener('mouseup', onMouseUp);
-    };
+    ['mouseup', 'mousemove'].forEach(event => {
+      const handler = () => {
+        clearTimeout(timeoutHandle);
+        target.removeEventListener(event, handler);
+      };
 
-    target.addEventListener('mouseup', onMouseUp);
+      target.addEventListener(event, handler);
+    });
   };
 }
 

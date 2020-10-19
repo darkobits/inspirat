@@ -10,22 +10,21 @@ import { capitalizeWords } from 'lib/utils';
 
 // ----- Styles ----------------------------------------------------------------
 
-interface SplashLowerElProps {
+interface StyledSplashLowerProps {
   opacity: number;
 }
 
-const SplashLowerEl = styled.div<SplashLowerElProps>`
+const StyledSplashLower = styled.div<StyledSplashLowerProps>`
   display: flex;
   justify-content: space-between;
   opacity: ${R.prop('opacity')};
-  transition: opacity 1.2s ease-in 0.8s;
+  transition: opacity 1.2s ease-in;
+  transition-delay: 1.2s;
   width: 100%;
   z-index: 1;
 `;
 
-// Custom styling for the left ImageMeta element that will indicate the image's
-// location.
-const LocationWrapper = styled.div`
+const ImageLocation = styled(ImageMeta)`
   display: none;
 
   @media(min-width: 700px) {
@@ -33,9 +32,7 @@ const LocationWrapper = styled.div`
   }
 `;
 
-// Custom styling for the right ImageMeta element that will indicate the image's
-// author.
-const AttributionWrapper = styled.div`
+const ImageAttribution = styled(ImageMeta)`
   margin-left: auto;
 `;
 
@@ -52,29 +49,21 @@ const SplashLower: React.FunctionComponent = () => {
   }
 
   // Location.
-  const location = R.path<string>(['location', 'title'], currentPhoto);
+  const location = currentPhoto?.location?.title;
 
   // Attribution.
-  const name = capitalizeWords(R.pathOr('', ['user', 'name'], currentPhoto));
-  const nameHref = R.pathOr<string>('', ['user', 'links', 'html'], currentPhoto);
-  const unsplashHref = R.pathOr<string>('', ['links', 'html'], currentPhoto);
-  const attribution = R.path(['user', 'name'], currentPhoto)
-    ? <span>Photo by&nbsp;<a href={nameHref}>{name}</a>&nbsp;on&nbsp;<a href={unsplashHref}>Unsplash</a></span>
-    : undefined;
+  const author = capitalizeWords(currentPhoto?.user?.name ?? '');
+  const authorHref = currentPhoto?.user?.links?.html;
+  const unsplashHref = currentPhoto?.links?.html;
+  const attribution = author && (
+    <span>Photo by <a href={authorHref}>{author}</a> on <a href={unsplashHref}>Unsplash</a></span>
+  );
 
   return (
-    <SplashLowerEl opacity={currentPhoto ? 1 : 0}>
-      <LocationWrapper>
-        <ImageMeta>
-          {location}
-        </ImageMeta>
-      </LocationWrapper>
-      <AttributionWrapper>
-        <ImageMeta>
-          {attribution}
-        </ImageMeta>
-      </AttributionWrapper>
-    </SplashLowerEl>
+    <StyledSplashLower opacity={currentPhoto ? 1 : 0}>
+      <ImageLocation>{location}</ImageLocation>
+      <ImageAttribution>{attribution}</ImageAttribution>
+    </StyledSplashLower>
   );
 };
 

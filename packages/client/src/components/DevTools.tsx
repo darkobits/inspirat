@@ -1,10 +1,13 @@
-import {styled} from 'linaria/react';
+import { css } from 'linaria';
+import { styled } from 'linaria/react';
 import mousetrap from 'mousetrap';
-import {rgba} from 'polished';
+import { darken, desaturate, readableColor, rgba } from 'polished';
+import * as R from 'ramda';
 import React from 'react';
+import { BsArrowRepeat, BsCheck } from 'react-icons/bs';
 
 import InspiratContext from 'contexts/Inspirat';
-import { ifDebug } from 'lib/utils';
+import { ifDebug, modIndex } from 'lib/utils';
 
 
 // ----- Styles ----------------------------------------------------------------
@@ -15,24 +18,34 @@ import { ifDebug } from 'lib/utils';
 const BASIS = '28px';
 
 
-/**
- * Swatch component that resides at the top of the screen in development mode
- * when the "dev=true" query param is present.
- */
-interface SwatchProps {
-  color: string;
-}
+const StyledDevTools = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 12px 10px 0px 10px;
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 100%;
+  z-index: 0;
+`;
 
-const Swatch = styled.div<SwatchProps>`
-  background-color: ${props => props.color};
-  border-radius: ${BASIS};
-  box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
+
+/**
+ * Progress bar that resides at the top of the screen and reflects the current
+ * position in the photo collection.
+ */
+const Progress = styled.div<{progress: number; color: string}>`
+  background-color: ${props => rgba(readableColor(props.color || 'white'), 0.42)};
+  border-left-color: ${props => rgba(props.color || 'white', 1)};
+  border-left-style: solid;
+  border-left-width: ${props => (props.progress || 0) * 100}vw;
+  height: 3px;
+  left: 0;
   position: absolute;
-  width: ${BASIS};
-  height: ${BASIS};
-  top: 8px;
-  right: 8px;
-  z-index: 1;
+  right: 0;
+  top: 0;
+  transition: border-left-width 0.2s ease-in;
 `;
 
 
@@ -40,32 +53,36 @@ const Swatch = styled.div<SwatchProps>`
  * Image source input that resides at the top of the screen in development mode
  * when the "dev=true" query param is present.
  */
-const Source = styled.div`
+const Source = styled.div<SwatchProps>`
   height: ${BASIS};
-  left: 8px;
-  position: absolute;
-  top: 8px;
-  width: calc(100% - ${BASIS} - 26px);
-  z-index: 2;
+  width: 100%;
+  margin-right: 12px;
+  backdrop-filter: blur(20px);
 
   input {
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: ${BASIS};
-    border: none;
-    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.15);
-    color: rgba(0, 0, 0, 0.6);
+    background: ${props => rgba(desaturate(0.6, props.color), 0.5)};
+    backdrop-filter: blur(10px);
+    border-radius: 4px;
+    border: 1px solid ${props => rgba(readableColor(props.color), 0.64)};
+    box-shadow: 0px 0px 4px ${props => rgba(props.color, 0.16)};
+    color: ${props => readableColor(desaturate(0.6, props.color))};
     font-family: sans-serif;
     font-size: 15px;
     font-size: inherit;
-    font-weight: 500;
+    font-weight: 100;
     height: ${BASIS};
-    letter-spacing: 0.3px;
     line-height: ${BASIS};
     padding: 0px 10px 0px 14px;
     width: 100%;
 
     &:focus {
       outline: none;
+      box-shadow: 0px 0px 0px 1.5px ${props => rgba(readableColor(props.color), 0.32)};
+      background: ${props => rgba(desaturate(0.6, props.color), 0.64)};
+    }
+
+    &::placeholder {
+      color: ${props => rgba(readableColor(props.color), 0.64)};
     }
 
     &::selection {
@@ -76,20 +93,64 @@ const Source = styled.div`
 
 
 /**
- * Progress bar that resides at the top of the screen in development mode when
- * the "dev=true" query parameter is present.
+ * Swatch component that shows the "color"
  */
-const Progress = styled.div<{progress: number; color: string}>`
-  border-left-color: ${props => rgba(props.color || 'white', 1)};
-  border-left-style: solid;
-  border-left-width: ${props => (props.progress || 0) * 100}vw;
-  height: 2px;
-  left: 0;
-  position: absolute;
-  right: 0;
-  top: 0;
-  transition: border-left-width 0.2s ease-in;
+interface SwatchProps {
+  color: string;
+}
+
+const Swatch = styled.div<SwatchProps>`
+  background-color: ${R.prop('color')};
+  border-radius: 4px;
+  border: 1px solid ${props => rgba(darken(0.48, props.color), 0.32)};
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.16);
+  height: ${BASIS};
+  margin-right: 12px;
+  width: ${BASIS};
 `;
+
+// ----- Loading Indicator -----------------------------------------------------
+
+interface LoadingIndicatorProps {
+  color?: string;
+  isLoading: boolean;
+}
+
+const StyledLoadingIndicator = styled.div<{ color?: string }>`
+  background-color: ${props => rgba(readableColor(props.color ?? 'white'), 0.42)};
+  border-radius: 4px;
+  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.16);
+  width: 32px;
+  height: ${BASIS};
+  padding-top: 1px;
+  text-align: center;
+
+  & svg {
+    color: ${props => rgba(props.color ?? 'white', 1)};
+    filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.16));
+  }
+`;
+
+const spinClassName = css`
+  @keyframes spin {
+    from {
+      transform:rotate(0deg);
+    }
+    to {
+      transform:rotate(360deg);
+    }
+  }
+
+  animation: spin 2s infinite linear;
+`;
+
+const LoadingIndicator = ({ color, isLoading }: LoadingIndicatorProps) => {
+  return (
+    <StyledLoadingIndicator color={color}>
+      {isLoading ? <BsArrowRepeat className={spinClassName} /> : <BsCheck />}
+    </StyledLoadingIndicator>
+  );
+};
 
 
 // ----- Dev Tools -------------------------------------------------------------
@@ -102,6 +163,7 @@ const DevTools: React.FunctionComponent = () => {
   const {
     dayOffset,
     showDevTools,
+    isLoadingPhotos,
     currentPhoto,
     setCurrentPhoto,
     setDayOffset,
@@ -109,14 +171,15 @@ const DevTools: React.FunctionComponent = () => {
     numPhotos
   } = React.useContext(InspiratContext);
 
-
   /*
-   * [Effect] Create Dev Tools key bindings.
+   * [Effect] Dev Tools initialization.
    */
   React.useEffect(() => ifDebug(() => {
     if (!showDevTools) {
       return;
     }
+
+    console.debug('[DevTools] Dev tools are enabled.');
 
     mousetrap.bind('left', () => {
       setDayOffset('decrement');
@@ -126,21 +189,29 @@ const DevTools: React.FunctionComponent = () => {
       setDayOffset('increment');
     });
 
-    console.debug('[Development] Keyboard shortcuts registered.');
-
     return () => {
       mousetrap.unbind('left');
       mousetrap.unbind('right');
     };
   }), [showDevTools]);
 
-
   /**
    * [Callback] Handle updates to the image source field.
    */
-  const onSrcChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+  const onImgIdChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     try {
-      const url = new URL(event.target.value);
+      const value = event.currentTarget.value;
+
+      const imgId = value.startsWith('https://unsplash.com/photos/')
+        ? value.replace('https://unsplash.com/photos/', '')
+        : value;
+
+      if (!imgId) {
+        resetPhoto();
+        return;
+      }
+
+      const url = new URL(`https://source.unsplash.com/${imgId}`);
       setCurrentPhoto({urls: {full: url.href}} as any);
     } catch {
       resetPhoto();
@@ -150,25 +221,33 @@ const DevTools: React.FunctionComponent = () => {
     setCurrentPhoto
   ]);
 
-
   if (!showDevTools) {
     return null;
   }
 
-
   const color = currentPhoto?.color ?? 'black';
+  const progress = modIndex(dayOffset, numPhotos) / numPhotos;
 
-
-  return (<>
-    <Progress
-      progress={(dayOffset % numPhotos || 0) / numPhotos}
-      color={color}
-    />
-    <Source>
-      <input type="text" onChange={onSrcChange} />
-    </Source>
-    <Swatch color={color} />
-  </>);
+  return (
+    <StyledDevTools>
+      <Progress
+        progress={progress}
+        color={color}
+      />
+      <Source color={color}>
+        <input
+          type="text"
+          onChange={onImgIdChange}
+          placeholder="https://unsplash.com/photos/:id"
+          spellCheck={false}
+          autoCorrect="false"
+          autoComplete="false"
+        />
+      </Source>
+      <Swatch color={color} title="Photo Swatch Color" />
+      <LoadingIndicator color={color} isLoading={isLoadingPhotos} />
+    </StyledDevTools>
+  );
 };
 
 

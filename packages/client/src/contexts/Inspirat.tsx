@@ -1,4 +1,4 @@
-// import objectHash from 'object-hash';
+import prettyMs from 'pretty-ms';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
@@ -6,10 +6,14 @@ import {UnsplashPhotoResource} from 'etc/types';
 import useQuery from 'hooks/use-query';
 import useStorageItem from 'hooks/use-storage-item';
 import {
-  getPhotos,
+  getPhotoCollection,
   getCurrentPhotoFromCollection,
   getCurrentPhotoFromCache
 } from 'lib/photos';
+import {
+  midnight,
+  now
+} from 'lib/time';
 import {
   ifDebug,
   preloadImage,
@@ -52,6 +56,11 @@ export interface InspiratContext {
   showDevTools: boolean;
 
   /**
+   * Whether we are pre-loading photos in the background.
+   */
+  isLoadingPhotos: boolean;
+
+  /**
    * Current name that the user has set, persisted in local storage.
    */
   name?: string;
@@ -89,6 +98,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
+  const [isLoadingPhotos, setIsLoadingPhotos] = React.useState(false);
   const [name, setName] = useStorageItem<string>('name');
   const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean>('hasSeenIntroduction');
   const query = useQuery();
@@ -110,64 +120,133 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
 
   // ----- [Effect] Determine Dev Tools Visibility -----------------------------
 
-  React.useEffect(() => ifDebug(() => setShowDevTools(Object.keys(query).includes('dev'))), []);
+  React.useEffect(() => ifDebug(() => {
+    console.debug('[Debug] Debug mode is enabled.');
+    window.debug = window.debug || {};
+
+    if (Object.keys(query).includes('devtools')) {
+      setShowDevTools(true);
+    }
+  }), []);
 
 
   // ----- [Async Effect] Determine Size of Photo Collection -------------------
 
   useAsyncEffect(async () => {
-    const photos = await getPhotos();
+    const photos = await getPhotoCollection();
     setNumPhotos(photos.length);
+
+    ifDebug(() => {
+      window.debug.photos = photos;
+      window.debug.numPhotos = photos.length;
+    });
   }, []);
 
 
-  // ----- [Async Effect] Pre-Fetch Photos -------------------------------------
+  // ----- Pre-Fetch & Update Photos -------------------------------------------
 
-  useAsyncEffect(async () => {
-    const photoFetchPromises: Array<Promise<any>> = [];
+  /**
+   * If dev tools are open, pre-loads the previous photo for faster seeking.
+   */
+  const preloadPreviousPhoto = React.useCallback(async () => {
+    if (showDevTools) {
+      const prevPhoto = await getCurrentPhotoFromCollection({offset: dayOffset - 1});
+      return preloadImage(updateImgixQueryParams(prevPhoto.urls.full));
+    }
+  }, [
+    dayOffset,
+    showDevTools
+  ]);
 
-    // Get data about the photo for the current day.
+
+  /**
+   * Pre-loads the next/tomorrow's photo.
+   */
+  const preloadNextPhoto = React.useCallback(async () => {
+    const nextPhoto = await getCurrentPhotoFromCollection({offset: dayOffset + 1});
+    return preloadImage(updateImgixQueryParams(nextPhoto.urls.full));
+  }, [
+    dayOffset
+  ]);
+
+  /**
+   * Provided a descriptor for the current photo, pre-loads the photo, then
+   * sets the provided descriptor as the current photo.
+   */
+  const preloadAndSetCurrentPhoto = React.useCallback(async (photoDescriptor: UnsplashPhotoResource) => {
+    await preloadImage(updateImgixQueryParams(photoDescriptor.urls.full));
+    setCurrentPhoto(photoDescriptor);
+  }, [
+    currentPhotoFromState
+  ]);
+
+
+  /**
+   * Updates photos.
+   */
+  const updatePhotos = React.useCallback(async () => {
+    setIsLoadingPhotos(true);
+
+    // If dev tools are open, the current photo should be pulled from the photo
+    // collection using the current offset. If not, use the 'currentPhoto' cache
+    // item to ensure the photo does not change throughout the day if the photo
+    // collection is updated.
     const currentPhoto = showDevTools ? await getCurrentPhotoFromCollection({offset: dayOffset}) : await getCurrentPhotoFromCache();
 
-    // Start pre-loading the photo.
-    const currentPhotoFetchPromise = preloadImage(updateImgixQueryParams(currentPhoto.urls.full));
-
-    photoFetchPromises.push(currentPhotoFetchPromise);
-
-    // [Development] Log Current Photo Information
     ifDebug(() => {
-      console.groupCollapsed(`[Splash] Current photo ID: "${currentPhoto.id}"`);
-      console.debug(currentPhoto);
-      console.groupEnd();
+      window.debug.currentPhoto = currentPhoto;
     });
 
-    // Pre-Load Next Photo
-    const nextPhoto = await getCurrentPhotoFromCollection({offset: dayOffset + 1});
-    const nextPhotoFetchPromise = preloadImage(updateImgixQueryParams(nextPhoto.urls.full));
-    photoFetchPromises.push(nextPhotoFetchPromise);
+    await Promise.all([
+      preloadPreviousPhoto(),
+      preloadNextPhoto(),
+      preloadAndSetCurrentPhoto(currentPhoto)
+    ]);
 
-    // [Development] Pre-Load Previous Photo
-    ifDebug(async () => {
-      const prevPhoto = await getCurrentPhotoFromCollection({offset: dayOffset - 1});
-      const prevPhotoFetchPromise = preloadImage(updateImgixQueryParams(prevPhoto.urls.full));
-      photoFetchPromises.push(prevPhotoFetchPromise);
-    });
+    setIsLoadingPhotos(false);
+  }, [
+    dayOffset,
+    showDevTools
+  ]);
 
-    // If there is no current photo, or if the current photo does not match
-    // the one in the component's state, update state.
-    if (!currentPhotoFromState || currentPhoto.id !== currentPhotoFromState.id) {
-      // Wait for the photo to download.
-      await currentPhotoFetchPromise;
 
-      // Then, set the photo data. Because the image is already cached, it
-      // will appear immediately.
-      setCurrentPhoto(currentPhoto);
-    }
+  /**
+   * Updates photos, then sets a timeout that will trigger another update at
+   * midnight.
+   */
+  const updatePhotosWithTimer = React.useCallback(() => {
+    void updatePhotos();
 
-    ifDebug(async () => {
-      await Promise.all(photoFetchPromises);
-      console.debug('[PhotosProvider] Finished downloading adjacent photos.');
-    });
+    const timeToUpdate = midnight() - now();
+
+    ifDebug(() => {
+      console.debug(`[setPhotoUpdateTimer] Current photo will update in ${prettyMs(timeToUpdate)}.`);
+
+      Reflect.defineProperty(window.debug, 'expiresIn', {
+        get: () => prettyMs(midnight() - now())
+      });
+    }, { once: 'setPhotoUpdateTimer::expiresIn' });
+
+    const timeoutHandle = setTimeout(() => {
+      ifDebug(() => console.debug('[setPhotoUpdateTimer] Updating photo.'));
+      updatePhotosWithTimer();
+    }, timeToUpdate);
+
+    return timeoutHandle;
+  }, [
+    updatePhotos
+  ]);
+
+
+  /**
+   * Initiates the photo update routine.
+   */
+  React.useEffect(() => {
+    const timeoutHandle = updatePhotosWithTimer();
+
+    return () => {
+      clearTimeout(timeoutHandle);
+    };
   }, [
     dayOffset,
     shouldResetPhoto,
@@ -183,6 +262,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     dayOffset,
     setDayOffset,
     showDevTools,
+    isLoadingPhotos,
     name,
     setName,
     currentPhoto: currentPhotoFromState,

@@ -59,6 +59,7 @@ const SplashEl = styled.div<SplashElProps>`
     content: ' ';
     display: block;
     left: 0;
+    pointer-events: none;
     position: absolute;
     right: 0;
     top: 0;
@@ -78,6 +79,7 @@ const SplashEl = styled.div<SplashElProps>`
     display: block;
     left: 0;
     mix-blend-mode: darken;
+    pointer-events: none;
     position: absolute;
     right: 0;
     top: 0;

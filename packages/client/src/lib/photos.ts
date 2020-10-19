@@ -1,5 +1,6 @@
-import { differenceInMinutes } from 'date-fns';
 import ms from 'ms';
+import objectHash from 'object-hash';
+import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
 // @ts-ignore
 import shuffleSeed from 'shuffle-seed';
@@ -15,63 +16,94 @@ import {
   UnsplashPhotoResource
 } from 'etc/types';
 import client from 'lib/client';
+import PendingPromiseCache from 'lib/pending-promise-cache';
 import storage from 'lib/storage';
 import { now, midnight, daysSinceEpoch } from 'lib/time';
 import { ifDebug, modIndex } from 'lib/utils';
 
 
 /**
- * Returns an array of all images in the Inspirat collection. The response will
- * be persisted to local storage to improve load times and is asynchronously
- * updated in the background.
+ * @private
+ *
+ * Tracks calls to getPhotoCollection, ensuring promises are re-used when
+ * multiple invocations occur before the first invocation finishes.
  */
-export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
-  // Sub-routine that fetches up-to-date image collection data, immediately
-  // resolves with it, then caches it to local storage.
-  const fetchAndUpdateCollection = async (): Promise<PhotoCollectionStorageItem | null> => {
-    try {
-      const photos = (await client.get('/photos')).data;
+const pendingPromiseCache = new PendingPromiseCache();
 
-      ifDebug(() => console.debug(`[getImages] Fetched ${photos.length} images.`));
 
-      const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
+/**
+ * @private
+ *
+ * Fetches image collection from Unsplash, immediately resolves with it, then
+ * asynchronously caches it to local storage.
+ */
+async function fetchAndUpdateCollection(): Promise<PhotoCollectionStorageItem | null> {
+  try {
+    const photos = (await client.get('/photos')).data;
 
-      // Return photos immediately and update storage in the background.
-      void storage.setItem(COLLECTION_CACHE_KEY, cacheData);
+    ifDebug(() => console.debug(`[fetchAndUpdateCollection] Fetched ${photos.length} images.`));
 
-      return cacheData;
-    } catch (err) {
-      console.error('[getPhotos] Error fetching photo collection:', err.message);
-      return null;
+    const cacheData: PhotoCollectionStorageItem = {photos, updatedAt: now()};
+
+    // Return photos immediately and update storage in the background.
+    void storage.setItem(COLLECTION_CACHE_KEY, cacheData);
+
+    return cacheData;
+  } catch (err) {
+    console.error('[fetchAndUpdateCollection] Error fetching photo collection:', err.message);
+    return null;
+  }
+}
+
+
+/**
+ * Returns an array of all images in the Inspirat collection from local storage.
+ *
+ * Additionally checks if cached photo collection data has expired and performs
+ * an update in the background if necessary.
+ */
+export async function getPhotoCollection() {
+  return pendingPromiseCache.set('getPhotoCollection', async () => {
+    let photoCache = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
+
+    // If the cache is empty, fetch photos from Unsplash and cache them.
+    if (!photoCache) {
+      ifDebug(() => console.debug('[getPhotoCollection] Cache is empty. Fetching collection.'));
+      // eslint-disable-next-line require-atomic-updates
+      photoCache = await fetchAndUpdateCollection();
+    } else if (now() - photoCache.updatedAt >= ms(CACHE_TTL)) {
+      // If the cached collection is stale, re-fetch it.
+      ifDebug(() => console.debug(`[getPhotoCollection] Cache is stale, re-fetching. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`));
+      // eslint-disable-next-line require-atomic-updates
+      photoCache = await fetchAndUpdateCollection();
+    } else {
+      ifDebug(() => {
+        const expiresIn = ms(CACHE_TTL) - (now() - (photoCache?.updatedAt ?? 0));
+        console.debug(`[getPhotoCollection] Photo collection will be updated in ${prettyMs(expiresIn)}.`);
+      }, { once: 'getPhotoCollection::expiresIn' });
     }
-  };
 
-  let photoCache = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
+    // If photoCache is still null at this point, we had no cached data and
+    // the fetch attempt failed.
+    if (!photoCache) {
+      throw new Error('[getPhotoCollection] Photo collection cache was empty and an error occurred while trying to fetch it.');
+    }
 
-  // If the cache is empty, fetch photos from Unsplash and cache them.
-  if (!photoCache) {
-    ifDebug(() => console.debug('[getImages] Cache is empty. Fetching collection.'));
-    // eslint-disable-next-line require-atomic-updates
-    photoCache = await fetchAndUpdateCollection();
-  } else if (now() - photoCache.updatedAt >= ms(CACHE_TTL)) {
-    // If the cached collection is stale, re-fetch it.
-    ifDebug(() => console.warn(`[getImages] Cache is stale, re-fetching. (${ms(now() - (photoCache?.updatedAt ?? 0), {long: true})} out of date.).`));
-    // eslint-disable-next-line require-atomic-updates
-    photoCache = await fetchAndUpdateCollection();
-  }
+    // Get the current 'name' from storage.
+    const name = await storage.getItem<string>('name');
 
-  // If photoCache is still null at this point, we had no cached data and the
-  // fetch attempt failed.
-  if (!photoCache) {
-    throw new Error('[getPhotos] Photo collection cache was empty and an error occurred while trying to fetch it.');
-  }
+    // First sort photos by their ID to ensure consistent initial ordering.
+    // Then, use the user's 'name' to deterministically shuffle the
+    // collection.
+    const sortedCollection = shuffleSeed.shuffle(R.sortBy(R.prop('id'), photoCache.photos), name);
 
-  // Get the current 'name' from storage.
-  const name = await storage.getItem<string>('name');
+    ifDebug(() => {
+      const collectionHash = objectHash(sortedCollection);
+      console.debug('[getPhotoCollection] Collection hash:', collectionHash);
+    }, { once: true });
 
-  // First sort photos by their ID to ensure consistent initial ordering. Then,
-  // use the user's 'name' to deterministically shuffle the collection.
-  return shuffleSeed.shuffle(R.sortBy(R.prop('id'), photoCache.photos), name);
+    return sortedCollection as Array<UnsplashPhotoResource>;
+  });
 }
 
 
@@ -92,7 +124,7 @@ export async function getPhotos(): Promise<Array<UnsplashPhotoResource>> {
  */
 export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<UnsplashPhotoResource> {
   const day = daysSinceEpoch() + offset;
-  const photos = await getPhotos();
+  const photos = await getPhotoCollection();
 
   // Using the number of days since the Unix epoch, use modIndex to
   // calculate the index in the photo collection to use for the indicated day.
@@ -114,12 +146,6 @@ export async function getCurrentPhotoFromCache(): Promise<UnsplashPhotoResource>
 
   if (currentPhoto) {
     if (currentPhoto.expires > now()) {
-      const exp = differenceInMinutes(new Date(currentPhoto.expires), now());
-      const hoursRemaining = Math.floor(exp / 60);
-      const minutesRemaining = exp % 60;
-
-      ifDebug(() => console.debug(`[getCurrentPhotoFromCache] Current photo expires in ${hoursRemaining}h ${minutesRemaining}m.`));
-
       return currentPhoto.photo;
     }
 

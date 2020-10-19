@@ -38,6 +38,7 @@ const SplashMidEl = styled.div<StyledSplashMidProps>`
   letter-spacing: 1.5px;
   margin-bottom: 8px;
   padding-bottom: 1.2em;
+  pointer-events: none;
   text-shadow: ${props => textShadow(props.color)};
   user-select: none;
   z-index: 1;
@@ -93,9 +94,11 @@ const SplashMid: React.FunctionComponent = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const greeting = name ? `Good ${period}, ${name}.` : `Good ${period}.`;
+
   return (
     <SplashMidEl color={currentPhoto?.color ?? 'black'} opacity={currentPhoto ? 1 : 0}>
-      {`Good ${period}${name ? `, ${name}` : ''}.`}
+      {greeting}
     </SplashMidEl>
   );
 };

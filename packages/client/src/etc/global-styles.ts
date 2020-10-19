@@ -28,15 +28,10 @@ export default css`
     }
 
     a {
-      color: var(--light);
-      text-shadow: 0px 0px 4px rgba(255, 255, 255, 0.2);
       text-decoration: none;
-      transition: all 0.15s ease-in-out;
 
       &:hover {
-        color: var(--light);
         text-decoration: none;
-        text-shadow: 0px 0px 4px rgba(255, 255, 255, 1);
       }
     }
 

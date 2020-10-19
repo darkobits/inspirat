@@ -22,7 +22,7 @@ const textShadow = (color: string) => compositeTextShadow([
 ]);
 
 const ImageMetaEl = styled.div<ImageMetaElProps>`
-  color: rgb(255, 255, 255, 0.96);
+  color: rgba(255, 255, 255, 0.96);
   display: flex;
   font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
   font-weight: 600;
@@ -32,11 +32,11 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
   user-select: none;
 
   & a {
-    color: rgb(255, 255, 255, 0.96);
-    transition: all 0.15s ease-in-out;
+    color: inherit;
+    transition: all 0.25s ease-in-out;
 
     &:hover {
-      text-shadow: 0px 0px 4px rgba(255, 255, 255, 1);
+      text-shadow: 0px 0px 4px rgba(255, 255, 255, 0.32);
     }
   }
 `;
@@ -47,9 +47,11 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
 const ImageMeta: React.FunctionComponent = props => {
   const { currentPhoto } = React.useContext(InspiratContext);
 
+  // If children is falsy, render a space to ensure the element's height doesn't
+  // collapse.
   return (
     <ImageMetaEl shadowColor={R.propOr(undefined, 'color', currentPhoto)}>
-      {props.children}
+      {props.children ?? (<span>&nbsp;</span>)}
     </ImageMetaEl>
   );
 };
