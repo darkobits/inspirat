@@ -67,7 +67,7 @@ import {
 
 const log = createLogger({heading: 'pubby'});
 
-const logMessages: Array<() => void> = [];
+let logMessages: Array<() => void> = [];
 
 function prependLogMessage(cb: () => void) {
   logMessages.unshift(cb);
@@ -79,6 +79,7 @@ function appendLogMessage(cb: () => void) {
 
 function writeLogMessages() {
   logMessages.forEach(cb => cb());
+  logMessages = [];
 }
 
 
@@ -283,8 +284,6 @@ async function publishExtension(options: PublishExtensionOptions) {
     `));
   }
 
-  prependLogMessage(() => log.info(`Publishing Chrome extension ${log.chalk.bold(manifest.name)}.`));
-
 
   // ----- [7] Create Archive --------------------------------------------------
 
@@ -296,6 +295,11 @@ async function publishExtension(options: PublishExtensionOptions) {
     - Created bundle from ${log.chalk.green(options.publishRoot)} ${log.chalk.dim(`(${archiveSize})`)}.
   `));
 
+
+  // Drain the list of log messages for all local checks / tasks before we start
+  // to mutate remote resources.
+  prependLogMessage(() => log.info(`Publishing Chrome extension ${log.chalk.bold(manifest.name)}.`));
+  writeLogMessages();
 
   // ----- [8] Upload Artifacts ------------------------------------------------
 
