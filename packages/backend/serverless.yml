@@ -20,6 +20,7 @@ custom:
       - UNSPLASH_SECRET_KEY
       - UNSPLASH_COLLECTION_ID
   # Configuration for serverless-domain-manager plugin.
+  # TODO: Remove this in a future version.
   customDomain:
     domainName: aws.frontlawn.net
     endpointType: regional
@@ -37,84 +38,47 @@ provider:
   stage: ${self:custom.stage}
   environment:
     STAGE: ${self:custom.stage}
-    # AWS_REGION: ${env:AWS_REGION}
   iamRoleStatements:
     - Effect: Allow
       Action:
-        - dynamodb:*
-      Resource: arn:aws:dynamodb:*:*:table/inspirat-${self:custom.stage}
-    - Effect: Allow
-      Action:
-        - sqs:*
-      Resource: arn:aws:sqs:*:*:inspirat-${self:custom.stage}
+        - s3:*
+      Resource: arn:aws:s3:::inspirat-${self:custom.stage}/*
 
 
 # ----- Functions --------------------------------------------------------------
 
 functions:
-  # Queries the Unsplash Collection API and adds any new photos from the
-  # collection to the SQS queue for further processing. Deletes any photos from
-  # the database that are not present in the collection response from Unsplash.
+  # Fetches the Inspirat photo collection using the Unsplash API and uploads the
+  # response to S3.
   sync-collection:
+    handler: src/sync-collection.default
+    # Execute this function every hour.
     events:
       - schedule:
           name: sync-collection-${self:custom.stage}
           description: 'Sync collection from Unsplash.'
           rate: rate(1 hour)
-    handler: src/sync-collection.default
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
       UNSPLASH_COLLECTION_ID: ${env:UNSPLASH_COLLECTION_ID}
-    timeout: 120
-  # Periodically checks the SQS queue for messages representing new photos. For
-  # each, queries the Unsplash Photos API and adds a record for the photo to the
-  # database. This function is run on a schedule rather than via SQS triggers
-  # because we want to spread this operation out over time so that we don't hit
-  # the Unsplash API rate limit.
-  update-records:
-    events:
-      - schedule:
-          name: update-records-${self:custom.stage}
-          description: 'Update the database with new photos.'
-          rate: rate(15 minutes)
-    handler: src/update-records.default
-    environment:
-      UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
-    timeout: 120
-  # Returns all photos from the database. This is the only function exposed via
-  # API Gateway.
+    timeout: 10
+  # Returns the photo collection from S3.
   get-photos:
+    handler: src/get-photos.default
+    # Expose this function to the public via API Gateway.
     events:
       - http:
           method: GET
           path: photos
           cors: true
-    handler: src/get-photos.default
 
 
 # ----- CloudFormation Resource Templates --------------------------------------
 
 resources:
   Resources:
-    # DynamoDB Tables
-    InspiratDatabase:
-      Type: AWS::DynamoDB::Table
+    # S3 Bucket
+    InspiratBucket:
+      Type: AWS::S3::Bucket
       Properties:
-        TableName: inspirat-${self:custom.stage}
-        AttributeDefinitions:
-          -
-            AttributeName: id
-            AttributeType: S
-        KeySchema:
-          -
-            AttributeName: id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-    # Queues
-    InspiratQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: inspirat-${self:custom.stage}
-        VisibilityTimeout: 120
+        BucketName: inspirat-${self:custom.stage}

@@ -26,8 +26,8 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   const pkgRoot = path.dirname(pkgInfo.path);
 
-  const PROD_API_URL = 'https://aws.frontlawn.net/inspirat';
-  const DEV_API_URL = 'https://aws.frontlawn.net/inspirat-dev';
+  const PROD_API_URL = 'https://o9hpa5x7z3.execute-api.us-west-1.amazonaws.com/prod';
+  const DEV_API_URL = 'https://hnxuk9tl80.execute-api.us-west-1.amazonaws.com/dev';
 
 
   // ----- Entry / Output ------------------------------------------------------

@@ -1,4 +1,4 @@
-import {SQS} from 'aws-sdk';
+import { SQS } from 'aws-sdk';
 
 export interface AmazonResourceName {
   partition: string;

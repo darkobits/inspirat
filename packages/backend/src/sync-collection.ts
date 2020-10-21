@@ -1,13 +1,12 @@
-// @ts-ignore
-import DynamoDBFactory from '@awspilot/dynamodb';
 import env from '@darkobits/env';
-import * as R from 'ramda';
+import AWS from 'aws-sdk';
+// import * as R from 'ramda';
 
-import {UnsplashCollectionPhotoResource} from 'etc/types';
-import {getQueueHandle} from 'lib/aws-helpers';
-import {AWSLambdaHandlerFactory} from 'lib/aws-lambda';
+import { UnsplashCollectionPhotoResource } from 'etc/types';
+// import { getQueueHandle } from 'lib/aws-helpers';
+import { AWSLambdaHandlerFactory } from 'lib/aws-lambda';
 import chalk from 'lib/chalk';
-import {getAllPages, isEmptyObject} from 'lib/utils';
+import { getAllPages } from 'lib/utils';
 
 
 // ----- Sync Collection -------------------------------------------------------
@@ -25,6 +24,8 @@ import {getAllPages, isEmptyObject} from 'lib/utils';
  */
 export default AWSLambdaHandlerFactory({
   handler: async res => {
+    const stage = env<string>('STAGE', true);
+
     /**
      * Maximum page size allowed by Unsplash.
      */
@@ -48,8 +49,9 @@ export default AWSLambdaHandlerFactory({
       }
     });
 
+    // Collection is empty or some other error occurred.
     if (unsplashPhotoCollection.length === 0) {
-      console.warn('[syncCollection] Unsplash did not return any photos.');
+      console.warn('[sync-collection] Unsplash did not return any photos.');
 
       res.body = {
         message: 'Unsplash did not return any photos.'
@@ -61,70 +63,23 @@ export default AWSLambdaHandlerFactory({
     console.log(`[sync-collection] Collection has ${chalk.green(unsplashPhotoCollection.length.toString())} photos.`);
 
 
-    // ----- [2] Create Resource Handles ---------------------------------------
+    // ----- [2] Upload Collection to S3 ---------------------------------------
 
-    const stage = env<string>('STAGE', true);
-    const table = new DynamoDBFactory().table(`inspirat-${stage}`);
-    const queueHandle = await getQueueHandle(`inspirat-${stage}`);
+    const s3Client = new AWS.S3();
+    const bucketName = `inspirat-${stage}`;
+    const key = 'photoCollection';
 
+    await s3Client.putObject({
+      Bucket: bucketName,
+      Key: key,
+      ContentType: 'application/json',
+      Body: JSON.stringify(unsplashPhotoCollection)
+    }).promise();
 
-    // ----- [3] Handle Additions ----------------------------------------------
-
-    const additionResults = await Promise.all(unsplashPhotoCollection.map(async (photo: any) => {
-      // Determine if the photo already exists in the database.
-      const existingItem = await table.where('id').eq(photo.id).consistent_read().get();
-
-      // We will get back a value like {} if the table doesn't have a record.
-      // So, if we get a non-empty object, break.
-      if (!isEmptyObject(existingItem)) {
-        return false;
-      }
-
-      // Post a message to our queue indicating that a new photo needs to be
-      // added to the database.
-      // @ts-ignore Typings here require a QueueUrl even though we have
-      // pre-bound that param when creating our queue handle.
-      await queueHandle.sendMessage({
-        MessageBody: JSON.stringify({
-          id: photo.id
-        })
-      }).promise();
-
-      console.log(`[syncCollection] Message posted for ${chalk.green(photo.id)}.`);
-
-      return true;
-    }));
-
-    const numAdditions = R.filter<boolean>(R.identity, additionResults).length;
-
-    console.log(`[sync-collection] Added ${chalk.green(numAdditions.toString())} photos.`);
-
-
-    // ----- [4] Handle Deletions ----------------------------------------------
-
-    const allExistingItems: Array<any> = await table.consistent_read().scan();
-
-    const deletionResults = await Promise.all(allExistingItems.map(async (photo: any) => {
-      // Determine if the record from the database exists in our collection from
-      // Unsplash.
-      const itemInUnsplashCollection = R.find(R.propEq('id', photo.id), unsplashPhotoCollection);
-
-      // If not, remove it from the database.
-      if (!itemInUnsplashCollection) {
-        await table.where('id').eq(photo.id).delete();
-        return true;
-      }
-
-      return false;
-    }));
-
-    const numDeletions = R.filter<boolean>(R.identity, deletionResults).length;
-
-    console.log(`[sync-collection] Deleted ${chalk.green(numDeletions.toString())} photos.`);
+    console.log(`[sync-collection] Updated S3 object ${bucketName}/${key}.`);
 
     res.body = {
-      added: numAdditions,
-      deleted: numDeletions
+      message: 'Done.'
     };
   }
 });

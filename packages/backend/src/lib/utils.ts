@@ -1,6 +1,5 @@
-import axios, {AxiosRequestConfig} from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import parseLinkHeader from 'parse-link-header';
-import {LooseObject} from 'etc/types';
 
 
 /**
@@ -32,14 +31,6 @@ export async function getAllPages(options: AxiosRequestConfig): Promise<Array<an
     ...options,
     url: parsedLinkHeader.next.url
   }));
-}
-
-
-/**
- * Returns true if the provided object is empty.
- */
-export function isEmptyObject(value: LooseObject): boolean {
-  return Object.keys(value).length === 0;
 }
 
 

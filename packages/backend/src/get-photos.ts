@@ -1,31 +1,17 @@
-// @ts-ignore
-import DynamoDBFactory from '@awspilot/dynamodb';
 import env from '@darkobits/env';
-import {APIGatewayEvent} from 'aws-lambda';
+import { APIGatewayEvent } from 'aws-lambda';
+import AWS from 'aws-sdk';
 import * as R from 'ramda';
 
-import {LooseObject} from 'etc/types';
-import {AWSLambdaHandlerFactory, setCorsHeaders, setVersionHeader} from 'lib/aws-lambda';
+import {
+  AWSLambdaHandlerFactory,
+  setCorsHeaders,
+  setVersionHeader
+} from 'lib/aws-lambda';
+import { UnsplashCollectionPhotoResource } from './etc/types';
 
 
-/**
- * Provided a list of paths, a source object, and a destination object, returns
- * a new object built by cloning the destination object and then assigning each
- * path from the source object to the destination object. If a destination
- * object is omitted, an empty object is used.
- */
-const assocAllPaths = R.curry((paths: Array<Array<string>>, srcObj: LooseObject, destObj: LooseObject = {}) => {
-  return R.reduce((accumulator, curPath) => {
-    return R.assocPath(curPath, R.path(curPath, srcObj), accumulator);
-  }, destObj, paths);
-});
-
-
-/**
- * Provided an Unsplash photo resource, returns a partial photo resource with
- * only those fields used by the Inspirat client.
- */
-const assocPhotoPaths = assocAllPaths([
+const paths = [
   ['id'],
   ['color'],
   ['blur_hash'],
@@ -34,8 +20,9 @@ const assocPhotoPaths = assocAllPaths([
   ['urls', 'full'],
   ['user', 'links', 'html'],
   ['user', 'name']
-]);
+];
 
+// https://hnxuk9tl80.execute-api.us-west-1.amazonaws.com/dev/photos
 
 // ----- Get Photos ------------------------------------------------------------
 
@@ -48,8 +35,31 @@ export default AWSLambdaHandlerFactory<APIGatewayEvent>({
   pre: [setCorsHeaders, setVersionHeader],
   handler: async res => {
     const stage = env<string>('STAGE', true);
-    const table = new DynamoDBFactory().table(`inspirat-${stage}`);
-    const photos = await table.scan();
-    res.body = photos.map(assocPhotoPaths);
+    const s3Client = new AWS.S3();
+    const bucketName = `inspirat-${stage}`;
+    const key = 'photoCollection';
+
+    const photosResponse = await s3Client.getObject({
+      Bucket: bucketName,
+      Key: key,
+      ResponseContentType: 'application/json'
+    }).promise();
+
+    if (!photosResponse.Body) {
+      res.body = { message: 'Unknown error.' };
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    const parsedResponse: Array<UnsplashCollectionPhotoResource> = JSON.parse(photosResponse.Body.toString('utf8'));
+
+    const mappedPhotoCollection = R.map(photo => {
+      return R.reduce((photoPartial, curPath) => {
+        return R.assocPath(curPath, R.path(curPath, photo), photoPartial);
+      }, {}, paths);
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
+    }, parsedResponse);
+
+    res.body = mappedPhotoCollection;
   }
 });
