@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import { AxiosRequestConfig, AxiosInstance } from 'axios';
 import parseLinkHeader from 'parse-link-header';
 
 
@@ -6,8 +6,8 @@ import parseLinkHeader from 'parse-link-header';
  * Provided a URL for an API that returns "link" headers containing pagination
  * hints, fetches all pages and returns the results.
  */
-export async function getAllPages(options: AxiosRequestConfig): Promise<Array<any>> {
-  const page = await axios(options);
+export async function getAllPages(instance: AxiosInstance, options: AxiosRequestConfig): Promise<Array<any>> {
+  const page = await instance.request(options);
 
   // Response has no pagination information; return data.
   if (!page.headers.link) {
@@ -17,7 +17,7 @@ export async function getAllPages(options: AxiosRequestConfig): Promise<Array<an
   const parsedLinkHeader = parseLinkHeader(page.headers.link);
 
   if (!parsedLinkHeader) {
-    throw new Error('Response contained a "link" header, but it was not parseable.');
+    throw new Error('Response contained a "link" header, but it was not parsable.');
   }
 
   // Last page has been reached.
@@ -27,7 +27,7 @@ export async function getAllPages(options: AxiosRequestConfig): Promise<Array<an
 
   // Otherwise, if additional pages are available, make the next request using
   // the same request configuration provided.
-  return page.data.concat(await getAllPages({
+  return page.data.concat(await getAllPages(instance, {
     ...options,
     url: parsedLinkHeader.next.url
   }));

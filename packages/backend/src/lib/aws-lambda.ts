@@ -1,6 +1,4 @@
-import type {Callback, Context, Handler} from 'aws-lambda';
-import pSeries from 'p-series';
-import * as R from 'ramda';
+import type { Callback, Context, Handler } from 'aws-lambda';
 
 
 // ----- Types -----------------------------------------------------------------
@@ -32,26 +30,24 @@ export interface AWSLambdaResponse {
  * Describes the signature of the function that should be provided to
  * AWSLambdaHandlerFactory; an optionally async function that accepts a
  * response, a context, and an event object.
- *
- * Function that will be called
  */
-export type AWSHandler<TEvent> = (
-  response: AWSLambdaResponse,
-  event: TEvent,
-  context: Context
-) => void | Promise<void>;
+export type AWSHandler<TEvent = any> = (params: {
+  response: AWSLambdaResponse;
+  event: TEvent;
+  context: Context;
+}) => void | Promise<void>;
 
 
 /**
  * Function that will be called if an error is thrown during the execution of
  * middleware.
  */
-export type AWSErrorHandler<TEvent = any> = (
-  err: Error,
-  response: AWSLambdaResponse,
-  event: TEvent,
-  context: Context
-) => void | Promise<void>;
+export type AWSErrorHandler<TEvent = any> = (params: {
+  err: Error;
+  response: AWSLambdaResponse;
+  event: TEvent;
+  context: Context;
+}) => void | Promise<void>;
 
 
 /**
@@ -85,28 +81,28 @@ export interface AWSLambdaHandlerFactoryConfig<TEvent = any> {
  * serialized using JSON.stringify. Appropriate Content-Type and Content-Length
  * headers will be applied if they have not already been set.
  */
-function serializeBody(res: AWSLambdaResponse) {
-  if (typeof res.body === 'string') {
+const serializeBody: AWSHandler = ({ response }) => {
+  if (typeof response.body === 'string') {
     // If the response's body is already a string _and_ the user has not already
     // set a Content-Type header, use "text/plain".
-    if (res.headers['Content-Type'] === undefined) {
-      res.headers['Content-Type'] = 'text/plain';
+    if (response.headers['Content-Type'] === undefined) {
+      response.headers['Content-Type'] = 'text/plain';
     }
   } else {
-    res.body = JSON.stringify(res.body);
+    response.body = JSON.stringify(response.body);
 
     // If we serialized the response's body for the user _and_ they have not
     // already set a Content-Type header, use "application/json."
-    if (res.headers['Content-Type'] === undefined) {
-      res.headers['Content-Type'] = 'application/json';
+    if (response.headers['Content-Type'] === undefined) {
+      response.headers['Content-Type'] = 'application/json';
     }
   }
 
   // Finally, set the Content-Length header if it has not already been set.
-  if (res.headers['Content-Length'] === undefined) {
-    res.headers['Content-Length'] = String(res.body.length);
+  if (response.headers['Content-Length'] === undefined) {
+    response.headers['Content-Length'] = String(response.body.length);
   }
-}
+};
 
 
 // ----- Middleware ------------------------------------------------------------
@@ -117,10 +113,10 @@ function serializeBody(res: AWSLambdaResponse) {
  *
  * See: https://serverless.com/blog/cors-api-gateway-survival-guide/
  */
-export function setCorsHeaders(res: AWSLambdaResponse) {
-  res.headers['Access-Control-Allow-Origin'] = '*';
-  res.headers['Access-Control-Allow-Credentials'] = 'true';
-}
+export const setCorsHeaders: AWSHandler = ({ response }) => {
+  response.headers['Access-Control-Allow-Origin'] = '*';
+  response.headers['Access-Control-Allow-Credentials'] = 'true';
+};
 
 
 /**
@@ -129,33 +125,41 @@ export function setCorsHeaders(res: AWSLambdaResponse) {
  * "PACKAGE_VERSION" and "PACKAGE_BUILD_TIMESTAMP" compile-time constants that
  * were declared project's bundler configuration.
  */
-export function setVersionHeader(res: AWSLambdaResponse) {
+export const setVersionHeader: AWSHandler = ({ response }) => {
   if (process.env.PACKAGE_VERSION) {
-    res.headers['X-Function-Version'] = process.env.PACKAGE_VERSION;
+    response.headers['X-Function-Version'] = process.env.PACKAGE_VERSION;
   }
 
   if (process.env.PACKAGE_BUILD_TIMESTAMP) {
-    res.headers['X-Function-Build-Time'] = process.env.PACKAGE_BUILD_TIMESTAMP;
+    response.headers['X-Function-Build-Time'] = process.env.PACKAGE_BUILD_TIMESTAMP;
   }
-}
+};
 
 
 /**
  * Default error-handling middleware that formats the provided response
  * according to the shape of the error. Parses errors thrown by axios.
  */
-function defaultErrorHandler(error: any, res: AWSLambdaResponse) {
-  if (!error) {
+const defaultErrorHandler: AWSErrorHandler = ({ err, response }) => {
+  if (!err) {
     return;
   }
 
-  res.statusCode = R.pathOr(500, ['response', 'status'], error);
+  // If the error was thrown by Axios, use the status from its 'response'.
+  // @ts-expect-error
+  response.statusCode = err.response?.status ?? 500;
 
-  res.body = {
-    statusText: R.pathOr('Internal Server Error', ['response', 'statusText'], error),
-    message: R.pathOr('An unknown error occurred.', ['message'], error)
+  // If the error was thrown by Axios, get the status text from its 'response'.
+  // @ts-expect-error
+  const statusText = err.response?.statusText ?? 'Internal Server Error';
+
+  const message = err.message ?? 'Internal Server Error';
+
+  response.body = {
+    statusText,
+    message
   };
-}
+};
 
 
 // ----- Factory ---------------------------------------------------------------
@@ -170,54 +174,39 @@ function defaultErrorHandler(error: any, res: AWSLambdaResponse) {
  */
 export function AWSLambdaHandlerFactory<TEvent = any>(config: AWSLambdaHandlerFactoryConfig<TEvent>): Handler<TEvent> {
   return async (event: TEvent, context: Context, cb: Callback) => {
-    const response: AWSLambdaResponse = {statusCode: 200, headers: {}, body: 'OK'};
-
     try {
-      let handlers: Array<AWSHandler<TEvent>> = [];
-
-      if (Array.isArray(config.pre)) {
-        handlers = config.pre;
-      } else if (typeof config.pre === 'function') {
-        handlers.push(config.pre);
-      }
+      const response: AWSLambdaResponse = {statusCode: 200, headers: {}, body: 'OK'};
+      const handlers: Array<AWSHandler<TEvent>> = typeof config.pre === 'function'
+        ? [config.pre]
+        : config.pre ?? [];
 
       handlers.push(config.handler);
 
-      await pSeries(handlers.map(handler => {
-        return async () => {
-          await handler(response, event, context);
-        };
-      }));
-
-      serializeBody(response);
-      cb(undefined, response);
-
-      return;
-    } catch (err) {
-      let errorHandlers: Array<AWSErrorHandler<TEvent>> = [];
-
-      if (Array.isArray(config.err)) {
-        errorHandlers = config.err;
-      } else if (typeof config.err === 'function') {
-        errorHandlers.push(config.err);
+      for (const handler of handlers) {
+        await handler({ response, event, context });
       }
+
+      await serializeBody({ response, event, context });
+
+      cb(undefined, response);
+    } catch (err) {
+      const errorResponse: AWSLambdaResponse = {statusCode: 500, headers: {}, body: ''};
+      const errorHandlers: Array<AWSErrorHandler<TEvent>> = typeof config.err === 'function'
+        ? [config.err]
+        : config.err ?? [];
 
       errorHandlers.unshift(defaultErrorHandler);
 
       // Middleware or handler threw, run error handlers.
-      await pSeries(errorHandlers.map(errorHandler => {
-        return async () => {
-          await errorHandler(err, response, event, context);
-        };
-      }));
+      for (const errorHandler of errorHandlers) {
+        await errorHandler({ err, response: errorResponse, event, context });
+      }
 
-      serializeBody(response);
+      await serializeBody({ response: errorResponse, event, context });
 
-      console.log(`[AWSLambdaHandler] Error [${response.statusCode}]: ${err.stack}`);
+      console.log(`[AWSLambdaHandler] Error [${errorResponse.statusCode}]: ${err.stack}`);
 
-      cb(err, response);
-
-      return;
+      cb(err, errorResponse);
     }
   };
 }

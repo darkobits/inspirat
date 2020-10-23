@@ -33,11 +33,11 @@ scripts.backend = {
   deploy: {
     default: {
       description: 'Deploy the backend package to the dev environment.',
-      script: npsUtils.series(buildBackendCommand, `${runIn('backend')} serverless deploy`),
+      script: `${runIn('backend')} serverless deploy`,
     },
     prod: {
       description: 'Deploy the backend package to the production environment.',
-      script: npsUtils.series(buildBackendCommand, `${runIn('backend')} serverless deploy --stage prod`)
+      script: `${runIn('backend')} serverless deploy --stage prod`
     }
   }
 };

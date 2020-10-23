@@ -1,12 +1,34 @@
 import env from '@darkobits/env';
 import AWS from 'aws-sdk';
-// import * as R from 'ramda';
+import pQueue from 'p-queue';
+import * as R from 'ramda';
 
 import { UnsplashCollectionPhotoResource } from 'etc/types';
-// import { getQueueHandle } from 'lib/aws-helpers';
-import { AWSLambdaHandlerFactory } from 'lib/aws-lambda';
+import { AWSHandler, AWSLambdaHandlerFactory } from 'lib/aws-lambda';
 import chalk from 'lib/chalk';
+import unsplashClient from 'lib/unsplash-client';
 import { getAllPages } from 'lib/utils';
+
+
+/**
+ * Paths in each photo object that are used by Inspirat.
+ */
+const PHOTO_RESOURCE_PATHS = [
+  ['id'],
+  ['color'],
+  ['blur_hash'],
+  ['links', 'html'],
+  ['location', 'title'],
+  ['urls', 'full'],
+  ['user', 'links', 'html'],
+  ['user', 'name']
+];
+
+
+/**
+ * Maximum page size allowed by Unsplash.
+ */
+const MAX_PAGE_SIZE = 30;
 
 
 // ----- Sync Collection -------------------------------------------------------
@@ -22,64 +44,83 @@ import { getAllPages } from 'lib/utils';
  * the database. In a subsequent function call, we update the incomplete record
  * with a response from the /photos API.
  */
-export default AWSLambdaHandlerFactory({
-  handler: async res => {
-    const stage = env<string>('STAGE', true);
-
-    /**
-     * Maximum page size allowed by Unsplash.
-     */
-    const MAX_PAGE_SIZE = 30;
+const handler: AWSHandler = async () => {
+  const stage = env<string>('STAGE', true);
 
 
-    // ----- [1] Get Unsplash Collection ---------------------------------------
+  // ----- [1] Get Unsplash Collection -----------------------------------------
 
-    const collectionId = env<string>('UNSPLASH_COLLECTION_ID', true);
-    const accessKey = env<string>('UNSPLASH_ACCESS_KEY', true);
+  const collectionId = env<string>('UNSPLASH_COLLECTION_ID', true);
+  const accessKey = env<string>('UNSPLASH_ACCESS_KEY', true);
 
-    const unsplashPhotoCollection: Array<UnsplashCollectionPhotoResource> = await getAllPages({
+  const unsplashPhotoCollection: Array<UnsplashCollectionPhotoResource> = await getAllPages(unsplashClient, {
+    method: 'GET',
+    url: `/collections/${collectionId}/photos`,
+    params: { per_page: MAX_PAGE_SIZE }
+  });
+
+  // Collection is empty or some other error occurred.
+  if (unsplashPhotoCollection.length === 0) {
+    console.log('[sync-collection] Unsplash did not return any photos.');
+    return;
+  }
+
+  console.log(`[sync-collection] Collection has ${chalk.green(unsplashPhotoCollection.length)} photos.`);
+
+
+  // ----- [2] Get Full Photo Resources ----------------------------------------
+
+  const queue = new pQueue({concurrency: 6});
+
+  /**
+   * The photo objects returned from the /collections endpoint do not contain
+   * the full set of properties that a photo object from the /photos endpoint
+   * does. Unfortunately, we need some of these properties, so we must make a
+   * separate request to /photos for each photo in our response from
+   * /collections.
+   */
+  const photoResources = await queue.addAll(R.map(photo => async () => {
+    const { data } = await unsplashClient.request<UnsplashCollectionPhotoResource>({
       method: 'GET',
-      url: `https://api.unsplash.com/collections/${collectionId}/photos`,
+      url: `/photos/${photo.id}`,
       headers: {
         'Accept-Version': 'v1',
         'Authorization': `Client-ID ${accessKey}`
-      },
-      params: {
-        per_page: MAX_PAGE_SIZE
       }
     });
 
-    // Collection is empty or some other error occurred.
-    if (unsplashPhotoCollection.length === 0) {
-      console.warn('[sync-collection] Unsplash did not return any photos.');
-
-      res.body = {
-        message: 'Unsplash did not return any photos.'
-      };
-
-      return;
-    }
-
-    console.log(`[sync-collection] Collection has ${chalk.green(unsplashPhotoCollection.length.toString())} photos.`);
+    return data;
+  }, unsplashPhotoCollection));
 
 
-    // ----- [2] Upload Collection to S3 ---------------------------------------
+  // ----- [3] Map Photo Resources ---------------------------------------------
 
-    const s3Client = new AWS.S3();
-    const bucketName = `inspirat-${stage}`;
-    const key = 'photoCollection';
+  /**
+   * Now, map each photo resource using the above 'paths' so that we only store
+   * the properties we need.
+   */
+  const mappedPhotoResources = R.map(photo => {
+    return R.reduce((photoPartial, curPath) => {
+      return R.assocPath(curPath, R.path(curPath, photo), photoPartial);
+    }, {}, PHOTO_RESOURCE_PATHS);
+  }, photoResources);
 
-    await s3Client.putObject({
-      Bucket: bucketName,
-      Key: key,
-      ContentType: 'application/json',
-      Body: JSON.stringify(unsplashPhotoCollection)
-    }).promise();
 
-    console.log(`[sync-collection] Updated S3 object ${bucketName}/${key}.`);
+  // ----- [4] Upload Collection to S3 -----------------------------------------
 
-    res.body = {
-      message: 'Done.'
-    };
-  }
-});
+  const s3Client = new AWS.S3();
+  const bucketName = `inspirat-${stage}`;
+  const key = 'photoCollection';
+
+  await s3Client.putObject({
+    Bucket: bucketName,
+    Key: key,
+    ContentType: 'application/json',
+    Body: JSON.stringify(mappedPhotoResources)
+  }).promise();
+
+  console.log(`[sync-collection] S3 bucket ${chalk.green(`${bucketName}/${key}`)} updated with ${chalk.green(photoResources.length)} items.`);
+};
+
+
+export default AWSLambdaHandlerFactory({ handler });
