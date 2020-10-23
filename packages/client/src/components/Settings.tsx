@@ -76,8 +76,8 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
           <div>
             Inspirat
           </div>
-          <div className="text-muted" style={{ fontSize: '14px', lineHeight: '26px' }}>
-            {process.env.PACKAGE_VERSION}
+          <div style={{ fontSize: '14px', lineHeight: '26px' }}>
+            v{process.env.PACKAGE_VERSION}
           </div>
         </h1>
         <hr className="bg-secondary mb-5 mx-2" />
@@ -88,6 +88,9 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
           }}
         >
           <Form.Group as={Row} controlId="name">
+            <Col sm={{ span: 10, offset: 1 }} lg={{ span: 8, offset: 2 }} className="pb-3">
+              Customize the name that appears in the greeting.
+            </Col>
             <Form.Label column="lg" sm={{ span: 2, offset: 1 }} lg={{ span: 2, offset: 2 }}>
               Name
             </Form.Label>

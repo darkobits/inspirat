@@ -1,10 +1,28 @@
 import { cx } from 'linaria';
+import { styled } from 'linaria/react';
 import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 
 import InspiratContext from 'contexts/Inspirat';
 import useHideCallback from 'hooks/use-hide-callback';
 import { isChromeExtension } from 'lib/utils';
+
+const IntroductionModal = styled(Modal)`
+  a {
+    color: inherit;
+    transition: all 0.25s ease-in-out;
+    text-shadow: 0px 0px 1px rgba(255, 255, 255, 1);
+
+    &:hover {
+      text-shadow: 0px 0px 1px rgba(255, 255, 255, 1), 0px 0px 6px rgba(255, 255, 255, 0.66);
+    }
+  }
+
+  p {
+    line-height: 1.8;
+    letter-spacing: 0.018em;
+  }
+`;
 
 
 // ----- Introduction ----------------------------------------------------------
@@ -43,7 +61,7 @@ const Introduction: React.FunctionComponent = () => {
 
 
   return (
-    <Modal
+    <IntroductionModal
       animation={false}
       centered
       onHide={handleClose}
@@ -60,19 +78,16 @@ const Introduction: React.FunctionComponent = () => {
           <div>
             Inspirat
           </div>
-          <div className="text-muted" style={{ fontSize: '14px', lineHeight: '26px' }}>
-            {process.env.PACKAGE_VERSION}
+          <div style={{ fontSize: '14px', lineHeight: '26px' }}>
+            v{process.env.PACKAGE_VERSION}
           </div>
         </h1>
         <hr className="bg-secondary mb-4 mx-2" />
         <div className="mx-2">
           <p>
-            Welcome to Inspirat, a New Tab experience for Chrome and Chromium-based browsers.
-          </p>
-          <p>
-            Inspirat will display a beautiful photograph from {unsplashLink} each day, along with a
-            greeting. To customize Inspirat, simply click and hold anywhere on the screen to open the
-            settings menu.
+            Welcome to Inspirat, a New Tab experience for Chrome and Chromium-based browsers. Each day,
+            Inspirat will display a beautiful photograph from {unsplashLink}. To customize Inspirat,
+            simply click and hold anywhere on the screen to open the settings menu.
           </p>
         </div>
         <footer className="text-right mt-5">
@@ -80,11 +95,11 @@ const Introduction: React.FunctionComponent = () => {
             variant="secondary"
             onClick={handleClose}
           >
-            Got It
+            OK
           </Button>
         </footer>
       </Modal.Body>
-    </Modal>
+    </IntroductionModal>
   );
 };
 
