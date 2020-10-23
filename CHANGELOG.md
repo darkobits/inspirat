@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.12.5](https://github.com/darkobits/inspirat/compare/v0.12.4...v0.12.5) (2020-10-23)
+
+
+### Bug Fixes
+
+* **client:** Extension publisher validates options after determining release eligibility. ([3cecc0b](https://github.com/darkobits/inspirat/commit/3cecc0b553d427386bd1b650f12ab300f0f5d27e))
+
+
+
+
+
 ## [0.12.4](https://github.com/darkobits/inspirat/compare/v0.12.3...v0.12.4) (2020-10-19)
 
 **Note:** Version bump only for package inspirat
