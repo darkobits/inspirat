@@ -1,6 +1,7 @@
 import { hot } from 'react-hot-loader/root';
 import React from 'react';
 
+import DevTools from 'components/DevTools';
 import Introduction from 'components/Introduction';
 import Settings from 'components/Settings';
 import Splash from 'components/Splash';
@@ -13,6 +14,7 @@ const App: React.FunctionComponent = () => {
 
   return (
     <InspiratContextProvider>
+      <DevTools />
       <Introduction />
       <Settings
         show={showSettings}

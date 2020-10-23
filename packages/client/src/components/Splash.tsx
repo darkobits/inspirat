@@ -3,7 +3,6 @@ import { mix, rgba } from 'polished';
 import React from 'react';
 
 import InspiratContext from 'contexts/Inspirat';
-import DevTools from 'components/DevTools';
 import SplashMid from 'components/SplashMid';
 import SplashLower from 'components/SplashLower';
 import { BACKGROUND_RULE_OVERRIDES } from 'etc/constants';
@@ -89,6 +88,22 @@ const SplashEl = styled.div<SplashElProps>`
 `;
 
 
+/**
+ * This adds a subtle gradient at the bottom of the screen that provides some
+ * additional contrast behind the image metadata elements to improve
+ * readability.
+ */
+const BottomGradient = styled.div`
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  bottom: 0px;
+  height: 200px;
+  left: 0px;
+  position: fixed;
+  right: 0px;
+  width: 100%;
+`;
+
+
 // ----- Splash ----------------------------------------------------------------
 
 const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
@@ -99,7 +114,7 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
   const opacity = currentPhoto ? 1 : 0;
   const overrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
 
-  return (
+  return (<>
     <SplashEl
       backgroundImage={currentPhotoUrl}
       maskColor={color}
@@ -107,11 +122,11 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
       onMouseDown={onMouseDown}
       {...overrides}
     >
-      <DevTools />
       <SplashMid />
       <SplashLower />
     </SplashEl>
-  );
+    <BottomGradient />
+  </>);
 };
 
 

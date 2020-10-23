@@ -28,9 +28,11 @@ export default css`
     }
 
     a {
+      color: inherit;
       text-decoration: none;
 
       &:hover {
+        color: inherit;
         text-decoration: none;
       }
     }
