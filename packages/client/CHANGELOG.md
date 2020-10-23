@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.12.7](https://github.com/darkobits/inspirat/compare/v0.12.6...v0.12.7) (2020-10-23)
+
+
+### Bug Fixes
+
+* **client:** Add bottom gradient. ([e8ba94b](https://github.com/darkobits/inspirat/commit/e8ba94b3bf4c6dd2b34719d6d7ee35d5f64bf9d0))
+
+
+
+
+
 ## [0.12.6](https://github.com/darkobits/inspirat/compare/v0.12.5...v0.12.6) (2020-10-23)
 
 **Note:** Version bump only for package inspirat-client
