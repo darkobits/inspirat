@@ -92,6 +92,28 @@ function writeLogMessages() {
  * release eligibility, as they might not be exposed on non-release branches.
  */
 async function publishExtension(options: PublishExtensionOptions) {
+  // ----- [1] Validate Options (Partial) --------------------------------------
+
+  /**
+   * Validate only those options we need in order to determine release
+   * eligibility. We will validate remaining options after determining
+   * eligibility because it is likely that several of the more sensitive options
+   * are provided as environment variables and, depending on how the user has
+   * configured their CI system, may only be exposed to eligible branches.
+   * Therefore, on non-eligible branches, those options would be undefined, and
+   * validating them too early would cause us to throw an error and fail the
+   * build inadvertently.
+   */
+  const preEligibilityOptionsValidators = {
+    requireGitBranch: ow.optional.any(ow.string, ow.regExp),
+    requireGitTagPattern: ow.optional.any(ow.string.equals('semver'), ow.regExp),
+    requireCleanWorkingDirectory: ow.optional.boolean,
+    dryRun: ow.optional.boolean
+  };
+
+  ow(options, ow.object.partialShape(preEligibilityOptionsValidators));
+
+
   // ----- [1] Ensure Clean Working Directory ----------------------------------
 
   if (options.requireCleanWorkingDirectory) {
@@ -105,10 +127,12 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   // ----- [2] Determine Branch Eligibility ------------------------------------
 
-  // Many CI systems will clone repositories in a way that prevents us from
-  // determining the current branch name using Git. They do, however, provide
-  // an environment variable containing the current branch name. So, when
-  // in a CI environment, prefer reading from the environment variable.
+  /**
+   * Many CI systems will clone repositories in a way that prevents us from
+   * determining the current branch name using Git. They do, however, provide
+   * an environment variable containing the current branch name. So, when
+   * in a CI environment, prefer reading from the environment variable.
+   */
   const { isCi, branch: branchFromCi } = envCi();
   const branch = isCi && branchFromCi ? branchFromCi : await getBranchName();
 
@@ -171,31 +195,32 @@ async function publishExtension(options: PublishExtensionOptions) {
 
   // ----- [4] Validate Options ------------------------------------------------
 
-  // N.B. We validate options after determining eligibility because it is likely
-  // that several of the more sensitive options are provided as environment
-  // variables and, depending on how the user has configured their CI system,
-  // may only be exposed to eligible branches. Therefore, trying to validate our
-  // options too early would cause us to throw an Error, resulting in a failed
-  // build.
-  ow(options, ow.object.exactShape({
+  /**
+   * Now that we know we are on an eligible branch, validate the remainder of
+   * our options. We re-validate all options here so that we can use
+   * `exactShape`, which will catch additional (re: potentially misspelled)
+   * keys.
+   */
+  const postEligibilityOptionsValidators = {
     extensionId: ow.string,
     publishRoot: ow.string,
-    requireGitBranch: ow.optional.any(ow.string, ow.regExp),
-    requireGitTagPattern: ow.optional.any(ow.string.equals('semver'), ow.regExp),
-    requireCleanWorkingDirectory: ow.optional.boolean,
     syncManifestVersion: ow.optional.any(ow.string.equals('pkgJson'), ow.string.equals('gitTag')),
-    dryRun: ow.optional.boolean,
     auth: {
       clientId: ow.string,
       clientSecret: ow.string,
       refreshToken: ow.string
     }
+  };
+
+  ow(options, ow.object.exactShape({
+    ...preEligibilityOptionsValidators,
+    ...postEligibilityOptionsValidators
   }));
 
 
   // ----- [5] Verify Publish Root ---------------------------------------------
 
-  // Ensure directory can be read from.
+  // Ensure the publish root can be read-from.
   try {
     await fs.access(options.publishRoot);
   } catch  {
