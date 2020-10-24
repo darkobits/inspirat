@@ -195,8 +195,26 @@ const DevTools: React.FunctionComponent = () => {
     };
   }), [showDevTools]);
 
+
+  /**
+   * [Callback] Immediately select the contents of the image source field when
+   * the element is focused.
+   */
+  const handleImgIdFocus = React.useCallback((event: React.FocusEvent<HTMLInputElement>) => {
+    event.currentTarget.select();
+  }, []);
+
+
   /**
    * [Callback] Handle updates to the image source field.
+   *
+   * Note: This uses the Unsplash Source API, which redirects to a photo URL
+   * with various Imgix query parameters applied. This API lets the user control
+   * image dimensions by passing an additional path parameter in the format
+   * /<width>x<height>. Rather than implement logic to follow these redirects
+   * then run URLs through existing logic to rewrite Imgix params, we will just
+   * pass the browser's current width and height using the Source API parameter
+   * format.
    */
   const onImgIdChange = React.useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -211,7 +229,10 @@ const DevTools: React.FunctionComponent = () => {
         return;
       }
 
-      const url = new URL(`https://source.unsplash.com/${imgId}`);
+      const width = window.innerWidth * window.devicePixelRatio;
+      const height = window.innerHeight * window.devicePixelRatio;
+
+      const url = new URL(`https://source.unsplash.com/${imgId}/${width}x${height}`);
       setCurrentPhoto({urls: {full: url.href}} as any);
     } catch {
       resetPhoto();
@@ -238,6 +259,7 @@ const DevTools: React.FunctionComponent = () => {
         <input
           type="text"
           onChange={onImgIdChange}
+          onFocus={handleImgIdFocus}
           placeholder="https://unsplash.com/photos/:id"
           spellCheck={false}
           autoCorrect="false"

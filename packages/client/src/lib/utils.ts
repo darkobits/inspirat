@@ -7,14 +7,6 @@ import { GenericFunction, LooseObject } from 'etc/types';
 
 
 /**
- * Returns the greater of the two values provided.
- */
-export function greaterOf(a: number, b: number): number {
-  return a >= b ? a : b;
-}
-
-
-/**
  * Provided an integer and an array or a length param, returns an index in that
  * array computed by dividing the integer by the length of the array and using
  * the remainder as the result. This allows a counter to start at 0 and increase
@@ -139,21 +131,28 @@ export function onClickAndHold(interval: number, cb: GenericFunction) {
  * See: https://docs.imgix.com/apis/url
  */
 function buildImgixOptions(base?: LooseObject, overrides?: LooseObject): string {
-  const screenDimension = greaterOf(window.screen.width, window.screen.height);
+  const w = window.screen.width;
+  const h = window.screen.height;
+  const dpr = window.devicePixelRatio;
 
   const params = {
     ...base,
+    fm: 'png',
     // Sets several baseline parameters.
     auto: 'format',
     // Fit the image to the provided width/height without cropping and while
     // maintaining its aspect ratio.
     fit: 'max',
-    // Image width.
-    w: screenDimension,
-    // Image height.
-    h: screenDimension,
+    // Do not crop images.
+    crop: undefined,
+    // Desired maximum image width.
+    w,
+    // Desired maximum image height.
+    h,
+    // Set device pixel ratio.
+    dpr,
     // Image quality.
-    q: 80,
+    q: 100,
     // Apply any provided overrides.
     ...overrides
   };
