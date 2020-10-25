@@ -14,11 +14,11 @@ display a beautiful photograph from Unsplash along with a customizable greeting.
 ## Screenshots
 
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/441546/97066525-29afc080-156b-11eb-864c-70912ea8894b.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/97097859-5f1fe100-1633-11eb-81bd-a59c4265f06a.png">
   <br>
-  <img src="https://user-images.githubusercontent.com/441546/97066530-2e747480-156b-11eb-8753-3efbcda68688.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/97097792-68f51480-1632-11eb-87b0-23c519de3af7.png">
   <br>
-  <img src="https://user-images.githubusercontent.com/441546/97066532-2fa5a180-156b-11eb-9f34-29888b356f20.png"><br>
+  <img src="https://user-images.githubusercontent.com/441546/97097790-672b5100-1632-11eb-823c-66e741bb895d.png">
 </p>
 
 ## Using With Plash
@@ -26,8 +26,6 @@ display a beautiful photograph from Unsplash along with a customizable greeting.
 [Plash](https://sindresorhus.com/plash) is an app for macOS by prolific open-source developer
 [Sindre is a Horse](https://sindresorhus.com/) that lets you make any website your desktop wallpaper. ✨
 
-Plash pairs nicely with Inspirat to create a dynamic desktop. Simply point Plash to
-[`https://inspir.at`](https://inspir.at).
-
-To open the settings menu, enable **Browsing Mode** from the Plash menu, then click and hold anywhere on
+To use Inspirat with Plash, simply point Plash to [`https://inspir.at`](https://inspir.at). To open the
+Inspirat settings menu, enable **Browsing Mode** from the Plash menu, then click and hold anywhere on
 the screen. When you're done, disable Browsing Mode from the Plash menu.
