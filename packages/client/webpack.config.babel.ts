@@ -6,11 +6,12 @@ import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
 
 import CopyWebpackPlugin from 'copy-webpack-plugin';
+import ESLintWebpackPlugin from 'eslint-webpack-plugin';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
-import StylelintWebpackPlugin from 'stylelint-webpack-plugin';
+import StyleLintWebpackPlugin from 'stylelint-webpack-plugin';
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => {
@@ -47,21 +48,6 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
 
   // ----- Loaders -------------------------------------------------------------
-
-  // ESLint
-  config.module.rules.push({
-    test: /\.(ts|tsx)$/,
-    exclude: /node_modules/,
-    enforce: 'pre',
-    use: [{
-      loader: 'eslint-loader',
-      options: {
-        emitErrors: true,
-        emitWarning: true,
-        failOnError: argv.mode === 'production'
-      }
-    }]
-  });
 
   // TypeScript & JavaScript files.
   config.module.rules.push({
@@ -142,6 +128,15 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   config.plugins.push(new webpack.NamedModulesPlugin());
 
+  config.plugins.push(new StyleLintWebpackPlugin({
+    files: '**/*.{ts,tsx,js,jsx,css}',
+    lintDirtyModulesOnly: argv.mode === 'development',
+    emitWarning: true,
+    failOnWarning: argv.mode === 'production',
+    emitError: true,
+    failOnError: argv.mode === 'production'
+  }));
+
   config.plugins.push(new webpack.DefinePlugin({
     'process.env.API_URL': JSON.stringify(argv.mode === 'development' ? DEV_API_URL : PROD_API_URL),
     'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.packageJson.version)
@@ -156,21 +151,21 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     }
   }));
 
-  config.plugins.push(new StylelintWebpackPlugin({
-    files: '**/*.{ts,tsx,js,jsx,css}',
-    lintDirtyModulesOnly: argv.mode === 'development',
-    emitWarning: true,
-    failOnWarning: argv.mode === 'production',
-    emitError: true,
-    failOnError: argv.mode === 'production'
-  }));
-
   if (argv.mode === 'development') {
     config.plugins.push(new MiniCssExtractPlugin({filename: 'styles.css'}));
     config.plugins.push(new FriendlyErrorsWebpackPlugin());
   }
 
   if (argv.mode === 'production') {
+    config.plugins.push(new ESLintWebpackPlugin({
+      context: path.resolve(pkgRoot, 'src'),
+      extensions: ['ts', 'tsx', 'js', 'jsx'],
+      emitWarning: true,
+      failOnWarning: true,
+      emitError: true,
+      failOnError: true
+    }));
+
     config.plugins.push(new MiniCssExtractPlugin({filename: 'styles-[contenthash].css'}));
 
     config.plugins.push(new CopyWebpackPlugin({
