@@ -1,43 +1,37 @@
 import env from '@darkobits/env';
 import { APIGatewayEvent } from 'aws-lambda';
-import AWS from 'aws-sdk';
 
+import { InspiratPhotoResource } from 'etc/types';
 import {
-  AWSHandler,
-  AWSLambdaHandlerFactory,
+  AWSLambdaMiddleware,
+  AWSLambdaHandlerFactory
+} from 'lib/aws-lambda';
+import {
   setCorsHeaders,
   setVersionHeader
-} from 'lib/aws-lambda';
+} from 'lib/aws-lambda/middleware';
+import { getJSON } from 'lib/aws-s3';
 
 
 // ----- Get Photos ------------------------------------------------------------
 
 /**
- * This function returns all "full" photo records from the database.
- *
- * This is the only function exposed to the public via API Gateway.
+ * Returns a JSON array of all photos from S3.
  */
-const handler: AWSHandler = async ({ response }) => {
+const handler: AWSLambdaMiddleware = async ({ response }) => {
   const stage = env<string>('STAGE', true);
-
-  const s3Client = new AWS.S3();
-  const bucketName = `inspirat-${stage}`;
+  const bucket = `inspirat-${stage}`;
   const key = 'photoCollection';
 
-  const photosResponse = await s3Client.getObject({
-    Bucket: bucketName,
-    Key: key,
-    ResponseContentType: 'application/json'
-  }).promise();
+  const photoCollection = await getJSON<Array<InspiratPhotoResource>>({ bucket, key });
 
-  if (!photosResponse.Body) {
+  if (!photoCollection) {
     response.statusCode = 500;
-    response.body = { message: 'Response from S3 did not contain a Body.' };
+    response.body = { message: 'Response from S3 did not contain any photos.' };
     return;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-base-to-string
-  response.body = photosResponse.Body.toString('utf8');
+  response.body = photoCollection;
 };
 
 
