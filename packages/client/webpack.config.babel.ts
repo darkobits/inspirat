@@ -168,16 +168,11 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
     config.plugins.push(new MiniCssExtractPlugin({filename: 'styles-[contenthash].css'}));
 
+    // Copy our Chrome Extension manifest and icon assets into the output
+    // directory.
     config.plugins.push(new CopyWebpackPlugin({
       patterns: [
-        {
-          from: path.resolve(pkgRoot, 'src', 'manifest.json'),
-          transform: (contents: Buffer) => {
-            const manifest = JSON.parse(contents.toString());
-            manifest.version = pkgInfo.packageJson.version;
-            return JSON.stringify(manifest, undefined, 2);
-          }
-        },
+        path.resolve(pkgRoot, 'src', 'manifest.json'),
         path.resolve(pkgRoot, 'assets', 'favicon-16.png'),
         path.resolve(pkgRoot, 'assets', 'favicon-48.png'),
         path.resolve(pkgRoot, 'assets', 'favicon-128.png')

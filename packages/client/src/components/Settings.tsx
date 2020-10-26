@@ -80,7 +80,7 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
             v{process.env.PACKAGE_VERSION}
           </div>
         </h1>
-        <hr className="bg-secondary mb-5 mx-2" />
+        <hr className="bg-secondary mb-4 mx-2" />
         <Form
           noValidate
           onSubmit={(e: React.FormEvent<HTMLFormElement>) => {

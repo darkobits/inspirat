@@ -169,6 +169,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     dayOffset
   ]);
 
+
   /**
    * Provided a descriptor for the current photo, pre-loads the photo, then
    * sets the provided descriptor as the current photo.
@@ -191,7 +192,9 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     // collection using the current offset. If not, use the 'currentPhoto' cache
     // item to ensure the photo does not change throughout the day if the photo
     // collection is updated.
-    const currentPhoto = showDevTools ? await getCurrentPhotoFromCollection({offset: dayOffset}) : await getCurrentPhotoFromCache();
+    const currentPhoto = showDevTools
+      ? await getCurrentPhotoFromCollection({offset: dayOffset})
+      : await getCurrentPhotoFromCache();
 
     ifDebug(() => {
       window.debug.currentPhoto = currentPhoto;
