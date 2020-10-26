@@ -1,9 +1,23 @@
+import { Color } from 'inspirat-types';
 import queryString from 'query-string';
 import * as R from 'ramda';
 // @ts-ignore
 import urlParseLax from 'url-parse-lax';
-
+import {rgbToColorString} from 'polished';
 import { GenericFunction, LooseObject } from 'etc/types';
+
+
+/**
+ * Converts an Inspirat color object to a color string.
+ */
+export function toColorString(color?: Color) {
+  if (!color) {
+    return;
+  }
+
+  const { r, g, b, a } = color;
+  return rgbToColorString({ red: r, green: g, blue: b, alpha: a });
+}
 
 
 /**

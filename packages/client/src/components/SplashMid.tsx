@@ -7,6 +7,7 @@ import React from 'react';
 import InspiratContext from 'contexts/Inspirat';
 import { getPeriodDescriptor } from 'lib/time';
 import { compositeTextShadow } from 'lib/typography';
+import { toColorString } from 'lib/utils';
 
 
 // ----- Styles ----------------------------------------------------------------
@@ -95,9 +96,10 @@ const SplashMid: React.FunctionComponent = () => {
   }, []);
 
   const greeting = name ? `Good ${period}, ${name}.` : `Good ${period}.`;
+  const color = toColorString(currentPhoto?.palette.vibrant) ?? 'black';
 
   return (
-    <SplashMidEl color={currentPhoto?.color ?? 'black'} opacity={currentPhoto ? 1 : 0}>
+    <SplashMidEl color={color} opacity={currentPhoto ? 1 : 0}>
       {greeting}
     </SplashMidEl>
   );

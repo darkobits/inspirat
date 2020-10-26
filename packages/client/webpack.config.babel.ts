@@ -12,6 +12,7 @@ import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import StyleLintWebpackPlugin from 'stylelint-webpack-plugin';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => {
@@ -126,7 +127,19 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   // ----- Plugins -------------------------------------------------------------
 
-  config.plugins.push(new webpack.NamedModulesPlugin());
+  config.plugins.push(new ForkTsCheckerWebpackPlugin({
+    eslint: {
+      enabled: true,
+      files: './src/**/*.{ts,tsx,js,jsx}'
+    },
+    typescript: {
+      enabled: true,
+      diagnosticOptions: {
+        semantic: true,
+        syntactic: true
+      }
+    }
+  }));
 
   config.plugins.push(new StyleLintWebpackPlugin({
     files: '**/*.{ts,tsx,js,jsx,css}',

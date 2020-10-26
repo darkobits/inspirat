@@ -1,13 +1,13 @@
+import { Color, InspiratPhotoResource } from 'inspirat-types';
 import { css } from 'linaria';
 import { styled } from 'linaria/react';
 import mousetrap from 'mousetrap';
-import { darken, desaturate, readableColor, rgba } from 'polished';
-import * as R from 'ramda';
+import { desaturate, readableColor, rgba } from 'polished';
 import React from 'react';
 import { BsArrowRepeat, BsCheck } from 'react-icons/bs';
 
 import InspiratContext from 'contexts/Inspirat';
-import { ifDebug, modIndex } from 'lib/utils';
+import { ifDebug, modIndex, toColorString } from 'lib/utils';
 
 
 // ----- Styles ----------------------------------------------------------------
@@ -36,7 +36,7 @@ const StyledDevTools = styled.div`
  * position in the photo collection.
  */
 const Progress = styled.div<{progress: number; color: string}>`
-  background-color: ${props => rgba(readableColor(props.color || 'white'), 0.42)};
+  /* background-color: ${props => rgba(readableColor(props.color || 'white'), 0.42)}; */
   border-left-color: ${props => rgba(props.color || 'white', 1)};
   border-left-style: solid;
   border-left-width: ${props => (props.progress || 0) * 100}vw;
@@ -50,10 +50,9 @@ const Progress = styled.div<{progress: number; color: string}>`
 
 
 /**
- * Image source input that resides at the top of the screen in development mode
- * when the "dev=true" query param is present.
+ * Image override component.
  */
-const Source = styled.div<SwatchProps>`
+const Source = styled.div<{ color: string }>`
   height: ${BASIS};
   width: 100%;
   margin-right: 12px;
@@ -92,29 +91,7 @@ const Source = styled.div<SwatchProps>`
 `;
 
 
-/**
- * Swatch component that shows the "color"
- */
-interface SwatchProps {
-  color: string;
-}
-
-const Swatch = styled.div<SwatchProps>`
-  background-color: ${R.prop('color')};
-  border-radius: 4px;
-  border: 1px solid ${props => rgba(darken(0.48, props.color), 0.32)};
-  box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.16);
-  height: ${BASIS};
-  margin-right: 12px;
-  width: ${BASIS};
-`;
-
 // ----- Loading Indicator -----------------------------------------------------
-
-interface LoadingIndicatorProps {
-  color?: string;
-  isLoading: boolean;
-}
 
 const StyledLoadingIndicator = styled.div<{ color?: string }>`
   background-color: ${props => rgba(readableColor(props.color ?? 'white'), 0.42)};
@@ -124,10 +101,12 @@ const StyledLoadingIndicator = styled.div<{ color?: string }>`
   height: ${BASIS};
   padding-top: 1px;
   text-align: center;
+  transition: background-color 1s ease;
 
   & svg {
     color: ${props => rgba(props.color ?? 'white', 1)};
     filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.16));
+    transition: color 1s ease;
   }
 `;
 
@@ -144,11 +123,75 @@ const spinClassName = css`
   animation: spin 2s infinite linear;
 `;
 
+interface LoadingIndicatorProps {
+  color?: string;
+  isLoading: boolean;
+}
+
 const LoadingIndicator = ({ color, isLoading }: LoadingIndicatorProps) => {
   return (
     <StyledLoadingIndicator color={color}>
       {isLoading ? <BsArrowRepeat className={spinClassName} /> : <BsCheck />}
     </StyledLoadingIndicator>
+  );
+};
+
+
+// ----- Swatch ---------------------------------------------------------------
+
+interface SwatchProps {
+  swatch?: Color;
+}
+
+
+/**
+ * Renders a div whose background color is the provided color and whose text
+ * color will be a 'readable' color according to Polished.
+ */
+const Swatch = styled.div<SwatchProps>`
+  align-items: center;
+  background-color: ${({ swatch }) => rgba(swatch?.r ?? 0, swatch?.g ?? 0, swatch?.b ?? 0, swatch?.a ?? 1)};
+  color: ${({ swatch }) => readableColor(rgba(swatch?.r ?? 0, swatch?.g ?? 0, swatch?.b ?? 0, swatch?.a ?? 1))};
+  display: flex;
+  font-size: 12px;
+  height: 1.8em;
+  justify-content: center;
+  text-transform: capitalize;
+  width: 120px;
+
+  &:not(:last-of-type) {
+    margin-bottom: 8px;
+  }
+`;
+
+
+// ----- Palette ---------------------------------------------------------------
+
+interface PaletteProps {
+  photo?: InspiratPhotoResource;
+}
+
+/**
+ * Renders a Swatch for each color in a photo's 'palette'.
+ */
+const Palette = ({ photo }: PaletteProps) => {
+  if (!photo) {
+    return null;
+  }
+
+  return (
+    <div>
+      {Object.entries(photo.palette).map(([colorName, swatch]) => {
+        return (
+          <Swatch
+            key={colorName}
+            swatch={swatch}
+          >
+            {swatch ? colorName : 'N/A'}
+          </Swatch>
+        );
+      })}
+    </div>
   );
 };
 
@@ -246,7 +289,7 @@ const DevTools: React.FunctionComponent = () => {
     return null;
   }
 
-  const color = currentPhoto?.color ?? 'black';
+  const color = toColorString(currentPhoto?.palette.vibrant) ?? 'black';
   const progress = modIndex(dayOffset, numPhotos) / numPhotos;
 
   return (
@@ -266,8 +309,8 @@ const DevTools: React.FunctionComponent = () => {
           autoComplete="false"
         />
       </Source>
-      <Swatch color={color} title="Photo Swatch Color" />
       <LoadingIndicator color={color} isLoading={isLoadingPhotos} />
+      <Palette photo={currentPhoto} />
     </StyledDevTools>
   );
 };

@@ -1,7 +1,7 @@
 import env from '@darkobits/env';
-import { APIGatewayEvent } from 'aws-lambda';
+import type { APIGatewayEvent } from 'aws-lambda';
+import { InspiratPhotoResource } from 'inspirat-types';
 
-import { InspiratPhotoResource } from 'etc/types';
 import {
   AWSLambdaMiddleware,
   AWSLambdaHandlerFactory

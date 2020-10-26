@@ -1,4 +1,4 @@
-import { Context, Handler } from 'aws-lambda';
+import type { Context, Handler } from 'aws-lambda';
 
 import {
   AWSLambdaErrorHandler,

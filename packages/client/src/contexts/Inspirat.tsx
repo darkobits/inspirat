@@ -1,8 +1,8 @@
+import { InspiratPhotoResource } from 'inspirat-types';
 import prettyMs from 'pretty-ms';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
-import {UnsplashPhotoResource} from 'etc/types';
 import useQuery from 'hooks/use-query';
 import useStorageItem from 'hooks/use-storage-item';
 import {
@@ -43,7 +43,7 @@ export interface InspiratContext {
   /**
    * The photo resource that should be used based on the current day offset.
    */
-  currentPhoto: UnsplashPhotoResource | undefined;
+  currentPhoto: InspiratPhotoResource | undefined;
 
   /**
    * The total number of photos in the collection.
@@ -80,7 +80,7 @@ export interface InspiratContext {
    * Allows other components to set the current photo, overriding the photo that
    * would be displayed based on the current day offset.
    */
-  setCurrentPhoto: (photo: UnsplashPhotoResource | undefined) => void;
+  setCurrentPhoto: (photo: InspiratPhotoResource | undefined) => void;
 
   /**
    * Resets the current photo to the photo that should be displayed based on the
@@ -94,7 +94,7 @@ const Context = React.createContext<InspiratContext>({} as any);
 
 
 export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
-  const [currentPhotoFromState, setCurrentPhoto] = React.useState<UnsplashPhotoResource>();
+  const [currentPhotoFromState, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
@@ -174,9 +174,9 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
    * Provided a descriptor for the current photo, pre-loads the photo, then
    * sets the provided descriptor as the current photo.
    */
-  const preloadAndSetCurrentPhoto = React.useCallback(async (photoDescriptor: UnsplashPhotoResource) => {
-    await preloadImage(updateImgixQueryParams(photoDescriptor.urls.full));
-    setCurrentPhoto(photoDescriptor);
+  const preloadAndSetCurrentPhoto = React.useCallback(async (photoResource: InspiratPhotoResource) => {
+    await preloadImage(updateImgixQueryParams(photoResource.urls.full));
+    setCurrentPhoto(photoResource);
   }, [
     currentPhotoFromState
   ]);

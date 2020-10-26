@@ -37,6 +37,22 @@ const ImageAttribution = styled(ImageMeta)`
 `;
 
 
+/**
+ * This adds a subtle gradient at the bottom of the screen that provides some
+ * additional contrast behind the image metadata elements to improve
+ * readability.
+ */
+const BottomGradient = styled.div`
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  bottom: 0px;
+  height: 200px;
+  left: 0px;
+  position: fixed;
+  right: 0px;
+  width: 100%;
+`;
+
+
 // ----- Splash (Lower) --------------------------------------------------------
 
 const SplashLower: React.FunctionComponent = () => {
@@ -59,12 +75,13 @@ const SplashLower: React.FunctionComponent = () => {
     <span>Photo by <a href={authorHref}>{author}</a> on <a href={unsplashHref}>Unsplash</a></span>
   );
 
-  return (
+  return (<>
     <StyledSplashLower opacity={currentPhoto ? 1 : 0}>
       <ImageLocation>{location}</ImageLocation>
       <ImageAttribution>{attribution}</ImageAttribution>
     </StyledSplashLower>
-  );
+    <BottomGradient />
+  </>);
 };
 
 

@@ -1,13 +1,9 @@
 {
   "extends": "../../node_modules/@darkobits/ts-unified/dist/config/tsconfig.json",
   "compilerOptions": {
-    "plugins": [{
-      "name": "typescript-styled-plugin"
-    }],
     "baseUrl": ".",
-    "jsx": "react",
     "lib": ["dom"],
-    "outDir": "dist",
-    "paths": {"*": ["*", "src/*"]}
+    "noEmit": true,
+    "paths": {"*": ["*", "src/*"]},
   }
 }

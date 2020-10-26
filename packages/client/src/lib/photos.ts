@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { InspiratPhotoResource } from 'inspirat-types';
 import ms from 'ms';
 import objectHash from 'object-hash';
 import prettyMs from 'pretty-ms';
@@ -12,10 +14,8 @@ import {
 } from 'etc/constants';
 import {
   CurrentPhotoStorageItem,
-  PhotoCollectionStorageItem,
-  UnsplashPhotoResource
+  PhotoCollectionStorageItem
 } from 'etc/types';
-import client from 'lib/client';
 import PendingPromiseCache from 'lib/pending-promise-cache';
 import storage from 'lib/storage';
 import { now, midnight, daysSinceEpoch } from 'lib/time';
@@ -39,7 +39,10 @@ const pendingPromiseCache = new PendingPromiseCache();
  */
 async function fetchAndUpdateCollection(): Promise<PhotoCollectionStorageItem | null> {
   try {
-    const photos = (await client.get('/photos')).data;
+    const photos = (await axios.request<Array<InspiratPhotoResource>>({
+      method: 'GET',
+      url: 'https://inspirat-prod.s3-us-west-1.amazonaws.com/photoCollection'
+    })).data;
 
     ifDebug(() => console.debug(`[fetchAndUpdateCollection] Fetched ${photos.length} images.`));
 
@@ -102,7 +105,7 @@ export async function getPhotoCollection() {
       console.debug('[getPhotoCollection] Collection hash:', collectionHash);
     }, { once: true });
 
-    return sortedCollection as Array<UnsplashPhotoResource>;
+    return sortedCollection;
   });
 }
 
@@ -122,7 +125,7 @@ export async function getPhotoCollection() {
  *
  * If a day argument is provided, will return the photo for the provided day.
  */
-export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<UnsplashPhotoResource> {
+export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<InspiratPhotoResource> {
   const day = daysSinceEpoch() + offset;
   const photos = await getPhotoCollection();
 
@@ -141,7 +144,7 @@ export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<
  * is updated in the background between calls to this function, the value it
  * returns will not change.
  */
-export async function getCurrentPhotoFromCache(): Promise<UnsplashPhotoResource> {
+export async function getCurrentPhotoFromCache(): Promise<InspiratPhotoResource> {
   const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
 
   if (currentPhoto) {

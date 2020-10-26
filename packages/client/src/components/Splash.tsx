@@ -6,7 +6,7 @@ import InspiratContext from 'contexts/Inspirat';
 import SplashMid from 'components/SplashMid';
 import SplashLower from 'components/SplashLower';
 import { BACKGROUND_RULE_OVERRIDES } from 'etc/constants';
-import { updateImgixQueryParams } from 'lib/utils';
+import { updateImgixQueryParams, toColorString } from 'lib/utils';
 
 
 // ----- Props -----------------------------------------------------------------
@@ -88,33 +88,17 @@ const SplashEl = styled.div<SplashElProps>`
 `;
 
 
-/**
- * This adds a subtle gradient at the bottom of the screen that provides some
- * additional contrast behind the image metadata elements to improve
- * readability.
- */
-const BottomGradient = styled.div`
-  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
-  bottom: 0px;
-  height: 200px;
-  left: 0px;
-  position: fixed;
-  right: 0px;
-  width: 100%;
-`;
-
-
 // ----- Splash ----------------------------------------------------------------
 
 const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
   const { currentPhoto } = React.useContext(InspiratContext);
 
   const currentPhotoUrl = currentPhoto ? updateImgixQueryParams(currentPhoto.urls.full) : '';
-  const color = currentPhoto?.color ?? 'black';
+  const color = toColorString(currentPhoto?.palette.vibrant) ?? 'black';
   const opacity = currentPhoto ? 1 : 0;
   const overrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
 
-  return (<>
+  return (
     <SplashEl
       backgroundImage={currentPhotoUrl}
       maskColor={color}
@@ -125,8 +109,7 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
       <SplashMid />
       <SplashLower />
     </SplashEl>
-    <BottomGradient />
-  </>);
+  );
 };
 
 

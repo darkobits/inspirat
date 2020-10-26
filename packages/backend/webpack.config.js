@@ -3,6 +3,8 @@ const readPkgUp = require('read-pkg-up');
 const webpack = require('webpack');
 const serverlessWebpack = require('serverless-webpack');
 
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+
 
 module.exports = (async () => {
   const pkgInfo = await readPkgUp(__dirname);
@@ -39,6 +41,19 @@ module.exports = (async () => {
     new webpack.DefinePlugin({
       'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.packageJson.version),
       'process.env.PACKAGE_BUILD_TIMESTAMP': JSON.stringify(new Date().toISOString())
+    }),
+    new ForkTsCheckerWebpackPlugin({
+      eslint: {
+        enabled: true,
+        files: './src/**/*.{ts,tsx,js,jsx}'
+      },
+      typescript: {
+        enabled: true,
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true
+        }
+      }
     })
   ];
 

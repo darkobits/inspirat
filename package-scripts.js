@@ -11,6 +11,7 @@ const scripts = {};
 // ----- Backend Scripts -------------------------------------------------------
 
 const lintBackendCommand = `${runIn('backend')} unified.eslint src`;
+const typeCheckBackendCommand = `${runIn('backend')} unified.ttsc --pretty --noEmit`;
 const buildBackendCommand = `${runIn('backend')} serverless webpack`;
 
 scripts.backend = {
@@ -22,13 +23,17 @@ scripts.backend = {
     description: 'Lints the backend package.',
     script: lintBackendCommand
   },
+  typeCheck: {
+    description: 'Type-checks the backend package',
+    script: typeCheckBackendCommand
+  },
   build: {
-    description: 'Creates a production build of the backend package.',
-    script: npsUtils.series(lintBackendCommand, buildBackendCommand)
+    description: 'Builds  the backend package.',
+    script: buildBackendCommand
   },
   prepare: {
     description: 'Prepares the backend package for development or deployment.',
-    script: npsUtils.series(lintBackendCommand, buildBackendCommand)
+    script: buildBackendCommand
   },
   deploy: {
     default: {
@@ -47,6 +52,7 @@ scripts.backend = {
 
 const lintClientCommand = `${runIn('client')} unified.eslint src`;
 const lintClientStylesCommand = `${runIn('client')} stylelint src/**/*.{ts,tsx,js,jsx,css}`;
+const typeCheckClientCommand = `${runIn('client')} unified.ttsc --pretty --noEmit`;
 const buildClientCommand = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
 const publishClientCommand = `npx babel-node --extensions=.ts --config-file=./packages/client/babel.config.js ./packages/client/scripts/publish-bin.ts`
 
@@ -63,13 +69,17 @@ scripts.client = {
       script: lintClientStylesCommand
     }
   },
+  typeCheck: {
+    description: 'Type-checks the client package',
+    script: typeCheckClientCommand
+  },
   build: {
-    description: 'Lints and builds the client package',
-    script: npsUtils.series(lintClientCommand, buildClientCommand)
+    description: 'Builds the client package',
+    script: buildClientCommand,
   },
   prepare: {
-    description: 'Prepares the client package for development or building.',
-    script: npsUtils.series(lintClientCommand, buildClientCommand)
+    description: 'Prepares the client package for development or deployment.',
+    script: buildClientCommand
   },
   publish: {
     description: 'Publish a new version of the client package to the Chrome Web Store.',
@@ -108,6 +118,14 @@ scripts.build = {
   script: npsUtils.concurrent({
     backend: scripts.backend.build.script,
     client: scripts.client.build.script
+  })
+};
+
+scripts.typeCheck = {
+  description: 'Type-check all packages.',
+  script: npsUtils.concurrent({
+    backend: scripts.backend.typeCheck.script,
+    client: scripts.client.typeCheck.script
   })
 };
 

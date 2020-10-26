@@ -1,11 +1,9 @@
 import env from '@darkobits/env';
+import { InspiratPhotoResource } from 'inspirat-types';
 import pQueue from 'p-queue';
 import * as R from 'ramda';
 
-import {
-  InspiratPhotoResource,
-  UnsplashCollectionPhotoResource
-} from 'etc/types';
+import { UnsplashCollectionPhotoResource } from 'etc/types';
 import {
   AWSLambdaMiddleware,
   AWSLambdaHandlerFactory
