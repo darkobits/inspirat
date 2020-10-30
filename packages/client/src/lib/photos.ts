@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { InspiratPhotoResource } from 'inspirat-types';
-import ms from 'ms';
 import objectHash from 'object-hash';
 import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
@@ -75,14 +74,14 @@ export async function getPhotoCollection() {
       ifDebug(() => console.debug('[getPhotoCollection] Cache is empty. Fetching collection.'));
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollection();
-    } else if (now() - photoCache.updatedAt >= ms(CACHE_TTL)) {
+    } else if (now() - photoCache.updatedAt >= CACHE_TTL) {
       // If the cached collection is stale, re-fetch it.
       ifDebug(() => console.debug(`[getPhotoCollection] Cache is stale, re-fetching. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`));
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollection();
     } else {
       ifDebug(() => {
-        const expiresIn = ms(CACHE_TTL) - (now() - (photoCache?.updatedAt ?? 0));
+        const expiresIn = CACHE_TTL - (now() - (photoCache?.updatedAt ?? 0));
         console.debug(`[getPhotoCollection] Photo collection will be updated in ${prettyMs(expiresIn)}.`);
       }, { once: 'getPhotoCollection::expiresIn' });
     }

@@ -1,3 +1,4 @@
+import ms from 'ms';
 import {BackgroundImageOverrides} from 'etc/types';
 
 
@@ -15,9 +16,9 @@ if (!BUCKET_URL) {
 
 /**
  * How long image collection data may persist in the cache before it must be
- * updated.
+ * updated. (1 day)
  */
-export const CACHE_TTL = '1 day';
+export const CACHE_TTL = ms('1 day');
 
 
 /**
