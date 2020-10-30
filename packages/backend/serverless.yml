@@ -6,7 +6,6 @@ plugins:
   - serverless-api-gateway-caching
   - serverless-domain-manager
   - serverless-dotenv-plugin
-  # - serverless-offline
   - serverless-webpack
 
 
