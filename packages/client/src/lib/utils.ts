@@ -1,22 +1,31 @@
 import { Color } from 'inspirat-types';
+import { rgba as polishedRgba } from 'polished';
 import queryString from 'query-string';
 import * as R from 'ramda';
 // @ts-ignore
 import urlParseLax from 'url-parse-lax';
-import {rgbToColorString} from 'polished';
 import { GenericFunction, LooseObject } from 'etc/types';
 
 
 /**
- * Converts an Inspirat color object to a color string.
+ * Provided an Inspirat color object or a color string and an optional alpha
+ * value, returns a hex color string.
+ *
+ * This is used in lieu of rgba() from Polished to avoid having to perform an
+ * additional conversion from Inspirat color objects to Polished color objects
+ * while also accepting color strings in one code path.
  */
-export function toColorString(color?: Color) {
-  if (!color) {
-    return;
+export function rgba(arg0: Color | string, alpha?: number) {
+  if (typeof arg0 === 'string') {
+    return polishedRgba(arg0, alpha);
   }
 
-  const { r, g, b, a } = color;
-  return rgbToColorString({ red: r, green: g, blue: b, alpha: a });
+  return polishedRgba({
+    red: arg0.r,
+    green: arg0.g,
+    blue: arg0.b,
+    alpha: alpha ?? 1
+  });
 }
 
 
