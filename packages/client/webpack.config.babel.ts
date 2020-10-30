@@ -6,14 +6,13 @@ import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
 
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-import ESLintWebpackPlugin from 'eslint-webpack-plugin';
 import DotenvWebpackPlugin from 'dotenv-webpack';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
+import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import StyleLintWebpackPlugin from 'stylelint-webpack-plugin';
-import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 
 
 export default async (env: string, argv: any): Promise<webpack.Configuration> => {
@@ -125,20 +124,6 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   // ----- Plugins -------------------------------------------------------------
 
-  config.plugins.push(new ForkTsCheckerWebpackPlugin({
-    eslint: {
-      enabled: true,
-      files: './src/**/*.{ts,tsx,js,jsx}'
-    },
-    typescript: {
-      enabled: true,
-      diagnosticOptions: {
-        semantic: true,
-        syntactic: true
-      }
-    }
-  }));
-
   config.plugins.push(new StyleLintWebpackPlugin({
     files: '**/*.{ts,tsx,js,jsx,css}',
     lintDirtyModulesOnly: argv.mode === 'development',
@@ -169,13 +154,18 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   }
 
   if (argv.mode === 'production') {
-    config.plugins.push(new ESLintWebpackPlugin({
-      context: path.resolve(pkgRoot, 'src'),
-      extensions: ['ts', 'tsx', 'js', 'jsx'],
-      emitWarning: true,
-      failOnWarning: true,
-      emitError: true,
-      failOnError: true
+    config.plugins.push(new ForkTsCheckerWebpackPlugin({
+      eslint: {
+        enabled: true,
+        files: './src/**/*.{ts,tsx,js,jsx}'
+      },
+      typescript: {
+        enabled: true,
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true
+        }
+      }
     }));
 
     config.plugins.push(new MiniCssExtractPlugin({filename: 'styles-[contenthash].css'}));
