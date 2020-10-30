@@ -5,8 +5,8 @@
   "private": true,
   "author": "darkobits",
   "license": "WTFPL",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/darkobits/inspirat.git"
+  "devDependencies": {
+    "@types/git-rev-sync": "^2.0.0",
+    "execa": "^4.1.0"
   }
 }

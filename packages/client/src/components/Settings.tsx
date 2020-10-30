@@ -77,7 +77,7 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
             Inspirat
           </div>
           <div style={{ fontSize: '14px', lineHeight: '26px' }}>
-            v{process.env.PACKAGE_VERSION}
+            {process.env.GIT_VERSION}
           </div>
         </h1>
         <hr className="bg-secondary mb-4 mx-2" />

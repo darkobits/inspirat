@@ -21,6 +21,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.plugins = [];
 
   const pkgInfo = await readPkgUp();
+  const gitVersion = (await execa('git', ['describe'])).stdout;
 
   if (!pkgInfo) {
     throw new Error('Unable to read package.json.');
@@ -134,8 +135,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   }));
 
   config.plugins.push(new webpack.DefinePlugin({
-    'process.env.API_URL': JSON.stringify(argv.mode === 'development' ? DEV_API_URL : PROD_API_URL),
-    'process.env.PACKAGE_VERSION': JSON.stringify(pkgInfo.packageJson.version)
+    'process.env.GIT_VERSION': JSON.stringify(gitVersion)
   }));
 
   config.plugins.push(new HtmlWebpackPlugin({
