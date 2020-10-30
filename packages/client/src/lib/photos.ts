@@ -8,6 +8,7 @@ import * as R from 'ramda';
 import shuffleSeed from 'shuffle-seed';
 
 import {
+  BUCKET_URL,
   CACHE_TTL,
   COLLECTION_CACHE_KEY,
   CURRENT_PHOTO_CACHE_KEY
@@ -41,7 +42,7 @@ async function fetchAndUpdateCollection(): Promise<PhotoCollectionStorageItem | 
   try {
     const photos = (await axios.request<Array<InspiratPhotoResource>>({
       method: 'GET',
-      url: 'https://inspirat-prod.s3-us-west-1.amazonaws.com/photoCollection'
+      url: `${BUCKET_URL}/photoCollection`
     })).data;
 
     ifDebug(() => console.debug(`[fetchAndUpdateCollection] Fetched ${photos.length} images.`));

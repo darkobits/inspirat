@@ -1,9 +1,16 @@
 import {BackgroundImageOverrides} from 'etc/types';
 
+
 /**
- * Netlify path where lambda functions are hosted. Provided by the DefinePlugin.
+ * S3 Bucket URL.
  */
-export const API_URL = process.env.API_URL;
+export const BUCKET_URL = process.env.BUCKET_URL;
+
+// Ensures that the above is set, as we don't make a request on every page load,
+// so if this were broken, we may not find out immediately.
+if (!BUCKET_URL) {
+  throw new Error('BUCKET_URL is not set.');
+}
 
 
 /**

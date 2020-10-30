@@ -7,6 +7,7 @@ import webpack from 'webpack';
 
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintWebpackPlugin from 'eslint-webpack-plugin';
+import DotenvWebpackPlugin from 'dotenv-webpack';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
@@ -27,9 +28,6 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   }
 
   const pkgRoot = path.dirname(pkgInfo.path);
-
-  const PROD_API_URL = 'https://o9hpa5x7z3.execute-api.us-west-1.amazonaws.com/prod';
-  const DEV_API_URL = 'https://hnxuk9tl80.execute-api.us-west-1.amazonaws.com/dev';
 
 
   // ----- Entry / Output ------------------------------------------------------
@@ -165,6 +163,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   }));
 
   if (argv.mode === 'development') {
+    config.plugins.push(new DotenvWebpackPlugin());
     config.plugins.push(new MiniCssExtractPlugin({filename: 'styles.css'}));
     config.plugins.push(new FriendlyErrorsWebpackPlugin());
   }
