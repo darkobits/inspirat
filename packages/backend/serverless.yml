@@ -6,6 +6,7 @@ plugins:
   - serverless-api-gateway-caching
   - serverless-domain-manager
   - serverless-dotenv-plugin
+  # - serverless-offline
   - serverless-webpack
 
 
@@ -21,7 +22,6 @@ custom:
     include:
       - UNSPLASH_ACCESS_KEY
       - UNSPLASH_SECRET_KEY
-      - UNSPLASH_COLLECTION_ID
   # Enable the serverless-api-gateway-caching plugin.
   apiGatewayCaching:
     enabled: true
@@ -33,6 +33,9 @@ custom:
     basePath: ${self:custom.basePaths.${self:custom.stage}}
     stage: ${self:custom.stage}
     createRoute53Record: true
+  # Configuration for serverless-webpack
+  webpack:
+    webpackConfig: 'webpack.config.babel.ts'
 
 
 # ----- Serverless Compute Provider Configuration ------------------------------
@@ -66,7 +69,6 @@ functions:
           rate: rate(1 hour)
     environment:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
-      UNSPLASH_COLLECTION_ID: ${env:UNSPLASH_COLLECTION_ID}
     timeout: 300 # (5 minutes)
   # Returns the photo collection from S3.
   get-photos:

@@ -1,9 +1,10 @@
 import env from '@darkobits/env';
-import { InspiratPhotoResource } from 'inspirat-types';
+import { InspiratPhotoCollection, InspiratPhotoResource } from 'inspirat-types';
 import pQueue from 'p-queue';
+import pSeries from 'p-series';
+import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
 
-import { UnsplashCollectionPhotoResource } from 'etc/types';
 import {
   AWSLambdaMiddleware,
   AWSLambdaHandlerFactory
@@ -11,8 +12,7 @@ import {
 import { getJSON, putJSON } from 'lib/aws-s3';
 import chalk from 'lib/chalk';
 import getPalette from 'lib/get-palette';
-import unsplashClient from 'lib/unsplash-client';
-import { getAllPages } from 'lib/utils';
+import { getPhotoIdsForCollection, getPhoto } from 'lib/unsplash';
 
 
 /**
@@ -28,10 +28,27 @@ const PHOTO_RESOURCE_PATHS = [
 ];
 
 
+const asyncTaskQueue = new pQueue({ concurrency: 10 });
+
+
 /**
- * Maximum page size allowed by Unsplash.
+ * Provided a photo ID, computes its dominant colors and returns an Inspirat
+ * photo resource object.
  */
-const MAX_PAGE_SIZE = 30;
+async function computeInspiratPhotoData(unsplashPhotoId: string): Promise<InspiratPhotoResource> {
+  // Fetch the photo from Unsplash.
+  const unsplashPhotoResource = await getPhoto(unsplashPhotoId);
+
+  // Extract selected paths from the photo.
+  const inspiratPhotoResource = R.reduce((photoPartial, curPath) => {
+    return R.assocPath(curPath, R.path(curPath, unsplashPhotoResource), photoPartial);
+  }, {} as InspiratPhotoResource, PHOTO_RESOURCE_PATHS);
+
+  // Compute the photo's dominant colors.
+  inspiratPhotoResource.palette = await getPalette(unsplashPhotoResource.urls.regular);
+
+  return inspiratPhotoResource;
+}
 
 
 // ----- Sync Collection -------------------------------------------------------
@@ -48,85 +65,103 @@ const MAX_PAGE_SIZE = 30;
  * with a response from the /photos API.
  */
 const handler: AWSLambdaMiddleware = async () => {
+  const startTime = Date.now();
+
   const stage = env<string>('STAGE', true);
   const bucket = `inspirat-${stage}`;
   const key = 'photoCollection';
 
+  let totalPhotos = 0;
+  let totalAdditions = 0;
+  let totalDeletions = 0;
 
-  // ----- [1] Fetch Existing Photo Collection ---------------------------------
+  let inspiratPhotoCollections: Array<InspiratPhotoCollection>;
 
-  const inspiratPhotoCollection = await getJSON<Array<InspiratPhotoResource>>({ bucket, key }) ?? [];
-  console.log(`[sync-collection] Inspirat collection contains ${chalk.green(inspiratPhotoCollection.length)} photos.`);
-
-
-  // ----- [2] Fetch Unsplash Photo Collection ---------------------------------
-
-  const collectionId = env<string>('UNSPLASH_COLLECTION_ID', true);
-
-  const unsplashPhotoCollection: Array<UnsplashCollectionPhotoResource> = await getAllPages(unsplashClient, {
-    method: 'GET',
-    url: `/collections/${collectionId}/photos`,
-    params: { per_page: MAX_PAGE_SIZE }
-  });
-
-  // Collection is empty or some other error occurred.
-  if (unsplashPhotoCollection.length === 0) {
-    console.log('[sync-collection] Unsplash did not return any photos.');
-    return;
+  try {
+    inspiratPhotoCollections = await getJSON<Array<InspiratPhotoCollection>>({ bucket, key }) ?? [];
+    console.log(`[sync-collections] Inspirat data contains ${chalk.green(inspiratPhotoCollections.length)} collections.`);
+  } catch (err) {
+    console.error(`[sync-collections] Error fetching existing collections: ${err.message}`);
+    inspiratPhotoCollections = [];
   }
 
-  console.log(`[sync-collection] Unsplash collection has ${chalk.green(unsplashPhotoCollection.length)} photos.`);
+  const COLLECTION_IDS = [
+    // Primary
+    '2742109',
+    // Spring
+    '81172058',
+    // Summer
+    '25786504',
+    // Autumn
+    '3340319',
+    // Winter
+    '64480821'
+  ];
 
-
-  // ----- [3] Get Full Photo Resources ----------------------------------------
-
-  const queue = new pQueue({concurrency: 32});
 
   /**
-   * The photo objects returned from the /collections endpoint do not contain
-   * the full set of properties that a photo object from the /photos endpoint
-   * does. Unfortunately, we need some of these properties, so we must make a
-   * separate request to /photos for each photo in our response from
-   * /collections.
+   * Map our list of collection IDs into a list of Inspirat photo collection
+   * objects. This process will conserve existing photos, handle new photos, and
+   * ensure deleted photos are removed.
    */
-  const inspiratPhotoResources = await queue.addAll(R.map(unsplashPhotoCollectionResource => async () => {
-    // Determine if the photo already exists in the collection.
-    const existingPhoto = R.find(R.propEq('id', unsplashPhotoCollectionResource.id), inspiratPhotoCollection);
+  const body = await pSeries(R.map(collectionId => async () => {
+    const inspiratCollection = R.find(R.propEq('id', collectionId), inspiratPhotoCollections);
 
-    // If the photo is already in the collection, re-use existing photo data.
-    // This will save us an additional Unsplash API request and the expensive
-    // dominant color computation step.
-    // Note: If the shape of photo objects ever changes, this check will need to
-    // be temporarily disabled.
-    if (existingPhoto) {
-      console.log(`[sync-collection] Reusing data for existing photo ${chalk.green(unsplashPhotoCollectionResource.id)}.`);
-      return existingPhoto;
+    if (inspiratCollection) {
+      console.log(`[sync-collections] Processing collection ${chalk.blue(collectionId)} (${chalk.green(inspiratCollection.photos.length)} existing photos)...`);
+    } else {
+      console.log(`[sync-collections] Processing ${chalk.bold('new')} collection ${chalk.green(collectionId)}...`);
     }
 
-    console.log(`[sync-collection] Compiling new photo ${chalk.yellow(unsplashPhotoCollectionResource.id)}.`);
+    const unsplashCollectionIds = await getPhotoIdsForCollection(collectionId);
+    console.log(`[sync-collections] Unsplash collection contains ${chalk.green(unsplashCollectionIds.length)} photos.`);
 
-    // Otherwise, fetch the full photo resource from the Unsplash API.
-    const { data: unsplashPhotoResource } = await unsplashClient.request<UnsplashCollectionPhotoResource>({
-      method: 'GET',
-      url: `/photos/${unsplashPhotoCollectionResource.id}`
-    });
+    // Compute a list of all photo IDs found in the Unsplash collection that are
+    // not in the current collection.
+    const photoIdsToAdd = R.differenceWith(
+      (id, photo) => id === photo.id,
+      unsplashCollectionIds,
+      inspiratCollection?.photos ?? []
+    );
 
-    // Extract selected paths from the photo resource.
-    const inspiratPhotoResource = R.reduce((photoPartial, curPath) => {
-      return R.assocPath(curPath, R.path(curPath, unsplashPhotoResource), photoPartial);
-    }, {} as InspiratPhotoResource, PHOTO_RESOURCE_PATHS);
+    const photosToAdd = await asyncTaskQueue.addAll(photoIdsToAdd.map(photoId => async () => {
+      console.log(`[sync-collections] Computing data for new photo ${chalk.green(photoId)}.`);
+      return computeInspiratPhotoData(photoId);
+    }));
 
-    // Compute dominant colors for the photo.
-    inspiratPhotoResource.palette = await getPalette(unsplashPhotoResource.urls.regular);
+    // Filter the existing list of photos based on whether its ID appears in the
+    // Unsplash collection. This ensures that if a photo is deleted from an
+    // Unsplash collection, it will be removed here as well.
+    const photosToKeep = R.filter(
+      photo => R.includes(photo.id, unsplashCollectionIds),
+      inspiratCollection?.photos ?? []
+    );
 
-    return inspiratPhotoResource;
-  }, unsplashPhotoCollection));
+    const numDeletedPhotos = inspiratCollection ? inspiratCollection.photos.length - unsplashCollectionIds.length : 0;
+    const photos = R.sortBy(R.prop('id'), R.concat(photosToAdd, photosToKeep));
+
+    console.log([
+      `[sync-collections] ${chalk.green(photoIdsToAdd.length)} photos added, `,
+      `${chalk.yellow(numDeletedPhotos)} photos removed.`
+    ].join(''));
+
+    totalPhotos += photos.length;
+    totalAdditions += photoIdsToAdd.length;
+    totalDeletions += numDeletedPhotos;
+
+    return { id: collectionId, photos };
+  }, COLLECTION_IDS));
 
 
   // ----- [4] Upload Collection to S3 -----------------------------------------
 
-  await putJSON({ bucket, key, body: inspiratPhotoResources });
-  console.log(`[sync-collection] S3 bucket ${chalk.green(`${bucket}/${key}`)} updated with ${chalk.green(inspiratPhotoResources.length)} items.`);
+  await putJSON({ bucket, key, body });
+  console.log(`[sync-collections] S3 bucket ${chalk.blue(`${bucket}/${key}`)} updated.`);
+
+  console.log(`[sync-collections] Totals: ${chalk.green(totalAdditions)} additions, ${chalk.yellow(totalDeletions)} deletions, ${chalk.bold(totalPhotos)} photos across all collections.`);
+
+  const runTime = Date.now() - startTime;
+  console.log(`[sync-collections] Done in ${prettyMs(runTime)}`);
 };
 
 

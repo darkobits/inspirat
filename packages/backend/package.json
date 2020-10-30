@@ -17,7 +17,9 @@
     "chalk": "^4.0.0",
     "node-vibrant": "^3.1.4",
     "p-queue": "^6.6.2",
+    "p-series": "^2.1.0",
     "parse-link-header": "^1.0.1",
+    "pretty-ms": "^7.0.1",
     "ramda": "^0.27.0"
   },
   "devDependencies": {
@@ -34,6 +36,7 @@
     "serverless-api-gateway-caching": "^1.5.1",
     "serverless-domain-manager": "^5.0.0",
     "serverless-dotenv-plugin": "^3.0.0",
+    "serverless-offline": "^6.8.0",
     "serverless-webpack": "^5.2.0",
     "source-map-support": "^0.5.19",
     "webpack": "^4.41.2"

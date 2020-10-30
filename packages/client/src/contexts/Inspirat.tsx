@@ -6,7 +6,7 @@ import useAsyncEffect from 'use-async-effect';
 import useQuery from 'hooks/use-query';
 import useStorageItem from 'hooks/use-storage-item';
 import {
-  getPhotoCollection,
+  getPhotoCollections,
   getCurrentPhotoFromCollection,
   getCurrentPhotoFromCache
 } from 'lib/photos';
@@ -133,7 +133,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   // ----- [Async Effect] Determine Size of Photo Collection -------------------
 
   useAsyncEffect(async () => {
-    const photos = await getPhotoCollection();
+    const photos = await getPhotoCollections();
     setNumPhotos(photos.length);
 
     ifDebug(() => {

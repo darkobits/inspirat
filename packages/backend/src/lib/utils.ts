@@ -32,11 +32,3 @@ export async function getAllPages(instance: AxiosInstance, options: AxiosRequest
     url: parsedLinkHeader.next.url
   }));
 }
-
-
-/**
- * Returns true if any element in the provided array is an instance of Error.
- */
-export function containsErrors(arr: Array<any>): boolean {
-  return Boolean(arr.find(item => item instanceof Error));
-}

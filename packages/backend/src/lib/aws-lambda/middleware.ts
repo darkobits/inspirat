@@ -25,7 +25,7 @@ export const setCorsHeaders: AWSLambdaMiddleware = ({ response }) => {
 /**
  * Sets custom headers in the response indicating the package.json version and
  * timestamp at the time the function was compiled. This assumes there are
- * "PACKAGE_VERSION" and "PACKAGE_BUILD_TIMESTAMP" compile-time constants that
+ * "GIT_VERSION" and "BUILD_TIMESTAMP" compile-time constants that
  * were declared project's bundler configuration.
  */
 export const setVersionHeader: AWSLambdaMiddleware = ({ response }) => {
@@ -33,12 +33,12 @@ export const setVersionHeader: AWSLambdaMiddleware = ({ response }) => {
     response.headers = {};
   }
 
-  if (process.env.PACKAGE_VERSION) {
-    response.headers['X-Function-Version'] = process.env.PACKAGE_VERSION;
+  if (process.env.GIT_VERSION) {
+    response.headers['X-Function-Version'] = process.env.GIT_VERSION;
   }
 
-  if (process.env.PACKAGE_BUILD_TIMESTAMP) {
-    response.headers['X-Function-Build-Time'] = process.env.PACKAGE_BUILD_TIMESTAMP;
+  if (process.env.BUILD_TIMESTAMP) {
+    response.headers['X-Function-Build-Time'] = process.env.BUILD_TIMESTAMP;
   }
 };
 

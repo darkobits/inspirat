@@ -30,6 +30,7 @@ export interface PutJSONOptions {
 
 export async function putJSON({ bucket, key, body }: PutJSONOptions) {
   await s3Client.putObject({
+    ACL: 'public-read',
     Bucket: bucket,
     Key: key,
     ContentType: 'application/json',

@@ -39,3 +39,12 @@ export interface InspiratPhotoResource {
     darkMuted?: Color;
   };
 }
+
+
+/**
+ * Object representing a collection of photos.
+ */
+export interface InspiratPhotoCollection {
+  id: string;
+  photos: Array<InspiratPhotoResource>;
+}

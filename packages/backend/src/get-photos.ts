@@ -17,6 +17,10 @@ import { getJSON } from 'lib/aws-s3';
 
 /**
  * Returns a JSON array of all photos from S3.
+ *
+ * N.B. This not in use at the moment as clients now fetch directly from S3.
+ * Keeping it in place in the event we need to perform any server-side
+ * transforms in the future, though this is not likely.
  */
 const handler: AWSLambdaMiddleware = async ({ response }) => {
   const stage = env<string>('STAGE', true);
