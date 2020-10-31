@@ -1,12 +1,18 @@
 import { styled } from 'linaria/react';
-import { mix, rgba } from 'polished';
+import ms from 'ms';
 import React from 'react';
 
+import BackgroundImage from 'components/BackgroundImage';
 import InspiratContext from 'contexts/Inspirat';
-import SplashMid from 'components/SplashMid';
+import Greeting from 'components/Greeting';
 import SplashLower from 'components/SplashLower';
-import { BACKGROUND_RULE_OVERRIDES } from 'etc/constants';
-import { updateImgixQueryParams, toColorString } from 'lib/utils';
+import {
+  BACKGROUND_RULE_OVERRIDES,
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION
+} from 'etc/constants';
+import { BackgroundImageOverrides } from 'etc/types';
+import { updateImgixQueryParams } from 'lib/utils';
 
 
 // ----- Props -----------------------------------------------------------------
@@ -18,95 +24,101 @@ export interface SplashProps {
 
 // ----- Styles ----------------------------------------------------------------
 
-export interface SplashElProps {
-  backgroundImage: string;
-  maskColor: string;
-  backgroundPosition?: string;
-  maskAmount?: string;
-  opacity: string | number;
-  transform?: string;
-}
-
-const SplashEl = styled.div<SplashElProps>`
+const SplashEl = styled.div`
   align-items: center;
   display: flex;
   flex-direction: column;
   height: 100%;
   justify-content: center;
   padding: 14px 18px;
-  opacity: ${props => props.opacity || 1};
   width: 100%;
   transition: opacity 0.4s ease-in;
-
-  /**
-   * This pseudo-element is where we will render the background image. We use
-   * absolute positioning to create a full-screen canvas for the image.
-   */
-  &::before {
-    background-attachment: fixed;
-    /**
-     * We can't use an outer url() here due to an idiosyncrasy in how Linaria
-     * handles quotes in url() expressions.
-     *
-     * See: https://github.com/callstack/linaria/issues/368
-     */
-    background-image: ${props => props.backgroundImage && `url(${props.backgroundImage})`};
-    background-position: ${props => props.backgroundPosition ?? 'center center'};
-    background-repeat: no-repeat;
-    background-size: cover;
-    bottom: 0;
-    content: ' ';
-    display: block;
-    left: 0;
-    pointer-events: none;
-    position: absolute;
-    right: 0;
-    top: 0;
-    transform: ${props => props.transform ?? 'initial'};
-    z-index: 0;
-  }
-
-  /**
-   * This pseudo-element is where we will render an overlay that will sit on top
-   * of the background image. The settings for this overlay vary from image to
-   * image, and are defined in etc/constants.
-   */
-  &::after {
-    background-color: ${props => rgba(mix(0.5, props.maskColor, 'black'), Number(props.maskAmount ?? 0.2))};
-    bottom: 0;
-    content: ' ';
-    display: block;
-    left: 0;
-    mix-blend-mode: darken;
-    pointer-events: none;
-    position: absolute;
-    right: 0;
-    top: 0;
-    transform: ${props => props.transform ?? 'initial'};
-    z-index: 0;
-  }
 `;
 
 
 // ----- Splash ----------------------------------------------------------------
 
+/**
+ * TODO: Deprecate usage of maskColor and maskAmount overrides. Use photo
+ * palette with a box-shadow around text instead.
+ */
 const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
+  const [aPhotoUrl, setAPhotoUrl] = React.useState<string>('');
+  const [bPhotoUrl, setBPhotoUrl] = React.useState<string>('');
+  const [aPhotoOverrides, setAPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
+  const [bPhotoOverrides, setBPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
+  const [transitionDuration, setTransitionDuration] = React.useState('0s');
   const { currentPhoto } = React.useContext(InspiratContext);
+  const [activeElement, toggleActiveElement] = React.useReducer((prev: string) => (prev === 'A' ? 'B' : 'A'), 'A');
 
-  const currentPhotoUrl = currentPhoto ? updateImgixQueryParams(currentPhoto.urls.full) : '';
-  const color = toColorString(currentPhoto?.palette.vibrant) ?? 'black';
-  const opacity = currentPhoto ? 1 : 0;
-  const overrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
+  // This is used to delay showing the greeting until the photo has loaded.
+  // const opacity = currentPhoto ? 1 : 0;
+
+
+  /**
+   * [Effect] When the current photo changes, updates the background-image URL
+   * of the inactive BackgroundImage component, toggles the active component,
+   * then clears the URL of the new inactive component after the transition
+   * duration has elapsed.
+   *
+   * N.B. This effect must not use activeElement in its dependency array or an
+   * infinite loop will occur because this effect triggers an update to
+   * activeElement.
+   */
+  React.useEffect(() => {
+    if (!currentPhoto) {
+      return;
+    }
+
+    const newPhotoUrl = currentPhoto ? updateImgixQueryParams(currentPhoto.urls.full) : '';
+    const newPhotoOverrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
+
+    if (activeElement === 'A') {
+      setBPhotoUrl(newPhotoUrl);
+      setBPhotoOverrides(newPhotoOverrides);
+    } else {
+      setAPhotoUrl(newPhotoUrl);
+      setAPhotoOverrides(newPhotoOverrides);
+    }
+
+    // Toggle active elements to trigger CSS opacity transition.
+    toggleActiveElement();
+
+    const timeoutHandle = setTimeout(() => {
+      if (activeElement === 'A') {
+        setAPhotoUrl('');
+      } else {
+        setBPhotoUrl('');
+      }
+
+      setTransitionDuration(BACKGROUND_TRANSITION_DURATION);
+    }, ms(transitionDuration));
+
+    return () => {
+      clearTimeout(timeoutHandle);
+    };
+  }, [currentPhoto]);
+
 
   return (
-    <SplashEl
-      backgroundImage={currentPhotoUrl}
-      maskColor={color}
-      opacity={opacity}
-      onMouseDown={onMouseDown}
-      {...overrides}
-    >
-      <SplashMid />
+    <SplashEl onMouseDown={onMouseDown}>
+      <BackgroundImage
+        id="A"
+        backgroundImage={aPhotoUrl}
+        opacity={activeElement === 'A' ? 1 : 0}
+        transitionDuration={transitionDuration}
+        transitionTimingFunction={BACKGROUND_TRANSITION_FUNCTION}
+        {...aPhotoOverrides}
+      />
+      <BackgroundImage
+        id="B"
+        backgroundImage={bPhotoUrl}
+        opacity={activeElement === 'B' ? 1 : 0}
+        transitionDuration={transitionDuration}
+        transitionTimingFunction={BACKGROUND_TRANSITION_FUNCTION}
+        {...bPhotoOverrides}
+      />
+      <Greeting />
       <SplashLower />
     </SplashEl>
   );

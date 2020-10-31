@@ -10,38 +10,27 @@ export type GenericFunction = (...args: Array<any>) => any;
 
 
 /**
- * Shape of the background image overrides object defined in etc/constants.
- * Informed by the props of the Splash component.
+ * Used for tuning the display of an individual image. Each prop maps to a CSS
+ * rule in the BackgroundImage component.
  */
 export interface BackgroundImageOverrides {
-  [index: string]: {
+  backgroundPosition?: string;
+  transform?: string;
+  opacity?: number;
+  transitionDuration?: string;
+  transitionTimingFunction?: string;
+  // backdropBlurRadius?: string;
+  // backdropBlur?: string;
+  backdrop?: {
     /**
-     * Adjust the color of the mask overlay applied to all images.
-     *
-     * Default: 'black';
+     * Must be a valid CSS length.
      */
-    maskColor?: string;
+    blurRadius?: string;
 
     /**
-     * CSS background-position property to use for the image.
-     *
-     * Default: 'center center'
+     * The alpha value applied to the black ellipse in the image backdrop.
      */
-    backgroundPosition?: string;
-
-    /**
-     * Adjust the opacity of the mask overlay applied on top of all images.
-     *
-     * Default: 0.2
-     */
-    maskAmount?: string;
-
-    /**
-     * Apply a CSS transform to the image.
-     *
-     * Default: none
-     */
-    transform?: string;
+    backgroundOpacity?: number;
   };
 }
 

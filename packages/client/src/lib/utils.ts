@@ -1,5 +1,5 @@
 import { Color } from 'inspirat-types';
-import { rgba as polishedRgba } from 'polished';
+import { rgba as polishedRgba, parseToRgb } from 'polished';
 import queryString from 'query-string';
 import * as R from 'ramda';
 // @ts-ignore
@@ -15,16 +15,17 @@ import { GenericFunction, LooseObject } from 'etc/types';
  * additional conversion from Inspirat color objects to Polished color objects
  * while also accepting color strings in one code path.
  */
-export function rgba(arg0: Color | string, alpha?: number) {
+export function rgba(arg0: Color | string, explicitAlpha?: number) {
   if (typeof arg0 === 'string') {
-    return polishedRgba(arg0, alpha);
+    const { red, green, blue } = parseToRgb(arg0);
+    return polishedRgba(red, green, blue, explicitAlpha ?? 1);
   }
 
   return polishedRgba({
     red: arg0.r,
     green: arg0.g,
     blue: arg0.b,
-    alpha: alpha ?? 1
+    alpha: explicitAlpha ?? 1
   });
 }
 

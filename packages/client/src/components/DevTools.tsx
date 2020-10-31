@@ -2,20 +2,25 @@ import { Color, InspiratPhotoResource } from 'inspirat-types';
 import { css } from 'linaria';
 import { styled } from 'linaria/react';
 import mousetrap from 'mousetrap';
-import { desaturate, readableColor, rgba } from 'polished';
+import { darken, desaturate, readableColor, lighten } from 'polished';
 import React from 'react';
+import { Overlay, Tooltip } from 'react-bootstrap';
 import { BsArrowRepeat, BsCheck } from 'react-icons/bs';
+import { v4 as uuid } from 'uuid';
+
 
 import InspiratContext from 'contexts/Inspirat';
-import { ifDebug, modIndex, toColorString } from 'lib/utils';
+import { ifDebug, modIndex, rgba } from 'lib/utils';
 
 
-// ----- Styles ----------------------------------------------------------------
+// ----- Progress Indicator ----------------------------------------------------
 
 /**
  * Basis for computing various attributes of the Source and Swatch components.
  */
-const BASIS = '28px';
+const BASIS = '32px';
+const BLACK: Color  = {r: 0, g: 0, b: 0};
+const WHITE: Color = {r: 255, g: 255, b: 255};
 
 
 const StyledDevTools = styled.div`
@@ -31,80 +36,237 @@ const StyledDevTools = styled.div`
 `;
 
 
+// ----- Progress Indicator ----------------------------------------------------
+
+interface ProgressProps extends React.PropsWithChildren<any> {
+  photo?: InspiratPhotoResource;
+  progress: number;
+  onProgressChange?: (progress: number) => void;
+}
+
 /**
  * Progress bar that resides at the top of the screen and reflects the current
  * position in the photo collection.
  */
-const Progress = styled.div<{progress: number; color: string}>`
-  /* background-color: ${props => rgba(readableColor(props.color || 'white'), 0.42)}; */
-  border-left-color: ${props => rgba(props.color || 'white', 1)};
+const StyledProgress = styled.div<{ fgColor: Color; bgColor: Color; progress: number }>`
+  background-color: ${({ bgColor }) => rgba(bgColor)};
+  border-left-color: ${({ fgColor }) => rgba(fgColor)};
   border-left-style: solid;
-  border-left-width: ${props => (props.progress || 0) * 100}vw;
-  height: 3px;
+  border-left-width: ${({ progress }) => (progress || 0) * 100}vw;
+  height: 4px;
   left: 0;
   position: absolute;
   right: 0;
   top: 0;
-  transition: border-left-width 0.2s ease-in;
+  transition: border-left-width 0.2s ease-in, height 0.2s linear;
+
+  &:hover {
+    cursor: pointer;
+    height: 10px;
+  }
 `;
 
+/**
+ * TODO: Implement dynamically-positioned tooltip that reads 152/255 where the
+ * numerator is the photo the user would navigate to if they clicked on the
+ * progress bar and the denominator is the total number of photos in the
+ * collection.
+ */
+const Progress = ({ photo, progress, onProgressChange, children }: ProgressProps) => {
+  // const [hoverProgress, setHoverProgress] = React.useState(0);
+  // const [tooltipLeftOffset, setTooltipLeftOffset] = React.useState(0);
+  const fgColor = photo?.palette?.muted ?? WHITE;
+  const bgColor = photo?.palette?.darkMuted ?? BLACK;
+  const target = React.useRef(null);
+
+
+  /**
+   * [Callback] Invoke user-provided progress callback when the progress bar is
+   * clicked.
+   */
+  const handleClick = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, right } = e.currentTarget.getBoundingClientRect();
+    const { clientX } = e;
+    const userProgress = (clientX - left) / (right - left);
+
+    if (onProgressChange) {
+      onProgressChange(userProgress);
+    }
+  }, [onProgressChange]);
+
+
+  /**
+   * [Callback] Re-compute the element's title attribute when the mouse moves
+   * over the element.
+   */
+  // const handleMouseMove = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  //   const { left, right } = e.currentTarget.getBoundingClientRect();
+  //   const { clientX } = e;
+  //   const userProgress = (clientX - left) / (right - left);
+  // }, []);
+
+  return (
+    <StyledProgress
+      fgColor={fgColor}
+      bgColor={bgColor}
+      progress={progress}
+      onClick={handleClick}
+      // onMouseMove={handleMouseMove}
+      ref={target}
+    >
+      {children}
+      {/* <Overlay target={target.current} show placement="bottom">
+        {props => {
+          console.debug('tooltip props', props);
+          return (
+            <Tooltip id="overlay-example" {...props}>
+              {hoverProgress}
+            </Tooltip>
+          );
+        }}
+      </Overlay> */}
+    </StyledProgress>
+  );
+};
+
+
+// ----- Image Source ----------------------------------------------------------
+
+interface SourceProps extends React.PropsWithChildren<any> {
+  photo?: InspiratPhotoResource;
+}
 
 /**
  * Image override component.
  */
-const Source = styled.div<{ color: string }>`
+const StyledSource = styled.div<{ fgColor: Color; bgColor: Color }>`
   height: ${BASIS};
   width: 100%;
   margin-right: 12px;
   backdrop-filter: blur(20px);
 
   input {
-    background: ${props => rgba(desaturate(0.6, props.color), 0.5)};
+    background-color: ${({ bgColor }) => darken(0.2, rgba(bgColor, 0.7))};
     backdrop-filter: blur(10px);
     border-radius: 4px;
-    border: 1px solid ${props => rgba(readableColor(props.color), 0.64)};
-    box-shadow: 0px 0px 4px ${props => rgba(props.color, 0.16)};
-    color: ${props => readableColor(desaturate(0.6, props.color))};
+    border-width: 1px;
+    border-style: solid;
+    border-color: ${({ fgColor }) => desaturate(0.6, rgba(fgColor, 0.4))};
+    box-shadow: 0px 0px 2px 1px ${({ bgColor }) => rgba(bgColor, 0.16)};
+    color: ${({ fgColor }) => desaturate(0, lighten(0.16, rgba(fgColor)))};
     font-family: sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     font-size: inherit;
-    font-weight: 100;
+    font-weight: 400;
     height: ${BASIS};
     line-height: ${BASIS};
-    padding: 0px 10px 0px 14px;
+    padding: 0px 10px;
     width: 100%;
+    transition: all 0.15s ease-in-out;
 
     &:focus {
       outline: none;
-      box-shadow: 0px 0px 0px 1.5px ${props => rgba(readableColor(props.color), 0.32)};
-      background: ${props => rgba(desaturate(0.6, props.color), 0.64)};
+      box-shadow: 0px 0px 1px 1px ${({ bgColor }) => rgba(bgColor, 0.32)};
+      background-color: ${({ bgColor }) => darken(0.2, rgba(bgColor, 0.8))};
+      border-color: ${({ fgColor }) => desaturate(0.6, rgba(fgColor, 0.6))};
     }
 
     &::placeholder {
-      color: ${props => rgba(readableColor(props.color), 0.64)};
+      color: ${({ fgColor }) => rgba(fgColor, 0.64)};
     }
 
     &::selection {
-      background-color: rgba(255, 255, 255, 0.5);
+      background-color: ${({ bgColor }) => darken(0.05, rgba(bgColor, 0.5))};
     }
   }
 `;
 
+const Source = ({ photo, children }: SourceProps) => {
+  const fgColor = photo?.palette?.lightMuted ?? WHITE;
+  const bgColor = photo?.palette?.darkVibrant ?? BLACK;
+
+  return (
+    <StyledSource fgColor={fgColor} bgColor={bgColor}>
+      {children}
+    </StyledSource>
+  );
+};
+
+
+// ----- Swatch ---------------------------------------------------------------
+
+interface SwatchProps extends React.PropsWithChildren<any> {
+  color?: Color;
+}
+
+const StyledSwatch = styled.div<{ notHtmlColor?: Color }>`
+  align-items: center;
+  background-color: ${({ notHtmlColor }) => rgba(notHtmlColor ?? WHITE)};
+  border-radius: 4px;
+  border: 1px solid ${({ notHtmlColor }) => darken(0.2, rgba(notHtmlColor ?? BLACK, 0.42))};
+  color: ${({ notHtmlColor }) => readableColor(rgba(notHtmlColor ?? WHITE))};
+  display: flex;
+  font-size: 12px;
+  height: ${BASIS};
+  justify-content: center;
+  text-transform: capitalize;
+  width: 32px;
+`;
+
+/**
+ * Renders a div whose background color is the provided color and whose text
+ * color will be a 'readable' color according to Polished.
+ */
+const Swatch = ({ color, children, ...props }: SwatchProps) => {
+  const [tooltipId] = React.useState(uuid());
+  const tooltipTarget = React.useRef(null);
+  const [showTooltip, setShowTooltip] = React.useState(false);
+
+  return (
+    <StyledSwatch
+      ref={tooltipTarget}
+      notHtmlColor={color}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      {...props}
+    >
+      <Overlay
+        target={tooltipTarget.current}
+        show={showTooltip}
+        placement="auto"
+        flip
+      >
+        {props => (
+          <Tooltip id={tooltipId} {...props}>
+            {children}
+          </Tooltip>
+        )}
+      </Overlay>
+    </StyledSwatch>
+  );
+};
+
 
 // ----- Loading Indicator -----------------------------------------------------
 
-const StyledLoadingIndicator = styled.div<{ color?: string }>`
-  background-color: ${props => rgba(readableColor(props.color ?? 'white'), 0.42)};
+interface LoadingIndicatorProps {
+  photo?: InspiratPhotoResource;
+  isLoading: boolean;
+}
+
+const StyledLoadingIndicator = styled.div<{ fgColor?: Color; bgColor?: Color }>`
+  align-items: center;
+  background-color: ${({ bgColor }) => rgba(bgColor ?? BLACK)};
   border-radius: 4px;
   box-shadow: 0px 0px 4px rgba(0, 0, 0, 0.16);
-  width: 32px;
+  display: flex;
   height: ${BASIS};
-  padding-top: 1px;
-  text-align: center;
+  justify-content: center;
   transition: background-color 1s ease;
+  width: ${BASIS};
 
   & svg {
-    color: ${props => rgba(props.color ?? 'white', 1)};
+    color: ${({ fgColor }) => rgba(fgColor ?? WHITE)};
     filter: drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.16));
     transition: color 1s ease;
   }
@@ -123,46 +285,17 @@ const spinClassName = css`
   animation: spin 2s infinite linear;
 `;
 
-interface LoadingIndicatorProps {
-  color?: string;
-  isLoading: boolean;
-}
 
-const LoadingIndicator = ({ color, isLoading }: LoadingIndicatorProps) => {
+const LoadingIndicator = ({ photo, isLoading }: LoadingIndicatorProps) => {
+  const fgColor = photo?.palette?.lightVibrant ?? WHITE;
+  const bgColor = photo?.palette?.darkMuted ?? BLACK;
+
   return (
-    <StyledLoadingIndicator color={color}>
+    <StyledLoadingIndicator fgColor={fgColor} bgColor={bgColor}>
       {isLoading ? <BsArrowRepeat className={spinClassName} /> : <BsCheck />}
     </StyledLoadingIndicator>
   );
 };
-
-
-// ----- Swatch ---------------------------------------------------------------
-
-interface SwatchProps {
-  swatch?: Color;
-}
-
-
-/**
- * Renders a div whose background color is the provided color and whose text
- * color will be a 'readable' color according to Polished.
- */
-const Swatch = styled.div<SwatchProps>`
-  align-items: center;
-  background-color: ${({ swatch }) => rgba(swatch?.r ?? 0, swatch?.g ?? 0, swatch?.b ?? 0, swatch?.a ?? 1)};
-  color: ${({ swatch }) => readableColor(rgba(swatch?.r ?? 0, swatch?.g ?? 0, swatch?.b ?? 0, swatch?.a ?? 1))};
-  display: flex;
-  font-size: 12px;
-  height: 1.8em;
-  justify-content: center;
-  text-transform: capitalize;
-  width: 120px;
-
-  &:not(:last-of-type) {
-    margin-bottom: 8px;
-  }
-`;
 
 
 // ----- Palette ---------------------------------------------------------------
@@ -175,19 +308,30 @@ interface PaletteProps {
  * Renders a Swatch for each color in a photo's 'palette'.
  */
 const Palette = ({ photo }: PaletteProps) => {
-  if (!photo) {
+  if (!photo || !photo.palette) {
     return null;
   }
 
   return (
-    <div>
+    <div
+      className={css`
+        margin-left: 12px;
+      `}
+    >
       {Object.entries(photo.palette).map(([colorName, swatch]) => {
         return (
           <Swatch
             key={colorName}
-            swatch={swatch}
+            color={swatch}
+            className={css`
+              &:not(:last-child) {
+                margin-bottom: 14px;
+              }
+            `}
           >
-            {swatch ? colorName : 'N/A'}
+            <span className="text-capitalize">
+              {swatch ? colorName : 'N/A'}
+            </span>
           </Swatch>
         );
       })}
@@ -285,20 +429,32 @@ const DevTools: React.FunctionComponent = () => {
     setCurrentPhoto
   ]);
 
+
+  /**
+   * [Callback] Explicitly sets the day offset when we get a progress update
+   * from the progress bar.
+   */
+  const handleProgressChange = React.useCallback((newProgress: number) => {
+    setDayOffset(Math.floor(numPhotos * newProgress));
+  }, [setDayOffset]);
+
+
   if (!showDevTools) {
     return null;
   }
 
-  const color = toColorString(currentPhoto?.palette.vibrant) ?? 'black';
+
   const progress = modIndex(dayOffset, numPhotos) / numPhotos;
+
 
   return (
     <StyledDevTools>
       <Progress
         progress={progress}
-        color={color}
+        photo={currentPhoto}
+        onProgressChange={handleProgressChange}
       />
-      <Source color={color}>
+      <Source photo={currentPhoto}>
         <input
           type="text"
           onChange={onImgIdChange}
@@ -309,7 +465,7 @@ const DevTools: React.FunctionComponent = () => {
           autoComplete="false"
         />
       </Source>
-      <LoadingIndicator color={color} isLoading={isLoadingPhotos} />
+      <LoadingIndicator photo={currentPhoto} isLoading={isLoadingPhotos} />
       <Palette photo={currentPhoto} />
     </StyledDevTools>
   );

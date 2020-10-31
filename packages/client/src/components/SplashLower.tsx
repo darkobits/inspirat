@@ -43,9 +43,9 @@ const ImageAttribution = styled(ImageMeta)`
  * readability.
  */
 const BottomGradient = styled.div`
-  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, transparent 100%);
   bottom: 0px;
-  height: 200px;
+  height: 128px;
   left: 0px;
   position: fixed;
   right: 0px;
@@ -72,7 +72,11 @@ const SplashLower: React.FunctionComponent = () => {
   const authorHref = currentPhoto?.user?.links?.html;
   const unsplashHref = currentPhoto?.links?.html;
   const attribution = author && (
-    <span>Photo by <a href={authorHref}>{author}</a> on <a href={unsplashHref}>Unsplash</a></span>
+    <span>
+      Photo by <a href={authorHref} target="_blank" rel="noopener noreferrer">{author}</a>
+      {' '}on{' '}
+      <a href={unsplashHref} target="_blank" rel="noopener noreferrer">Unsplash</a>
+    </span>
   );
 
   return (<>

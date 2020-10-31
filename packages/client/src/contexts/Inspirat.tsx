@@ -74,7 +74,7 @@ export interface InspiratContext {
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
-  setDayOffset: (action: 'increment' | 'decrement') => void;
+  setDayOffset: (action: 'increment' | 'decrement'| number) => void;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
@@ -104,9 +104,18 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   const query = useQuery();
 
 
-  // ----- [Reducer] Increment/Decrement Photo Index ---------------------------
+  // ----- [Reducer] Increment/Decrement/Set Photo Index -----------------------
 
-  const [dayOffset, setDayOffset] = React.useReducer((state: number, action: 'increment' | 'decrement') => {
+  /**
+   * Day offset is 0 by default and is used exclusively by DevTools to move
+   * forward/backward through the photo collection. An explicit offset is also
+   * set when clicking on the progress bar.
+   */
+  const [dayOffset, setDayOffset] = React.useReducer((state: number, action: 'increment' | 'decrement' | number) => {
+    if (typeof action === 'number') {
+      return action;
+    }
+
     switch (action) {
       case 'increment':
         return state + 1;
