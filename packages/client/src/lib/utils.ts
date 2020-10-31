@@ -51,34 +51,27 @@ export function capitalizeWords(input: string): string {
 
 
 /**
+ * @private
+ *
  * Tracks debug callbacks provided to ifDebug.
  */
-const debugOnceStatements: Array<string | Array<any>> = [];
+const debugFns: Array<any> = [];
 
 
 /**
- * @private
- *
- * Invokes the provided callback and, if it makes any calls to console.debug,
- * will only log the debug statement if it has not already been seen. If key is
- * of type string, it will be used to make this determination. Otherwise, the
- * arguments provided to console.debug will be used.
+ * Provided a string or a function, returns a string used as a de-duplication
+ * key.
  */
-function debugOnce(key: boolean | string, cb: GenericFunction) {
-  const origDebug = console.debug;
+function computeDebugKey(value: string | GenericFunction) {
+  if (typeof value === 'string') {
+    return value;
+  }
 
-  console.debug = (...args: Array<any>) => {
-    const id = typeof key === 'string' ? key : args;
+  if (typeof value === 'function') {
+    return value.toString();
+  }
 
-    if (!R.includes(id, debugOnceStatements)) {
-      Reflect.apply(origDebug, console, args);
-      debugOnceStatements.push(id);
-    }
-  };
-
-  cb();
-
-  console.debug = origDebug;
+  throw new Error(`[computeDebugKey] Expected first argument to be of type "string" or "function", got "${typeof value}".`);
 }
 
 
@@ -95,13 +88,23 @@ export interface IfDebugOptions {
  * query string param has been set.
  */
 export function ifDebug(cb: GenericFunction, options?: IfDebugOptions) {
-  if (process.env.NODE_ENV === 'development' || queryString.parse(location.search).debug === 'true')  {
-    if (options?.once) {
-      debugOnce(options.once, cb);
-    } else {
-      cb();
-    }
+  const hasDebugParam = Object.keys(queryString.parse(location.search)).includes('debug');
+
+  if (process.env.NODE_ENV !== 'development' && !hasDebugParam)  {
+    return;
   }
+
+  if (options?.once) {
+    const key = options.once === true ? computeDebugKey(cb) : computeDebugKey(options.once);
+
+    if (R.includes(key, debugFns)) {
+      return;
+    }
+
+    debugFns.push(key);
+  }
+
+  cb();
 }
 
 

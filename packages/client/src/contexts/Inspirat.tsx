@@ -228,7 +228,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
       Reflect.defineProperty(window.debug, 'expiresIn', {
         get: () => prettyMs(midnight() - now())
       });
-    }, { once: 'setPhotoUpdateTimer::expiresIn' });
+    }, { once: true });
 
     const timeoutHandle = setTimeout(() => {
       ifDebug(() => console.debug('[setPhotoUpdateTimer] Updating photo.'));

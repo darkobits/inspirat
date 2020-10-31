@@ -95,7 +95,7 @@ export async function getPhotoCollections() {
       ifDebug(() => {
         const expiresIn = CACHE_TTL - (now() - (photoCache?.updatedAt ?? 0));
         console.debug(`[getPhotoCollections] Photo collection will be updated in ${prettyMs(expiresIn)}.`);
-      }, { once: 'getPhotoCollections::expiresIn' });
+      }, { once: true });
     }
 
     // If photoCache is still null at this point, we had no cached data and
