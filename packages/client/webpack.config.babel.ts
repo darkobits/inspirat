@@ -1,13 +1,12 @@
+/* eslint-disable require-atomic-updates */
 import path from 'path';
 
+import env from '@darkobits/env';
 import bytes from 'bytes';
-import execa from 'execa';
 import getPort from 'get-port';
-import readPkgUp from 'read-pkg-up';
 import webpack from 'webpack';
 
 import CopyWebpackPlugin from 'copy-webpack-plugin';
-import DotenvWebpackPlugin from 'dotenv-webpack';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import FriendlyErrorsWebpackPlugin from 'friendly-errors-webpack-plugin';
@@ -15,36 +14,24 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import StyleLintWebpackPlugin from 'stylelint-webpack-plugin';
 
+import configWrapper, { gitDescribe } from './scripts/webpack-utils';
+
 
 // ----- Client Webpack Configuration ------------------------------------------
 
-export default async (env: string, argv: any): Promise<webpack.Configuration> => {
-  const config: webpack.Configuration = {};
-  config.module = {rules: []};
-  config.plugins = [];
-
-  const pkgInfo = await readPkgUp();
-  const gitVersion = (await execa('git', ['describe'])).stdout;
-
-  if (!pkgInfo) {
-    throw new Error('Unable to read package.json.');
-  }
-
-  const pkgRoot = path.dirname(pkgInfo.path);
-
-
+export default configWrapper(async ({ config, pkg, ifProd, ifDev, mode }) => {
   // ----- Entry / Output ------------------------------------------------------
 
   config.entry = {
     app: [
-      argv.mode === 'development' ? 'react-hot-loader/patch' : '',
-      path.resolve(pkgRoot, 'src', 'index.tsx')
+      ifDev('react-hot-loader/patch', ''),
+      path.resolve(pkg.root, 'src', 'index.tsx')
     ].filter(Boolean)
   };
 
   config.output = {
-    path: path.resolve(pkgRoot, 'dist'),
-    filename: argv.mode === 'production' ? '[name]-[chunkhash].js' : '[name].js',
+    path: path.resolve(pkg.root, 'dist'),
+    filename: ifProd('[name]-[chunkhash].js', '[name].js'),
     chunkFilename: '[name]-[chunkhash].js'
   };
 
@@ -72,10 +59,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
   config.module.rules.push({
     test: /\.css$/,
     use: [{
-      loader: MiniCssExtractPlugin.loader,
-      options: {
-        hmr: process.env.NODE_ENV !== 'production'
-      }
+      loader: MiniCssExtractPlugin.loader
     }, {
       loader: 'css-loader',
       options: {
@@ -121,42 +105,51 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     alias: {
       // Use the @hot-loader variant of react-dom in development to avoid this
       // issue: https://github.com/gatsbyjs/gatsby/issues/11934#issuecomment-469046186
-      'react-dom': argv.mode === 'production' ? 'react-dom' : '@hot-loader/react-dom'
+      'react-dom': ifProd('react-dom', '@hot-loader/react-dom')
     }
   };
 
 
   // ----- Plugins -------------------------------------------------------------
 
-  config.plugins.push(new StyleLintWebpackPlugin({
-    files: '**/*.{ts,tsx,js,jsx,css}',
-    lintDirtyModulesOnly: argv.mode === 'development',
-    emitWarning: true,
-    failOnWarning: argv.mode === 'production',
-    emitError: true,
-    failOnError: argv.mode === 'production'
+  config.plugins.push(new webpack.LoaderOptionsPlugin({ minimize: ifProd() }));
+
+  config.plugins.push(new MiniCssExtractPlugin({
+    filename: ifDev('styles.css', 'styles-[contenthash].css')
   }));
 
-  config.plugins.push(new webpack.DefinePlugin({
-    'process.env.GIT_VERSION': JSON.stringify(gitVersion)
+  config.plugins.push(new StyleLintWebpackPlugin({
+    files: '**/*.{ts,tsx,js,jsx,css}',
+    lintDirtyModulesOnly: ifDev(),
+    emitWarning: true,
+    failOnWarning: ifProd(),
+    emitError: true,
+    failOnError: ifProd()
+  }));
+
+  config.plugins.push(new webpack.EnvironmentPlugin({
+    GIT_VERSION: gitDescribe(),
+    // Note: This will be loaded by dotenv in development and should be present
+    // in CI for production builds. Either way, env() will throw if it is not
+    // set.
+    BUCKET_URL: JSON.stringify(env('BUCKET_URL', true))
   }));
 
   config.plugins.push(new HtmlWebpackPlugin({
     filename: 'index.html',
-    template: path.resolve(pkgRoot, 'src', 'index.html'),
+    template: path.resolve(pkg.root, 'src', 'index.html'),
     inject: true,
     data: {
       title: process.env.DOCUMENT_TITLE ?? 'New Tab'
     }
   }));
 
-  if (argv.mode === 'development') {
-    config.plugins.push(new DotenvWebpackPlugin());
-    config.plugins.push(new MiniCssExtractPlugin({filename: 'styles.css'}));
+  if (ifDev()) {
     config.plugins.push(new FriendlyErrorsWebpackPlugin());
+    config.plugins.push(new webpack.HotModuleReplacementPlugin());
   }
 
-  if (argv.mode === 'production') {
+  if (ifProd()) {
     config.plugins.push(new ForkTsCheckerWebpackPlugin({
       eslint: {
         enabled: true,
@@ -171,25 +164,19 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
       }
     }));
 
-    config.plugins.push(new MiniCssExtractPlugin({filename: 'styles-[contenthash].css'}));
-
     // Copy our Chrome Extension manifest and icon assets into the output
     // directory.
     config.plugins.push(new CopyWebpackPlugin({
       patterns: [
-        path.resolve(pkgRoot, 'src', 'manifest.json'),
-        path.resolve(pkgRoot, 'assets', 'favicon-16.png'),
-        path.resolve(pkgRoot, 'assets', 'favicon-48.png'),
-        path.resolve(pkgRoot, 'assets', 'favicon-128.png')
+        path.resolve(pkg.root, 'src', 'manifest.json'),
+        path.resolve(pkg.root, 'assets', 'favicon-16.png'),
+        path.resolve(pkg.root, 'assets', 'favicon-48.png'),
+        path.resolve(pkg.root, 'assets', 'favicon-128.png')
       ]
     }));
 
-    config.plugins.push(new webpack.LoaderOptionsPlugin({
-      minimize: true
-    }));
-
     config.plugins.push(new FaviconsWebpackPlugin({
-      logo: path.resolve(pkgRoot, 'assets', 'favicon.png'),
+      logo: path.resolve(pkg.root, 'assets', 'favicon.png'),
       inject: true,
       favicons: {
         icons: {
@@ -204,7 +191,7 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   // ----- Dev Server ----------------------------------------------------------
 
-  if (argv.mode === 'development') {
+  if (ifDev()) {
     const port = await getPort({port: 8080});
 
     config.devServer = {
@@ -223,7 +210,14 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
 
   // ----- Misc ----------------------------------------------------------------
 
-  config.mode = argv.mode === 'development' ? 'development' : 'production';
+  config.stats = 'minimal';
+
+  config.devtool = ifDev('#inline-source-map', undefined);
+
+  config.performance = {
+    maxAssetSize: bytes('300kb'),
+    maxEntrypointSize: bytes('600kb')
+  };
 
   config.node = {
     setImmediate: false,
@@ -234,15 +228,8 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     child_process: 'empty'
   };
 
-  config.devtool = argv.mode === 'development' ? '#inline-source-map' : undefined;
-
-  config.performance = {
-    maxAssetSize: bytes('300kb'),
-    maxEntrypointSize: bytes('600kb')
-  };
-
   config.optimization = {
-    minimize: argv.mode === 'production',
+    minimize: mode === 'production',
     splitChunks: {
       cacheGroups: {
         vendor: {
@@ -261,8 +248,6 @@ export default async (env: string, argv: any): Promise<webpack.Configuration> =>
     }
   };
 
-  config.stats = 'minimal';
-
 
   return config;
-};
+});
