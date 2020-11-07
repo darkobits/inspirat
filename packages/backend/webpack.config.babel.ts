@@ -62,7 +62,9 @@ async function main(): Promise<webpack.Configuration> {
     config.plugins.push(new ForkTsCheckerWebpackPlugin({
       eslint: {
         enabled: true,
-        files: './src/**/*.{ts,tsx,js,jsx}'
+        // Be very careful when changing this; do a smoke test to produce a
+        // failing build to be sure nothing broke.
+        files: './src/**/*'
       },
       typescript: {
         enabled: true,

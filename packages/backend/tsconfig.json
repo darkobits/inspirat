@@ -3,6 +3,11 @@
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "dist",
-    "paths": {"*": ["*", "src/*"]}
+    "paths": {"*": ["*", "src/*"]},
+    // [Serverless Best Practice] Emit nothing, including declaration files.
+    // This reduces bundle size uploaded to AWS and thus reduces cold-start
+    // times.
+    "noEmit": true,
+    "skipLibCheck": true
   }
 }

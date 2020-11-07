@@ -9,9 +9,10 @@
       "hoist": true
     },
     "version": {
-      "allowBranch": "master",
+      "allowBranch": ["master", "canary"],
       "message": "chore(release): %v",
       "conventionalCommits": true,
+      "changelogPreset": "conventional-changelog-conventionalcommits",
       "gitTagVersion": true,
       "push": false
     },

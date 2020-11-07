@@ -1,12 +1,13 @@
 org: darkobits
 app: inspirat
-service:
-  name: inspirat
+service: inspirat
 plugins:
-  - serverless-api-gateway-caching
-  - serverless-domain-manager
   - serverless-dotenv-plugin
   - serverless-webpack
+package:
+  # Package each function as its own bundle to reduce the bundle size of each
+  # function. This helps improve cold-start times.
+  individually: true
 
 
 # ----- Custom Config Data -----------------------------------------------------
@@ -18,20 +19,11 @@ custom:
     prod: inspirat
   # Configuration for the serverless-dotenv plugin.
   dotenv:
+    basePath: ../../
+    logging: false
     include:
       - UNSPLASH_ACCESS_KEY
       - UNSPLASH_SECRET_KEY
-  # Enable the serverless-api-gateway-caching plugin.
-  apiGatewayCaching:
-    enabled: true
-  # Configuration for serverless-domain-manager plugin.
-  # TODO: Remove this in a future version.
-  customDomain:
-    domainName: aws.frontlawn.net
-    endpointType: regional
-    basePath: ${self:custom.basePaths.${self:custom.stage}}
-    stage: ${self:custom.stage}
-    createRoute53Record: true
   # Configuration for serverless-webpack
   webpack:
     webpackConfig: 'webpack.config.babel.ts'
@@ -70,16 +62,16 @@ functions:
       UNSPLASH_ACCESS_KEY: ${env:UNSPLASH_ACCESS_KEY}
     timeout: 300 # (5 minutes)
   # Returns the photo collection from S3.
-  get-photos:
-    handler: src/get-photos.default
-    # Expose this function to the public via API Gateway.
-    events:
-      - http:
-          method: GET
-          path: photos
-          cors: true
-          caching:
-            enabled: true
+  # get-photos:
+  #   handler: src/get-photos.default
+  #   # Expose this function to the public via API Gateway.
+  #   events:
+  #     - http:
+  #         method: GET
+  #         path: photos
+  #         cors: true
+  #         caching:
+  #           enabled: true
 
 
 # ----- CloudFormation Resource Templates --------------------------------------

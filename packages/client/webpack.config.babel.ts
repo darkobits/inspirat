@@ -6,6 +6,7 @@ import bytes from 'bytes';
 import getPort from 'get-port';
 import webpack from 'webpack';
 
+import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import FaviconsWebpackPlugin from 'favicons-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
@@ -119,7 +120,7 @@ export default configWrapper(async ({ config, pkg, ifProd, ifDev, mode }) => {
   }));
 
   config.plugins.push(new StyleLintWebpackPlugin({
-    files: '**/*.{ts,tsx,js,jsx,css}',
+    files: '**/src/**/*.{ts,tsx,js,jsx,css}',
     lintDirtyModulesOnly: ifDev(),
     emitWarning: true,
     failOnWarning: ifProd(),
@@ -150,6 +151,8 @@ export default configWrapper(async ({ config, pkg, ifProd, ifDev, mode }) => {
   }
 
   if (ifProd()) {
+    config.plugins.push(new CleanWebpackPlugin());
+
     config.plugins.push(new ForkTsCheckerWebpackPlugin({
       eslint: {
         enabled: true,

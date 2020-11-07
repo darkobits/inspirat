@@ -1,149 +1,139 @@
-const npsUtils = require('nps-utils');
-
-const runIn = package => `lerna exec --scope="*${package}*" --`;
+const path = require('path');
 
 
-// ----- Main Scripts ----------------------------------------------------------
+module.exports = require('@darkobits/ts-unified/dist/config/package-scripts')(({ npsUtils }) => {
+  const scripts = {};
+  const runIn = packageName => `cd ${path.resolve(__dirname, 'packages', packageName)} &&`;
 
-const scripts = {};
+  // ----- Backend Scripts -------------------------------------------------------
 
-
-// ----- Backend Scripts -------------------------------------------------------
-
-const lintBackendCommand = `${runIn('backend')} unified.eslint src`;
-const typeCheckBackendCommand = `${runIn('backend')} unified.ttsc --pretty --noEmit`;
-const buildBackendCommand = `${runIn('backend')} serverless webpack`;
-
-scripts.backend = {
-  checkDeps: {
-    description: 'Checks for outdated dependencies in the backend package.',
-    script: 'npm-check --skip-unused ./packages/backend || true'
-  },
-  lint: {
-    description: 'Lints the backend package.',
-    script: lintBackendCommand
-  },
-  typeCheck: {
-    description: 'Type-checks the backend package',
-    script: typeCheckBackendCommand
-  },
-  build: {
-    description: 'Builds  the backend package.',
-    script: buildBackendCommand
-  },
-  prepare: {
-    description: 'Prepares the backend package for development or deployment.',
-    script: buildBackendCommand
-  },
-  deploy: {
-    default: {
-      description: 'Deploy the backend package to the dev environment.',
+  scripts.backend = {
+    deps: { check: `${runIn('backend')} nps deps.check` },
+    ts: { check: `${runIn('backend')} nps ts.check` },
+    lint: `${runIn('backend')} nps lint`,
+    deploy: {
       script: `${runIn('backend')} serverless deploy`,
-    },
-    prod: {
-      description: 'Deploy the backend package to the production environment.',
-      script: `${runIn('backend')} serverless deploy --stage prod`
+      prod: { script: `${runIn('backend')} serverless deploy --stage=prod` }
     }
+  };
+
+  // At the moment, serverless is not playing nice with fork-ts-checker, which
+  // is responsible for running ESLint and TSC in the Webpack build. As such,
+  // temporarily explicitly lint and type-check the backend package as part of
+  // the build step.
+  scripts.backend.build = npsUtils.series(
+    `${runIn('backend')} serverless webpack`
+  );
+
+  scripts.backend.prepare = scripts.backend.build;
+
+
+  // ----- Client Scripts ------------------------------------------------------
+
+  scripts.client = {
+    deps: { check: `${runIn('client')} nps deps.check` },
+    lint: `${runIn('client')} nps lint`,
+    build: `${runIn('client')} webpack --mode=production`,
+    start: `${runIn('client')} webpack-dev-server --mode=development`,
+    publish: [
+      'npx babel-node',
+      '--extensions=.ts',
+      `--config-file=${path.resolve(__dirname, 'packages', 'client', 'babel.config.js')}`,
+      path.resolve(__dirname, 'packages', 'client', 'scripts', 'publish-bin.ts')
+    ].join(' ')
+  };
+
+  // N.B. This will provide linting and type-checking via Webpack.
+  scripts.client.prepare = scripts.client.build;
+
+
+  // ----- Global Scripts ------------------------------------------------------
+
+  scripts.clean = {
+    // Removes node_modules in each package, then the root.
+    script: npsUtils.series(
+      `${runIn('backend')} unified.del node_modules`,
+      `${runIn('client')} unified.del node_modules`,
+      'lerna clean --yes && unified.del node_modules'
+    ),
+    // Removes lock files in each package.
+    lockFiles: npsUtils.series(
+      `${runIn('backend')} unified.del package-lock.json`,
+      `${runIn('client')} unified.del package-lock.json`,
+    )
+  };
+
+  // Checks for outdated dependencies in each package, then the root. We use
+  // 'checkAll' here because 'nps deps.check' is called from the context of
+  // each package, and we don't want to overwrite that script.
+  scripts.deps = {
+    checkAll: npsUtils.series(
+      scripts.client.deps.check,
+      scripts.backend.deps.check,
+      'nps deps.check'
+    ),
+    updateAll: npsUtils.series(
+      npsUtils.concurrent({
+        backend: {
+          script: `${runIn('backend')} npm update`,
+          color: 'bgBlack.yellow'
+        },
+        client: {
+          script: `${runIn('backend')} npm update`,
+          color: 'bgBlack.green'
+        }
+      }),
+      'npm update',
+      'lerna bootstrap',
+      scripts.clean.lockFiles
+    )
+  };
+
+  // Lints each package. We use 'lintAll' here so that we do not overwrite the
+  // lint script from ts-unified, which we invoke in client/backend lint
+  // scripts.
+  scripts.lintAll = npsUtils.series(
+    scripts.backend.lint,
+    scripts.client.lint
+  );
+
+  // N.B. We don't care about overwriting the default 'bump' script, as we will
+  // never use it.
+  scripts.bump = {
+    script: 'lerna version',
+    beta: { script: 'lerna version prerelease --preid=beta' }
   }
-};
 
+  // N.B. We don't care about overwriting the default 'build' script, as we will
+  // never use it.
+  scripts.build = {
+    script: npsUtils.concurrent({
+      backend: {
+        script: scripts.backend.prepare,
+        color: 'bgBlack.yellow'
+      },
+      client: {
+        script: scripts.client.prepare,
+        color: 'bgBlack.green'
+      }
+    })
+  };
 
-// ----- Client Scripts ----------------------------------------------------
+  // N.B. We don't care about overwriting the default 'prepare' script, as we
+  // will never use it.
+  scripts.prepare = npsUtils.series(
+    'lerna bootstrap',
+    'nps build'
+  );
 
-const lintClientCommand = `${runIn('client')} unified.eslint src`;
-const lintClientStylesCommand = `${runIn('client')} stylelint src/**/*.{ts,tsx,js,jsx,css}`;
-const typeCheckClientCommand = `${runIn('client')} unified.ttsc --pretty --noEmit`;
-const buildClientCommand = `${runIn('client')} "unified.del dist && webpack --mode=production"`;
-const publishClientCommand = `npx babel-node --extensions=.ts --config-file=./packages/client/babel.config.js ./packages/client/scripts/publish-bin.ts`
+  // Hoisted scripts.
+  scripts.deploy = 'nps backend.deploy';
+  scripts.start = 'nps client.start';
 
-
-scripts.client = {
-  checkDeps: {
-    description: 'Checks for outdated dependencies in the client package.',
-    script: 'npm-check --skip-unused ./packages/client || true'
-  },
-  lint: {
-    description: 'Lints the client package.',
-    script: lintClientCommand,
-    styles: {
-      script: lintClientStylesCommand
+  return {
+    scripts,
+    options: {
+      logLevel: 'info'
     }
-  },
-  typeCheck: {
-    description: 'Type-checks the client package',
-    script: typeCheckClientCommand
-  },
-  build: {
-    description: 'Builds the client package',
-    script: buildClientCommand,
-  },
-  prepare: {
-    description: 'Prepares the client package for development or deployment.',
-    script: buildClientCommand
-  },
-  publish: {
-    description: 'Publish a new version of the client package to the Chrome Web Store.',
-    script: publishClientCommand
-  },
-  start: {
-    description: 'Start a Webpack development server for the client.',
-    script: `${runIn('client')} webpack-dev-server --mode=development`
-  }
-};
-
-
-// ----- Global Scripts ----------------------------------------------------
-
-scripts.checkDeps = {
-  description: 'Check for outdated dependencies in all packages.',
-  script: npsUtils.series(
-    scripts.client.checkDeps.script,
-    scripts.backend.checkDeps.script,
-    'npm-check --skip-unused || true'
-  )
-};
-
-scripts.lint = {
-  description: 'Lint all packages.',
-  script: npsUtils.series(scripts.backend.lint.script, scripts.client.lint.script)
-};
-
-scripts.clean = {
-  description: 'Remove installed dependencies.',
-  script: 'lerna clean --yes && unified.del node_modules'
-};
-
-scripts.build = {
-  description: 'Build all packages.',
-  script: npsUtils.concurrent({
-    backend: scripts.backend.build.script,
-    client: scripts.client.build.script
-  })
-};
-
-scripts.typeCheck = {
-  description: 'Type-check all packages.',
-  script: npsUtils.concurrent({
-    backend: scripts.backend.typeCheck.script,
-    client: scripts.client.typeCheck.script
-  })
-};
-
-scripts.prepare = {
-  description: 'Prepares all packages.',
-  script: `lerna bootstrap && ${npsUtils.concurrent({
-    backend: scripts.backend.prepare.script,
-    client: scripts.client.prepare.script
-  })}`
-}
-
-scripts.bump = {
-  description: 'Bump package versions and generate a tagged commit.',
-  script: 'lerna version'
-};
-
-// Hoisted scripts.
-scripts.deploy = scripts.backend.deploy;
-scripts.start = scripts.client.start;
-
-module.exports = {scripts};
+  };
+});
