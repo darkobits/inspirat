@@ -1,7 +1,7 @@
 {
   "name": "inspirat-types",
   "description": "Common type definitions for Inspirat.",
-  "version": "0.12.7",
+  "version": "0.13.0",
   "private": true,
   "author": "darkobits",
   "license": "WTFPL",

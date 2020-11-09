@@ -1,5 +1,5 @@
 {
-  "version": "0.12.7",
+  "version": "0.13.0",
   "packages": [
     "packages/*"
   ],
@@ -9,7 +9,10 @@
       "hoist": true
     },
     "version": {
-      "allowBranch": ["master", "canary"],
+      "allowBranch": [
+        "master",
+        "canary"
+      ],
       "message": "chore(release): %v",
       "conventionalCommits": true,
       "changelogPreset": "conventional-changelog-conventionalcommits",

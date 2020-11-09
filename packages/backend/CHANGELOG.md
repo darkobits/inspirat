@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.13.0](https://github.com/darkobits/inspirat/compare/v0.12.7...v0.13.0) (2020-11-09)
+
+
+### Features
+
+* **backend:** Add dominant color computation. ([1766d3a](https://github.com/darkobits/inspirat/commit/1766d3a22cdb9c4c508326e6b5b2da684a469294))
+
+
+
 ## [0.12.6](https://github.com/darkobits/inspirat/compare/v0.12.5...v0.12.6) (2020-10-23)
 
 **Note:** Version bump only for package inspirat-backend

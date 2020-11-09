@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.13.0](https://github.com/darkobits/inspirat/compare/v0.12.7...v0.13.0) (2020-11-09)
+
+
+### Features
+
+* **backend:** Add dominant color computation. ([1766d3a](https://github.com/darkobits/inspirat/commit/1766d3a22cdb9c4c508326e6b5b2da684a469294))
+* **client:** Improve image rendering, transitions, color-handling, overrides. ([9d2f0dc](https://github.com/darkobits/inspirat/commit/9d2f0dcabeaca66c16673f2dc965ad53d10e820a))
+
+
+### Bug Fixes
+
+* **client:** Improve image quality settings. ([abc999d](https://github.com/darkobits/inspirat/commit/abc999d83f8f9acd1990bd99ab1fae9bf0178822))
+
+
+
 ## [0.12.7](https://github.com/darkobits/inspirat/compare/v0.12.6...v0.12.7) (2020-10-23)
 
 

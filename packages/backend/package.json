@@ -1,7 +1,7 @@
 {
   "name": "inspirat-backend",
   "description": "Backend for Inspirat.",
-  "version": "0.12.6",
+  "version": "0.13.0",
   "private": true,
   "author": "darkobits",
   "license": "WTFPL",
@@ -30,7 +30,7 @@
     "babel-loader": "^8.0.4",
     "execa": "^4.1.0",
     "fork-ts-checker-webpack-plugin": "^6.0.0",
-    "inspirat-types": "^0.12.7",
+    "inspirat-types": "^0.13.0",
     "read-pkg-up": "^7.0.0",
     "serverless": "^2.8.0",
     "serverless-dotenv-plugin": "^3.0.0",

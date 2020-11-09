@@ -1,7 +1,7 @@
 {
   "name": "inspirat-client",
   "description": "Front-end for Inspirat.",
-  "version": "0.12.7",
+  "version": "0.13.0",
   "private": true,
   "author": "darkobits",
   "license": "WTFPL",
@@ -80,7 +80,7 @@
     "globby": "^11.0.1",
     "html-loader": "^1.0.0",
     "html-webpack-plugin": "^4.0.2",
-    "inspirat-types": "^0.12.7",
+    "inspirat-types": "^0.13.0",
     "is-ci": "^2.0.0",
     "mini-css-extract-plugin": "^1.0.0",
     "raw-loader": "^4.0.0",
