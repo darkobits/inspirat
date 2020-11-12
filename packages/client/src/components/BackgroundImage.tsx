@@ -9,7 +9,7 @@ import { BackgroundImageOverrides } from 'etc/types';
  * Props for the BackgroundImage component.
  */
 interface BackgroundImageProps extends BackgroundImageOverrides {
-  backgroundImage: string;
+  backgroundImage?: string;
   // backgroundPosition?: string;
   // transform?: string;
   // opacity?: number;
@@ -37,7 +37,7 @@ const BackgroundImage = styled.div<BackgroundImageProps>`
     *
     * See: https://github.com/callstack/linaria/issues/368
     */
-  background-image: ${props => props.backgroundImage && `url(${props.backgroundImage})`};
+  background-image: ${props => (props.backgroundImage ? `url(${props.backgroundImage})` : 'none')};
   background-position: ${props => props.backgroundPosition ?? 'center center'};
   background-attachment: fixed;
   background-repeat: no-repeat;

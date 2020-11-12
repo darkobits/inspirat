@@ -43,8 +43,8 @@ const SplashEl = styled.div`
  * palette with a box-shadow around text instead.
  */
 const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
-  const [aPhotoUrl, setAPhotoUrl] = React.useState<string>('');
-  const [bPhotoUrl, setBPhotoUrl] = React.useState<string>('');
+  const [aPhotoUrl, setAPhotoUrl] = React.useState<string>();
+  const [bPhotoUrl, setBPhotoUrl] = React.useState<string>();
   const [aPhotoOverrides, setAPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
   const [bPhotoOverrides, setBPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
   const [transitionDuration, setTransitionDuration] = React.useState('0s');
@@ -53,7 +53,6 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
 
   // This is used to delay showing the greeting until the photo has loaded.
   // const opacity = currentPhoto ? 1 : 0;
-
 
   /**
    * [Effect] When the current photo changes, updates the background-image URL
@@ -84,14 +83,28 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
     // Toggle active elements to trigger CSS opacity transition.
     toggleActiveElement();
 
+    // To ensure the first photo always appears immediately, but that subsequent
+    // transitions run at the configured transition speed, we set the initial
+    // transition duration to '0s' (see above). We then do a check here to see
+    // if this is the first image being shown, and if so, run a timer that
+    // expires after the _target_ transition time, then updates the component's
+    // transition time to the target time.
+    if (aPhotoUrl === undefined && bPhotoUrl === undefined) {
+      setTimeout(() => {
+        setTransitionDuration(BACKGROUND_TRANSITION_DURATION);
+      }, ms(BACKGROUND_TRANSITION_DURATION));
+    }
+
+    // This timer clears the photo on the inactive backdrop once the transition
+    // animation has completed. We always want it to run using the current
+    // transition duration, and it is acceptable to allow the effect's cleanup
+    // function to cancel it.
     const timeoutHandle = setTimeout(() => {
       if (activeElement === 'A') {
         setAPhotoUrl('');
       } else {
         setBPhotoUrl('');
       }
-
-      setTransitionDuration(BACKGROUND_TRANSITION_DURATION);
     }, ms(transitionDuration));
 
     return () => {
