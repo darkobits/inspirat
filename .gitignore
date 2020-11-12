@@ -90,3 +90,6 @@ dist
 .linaria-cache
 
 NOTES.md
+
+# Local Netlify folder
+.netlify
