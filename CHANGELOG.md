@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+### [0.13.1](https://github.com/darkobits/inspirat/compare/v0.13.0...v0.13.1) (2020-11-12)
+
+
+### Bug Fixes
+
+* Ensure first image always appears immediately. ([42f670a](https://github.com/darkobits/inspirat/commit/42f670a7d5732c78c8b2dea41327954bc2748773))
+
+
+
 ## [0.13.0](https://github.com/darkobits/inspirat/compare/v0.12.7...v0.13.0) (2020-11-09)
 
 
