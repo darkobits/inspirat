@@ -14,13 +14,15 @@ const log = LogFactory({ heading: 'webpack-config' });
 // ----- Utilities -------------------------------------------------------------
 
 /**
+ * @private
+ *
  * Returns a short description of the current Git commit using 'git describe'.
  *
  * Example: "v0.12.7-17-g9d2f0dc"
  */
-export function gitDescribe() {
-  const result = execa.sync('git', ['describe']).stdout;
-  log.verbose(`Current Git description: ${log.chalk.green(result)}`);
+function gitDescribe() {
+  const result = execa.sync('git', ['describe', '--tags']).stdout;
+  log.info(log.prefix('gitDescribe'), `Current Git description: ${log.chalk.green(result)}`);
   return result;
 }
 
@@ -36,7 +38,7 @@ export function gitDescribe() {
  */
 function readDotenvUp(cwd?: string) {
   if (IS_CI) {
-    log.warn('Not loading .env because a CI environment has been detected.');
+    log.warn(log.prefix('readDotenvUp'), 'Not loading .env because a CI environment has been detected.');
     return;
   }
 
@@ -44,11 +46,11 @@ function readDotenvUp(cwd?: string) {
   const result = dotenv.config({ path: envFilePath });
 
   if (result.error) {
-    log.warn(`Error loading .env file: ${result.error.message}`);
+    log.warn(log.prefix('readDotenvUp'), `Error loading .env file: ${result.error.message}`);
     return {};
   }
 
-  log.verbose(`Loaded ${log.chalk.yellow(Object.keys(result.parsed ?? {}).length)} variables from ${log.chalk.blue(envFilePath)}.`);
+  log.verbose(log.prefix('readDotenvUp'), `Loaded ${log.chalk.yellow(Object.keys(result.parsed ?? {}).length)} variables from ${log.chalk.blue(envFilePath)}.`);
 
   return result.parsed;
 }
@@ -71,7 +73,7 @@ export function getPackageInfo(cwd?: string): GetPackageInfoResult {
     throw new Error(`Unable to find a ${log.chalk.green('package.json')} at or above ${log.chalk.blue(process.cwd())}`);
   }
 
-  log.verbose(`Using ${log.chalk.green('package.json')} from ${log.chalk.blue(pkgInfo.path)}.`);
+  log.verbose(log.prefix('getPackageInfo'), `Using ${log.chalk.green('package.json')} from ${log.chalk.blue(pkgInfo.path)}.`);
 
   return {
     json: pkgInfo.packageJson,
@@ -93,6 +95,11 @@ interface WebpackConfigurationFunctionOptions {
    * Second argument passed to traditional Webpack configuration functions.
    */
   argv: Parameters<webpack.ConfigurationFactory>[1];
+
+  /**
+   * Result of running "git describe".
+   */
+  gitDesc: string;
 
   /**
   * Webpack configuration object with several data strictures pre-initialized as
@@ -193,6 +200,7 @@ export default function webpackConfigurationWrapper(configFn: WebpackConfigurati
     };
 
     const pkg = getPackageInfo();
+
     readDotenvUp();
 
     const ifDev = (ifTrue?: any, ifFalse?: any): any => {
@@ -213,6 +221,7 @@ export default function webpackConfigurationWrapper(configFn: WebpackConfigurati
 
     const options: WebpackConfigurationFunctionOptions = {
       config,
+      gitDesc: gitDescribe(),
       pkg,
       env,
       argv,

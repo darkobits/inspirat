@@ -15,12 +15,12 @@ import HtmlWebpackPlugin from 'html-webpack-plugin';
 import MiniCssExtractPlugin from 'mini-css-extract-plugin';
 import StyleLintWebpackPlugin from 'stylelint-webpack-plugin';
 
-import configWrapper, { gitDescribe } from './scripts/webpack-utils';
+import configWrapper from './scripts/webpack-utils';
 
 
 // ----- Client Webpack Configuration ------------------------------------------
 
-export default configWrapper(async ({ config, pkg, ifProd, ifDev, mode }) => {
+export default configWrapper(async ({ config, pkg, ifProd, ifDev, mode, gitDesc }) => {
   // ----- Entry / Output ------------------------------------------------------
 
   config.entry = {
@@ -129,7 +129,7 @@ export default configWrapper(async ({ config, pkg, ifProd, ifDev, mode }) => {
   }));
 
   config.plugins.push(new webpack.EnvironmentPlugin({
-    GIT_VERSION: gitDescribe(),
+    GIT_VERSION: gitDesc,
     // Note: This will be loaded by dotenv in development and should be present
     // in CI for production builds. Either way, env() will throw if it is not
     // set.
