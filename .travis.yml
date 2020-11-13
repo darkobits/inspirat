@@ -91,15 +91,14 @@ jobs:
         prod: true
         edge: true
 
+
     # ----- Publish Chrome Extension -------------------------------------------
 
     # This job will use the "build-client" workspace created in a previous job
     # to publish the client to the Chrome Web Store.
-    - stage: publish
+    - stage: publish-client
       if: branch = master
       workspaces:
         use: build-client
       install: skip
-      script:
-        - git status
-        - npx nps client.publish
+      script: npx nps client.publish
