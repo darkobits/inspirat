@@ -1,10 +1,10 @@
 <a href="#top" id="top">
-  <img src="https://user-images.githubusercontent.com/441546/97067108-36361800-156f-11eb-9feb-cda79013a35b.png" style="max-width: 100%">
+  <img src="./.github/inspirat-header-thin.png" style="max-width: 100%">
 </a>
 <p align="center">
-  <a href="https://travis-ci.com/darkobits/inspirat"><img src="https://img.shields.io/travis/com/darkobits/inspirat/master?style=flat-square"></a>
-  <a href="https://bit.ly/inspirat-chrome"><img src="https://img.shields.io/chrome-web-store/v/fpdbdpjcibecigaedhhkfbikpnllleeo.svg?style=flat-square"></a>
-  <a href="https://conventionalcommits.org"><img src="https://img.shields.io/badge/conventional%20commits-1.0.0-027dc6.svg?style=flat-square"></a>
+  <a href="https://travis-ci.com/darkobits/inspirat"><img src="https://img.shields.io/travis/com/darkobits/inspirat/master?style=for-the-badge"></a>
+  <a href="https://bit.ly/inspirat-chrome"><img src="https://img.shields.io/chrome-web-store/v/fpdbdpjcibecigaedhhkfbikpnllleeo.svg?style=for-the-badge"></a>
+  <a href="https://conventionalcommits.org"><img src="https://img.shields.io/badge/conventional%20commits-1.0.0-027dc6.svg?style=for-the-badge"></a>
 </p>
 
 A minimalistic New Tab experience for Chrome and Chromium-based browsers. Each day, Inspirat will
