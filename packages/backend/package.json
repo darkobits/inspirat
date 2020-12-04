@@ -22,21 +22,15 @@
     "ramda": "^0.27.0"
   },
   "devDependencies": {
-    "@darkobits/ts": "^0.1.4",
+    "@darkobits/tsx": "^0.1.8",
     "@types/aws-lambda": "^8.10.36",
     "@types/parse-link-header": "^1.0.0",
     "@types/ramda": "^0.27.0",
-    "@types/webpack": "^4.41.0",
     "aws-sdk": "^2.774.0",
-    "babel-loader": "^8.0.4",
-    "execa": "^4.1.0",
-    "fork-ts-checker-webpack-plugin": "^6.0.0",
     "inspirat-types": "^0.13.0",
-    "read-pkg-up": "^7.0.0",
     "serverless": "^2.8.0",
     "serverless-dotenv-plugin": "^3.0.0",
     "serverless-webpack": "^5.2.0",
-    "source-map-support": "^0.5.19",
-    "webpack": "^4.44.2"
+    "source-map-support": "^0.5.19"
   }
 }
