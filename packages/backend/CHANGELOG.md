@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+### [0.13.2](https://github.com/darkobits/inspirat/compare/v0.13.1...v0.13.2) (2020-12-04)
+
+
+### 🏗 Chores
+
+* Migrate to @darkobits/ts(x). ([9186b78](https://github.com/darkobits/inspirat/commit/9186b7827e7d21e9ab33b821f1b5806e4dbb7c95))
+
+
+
 ## [0.13.0](https://github.com/darkobits/inspirat/compare/v0.12.7...v0.13.0) (2020-11-09)
 
 

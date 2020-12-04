@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+### [0.13.2](https://github.com/darkobits/inspirat/compare/v0.13.1...v0.13.2) (2020-12-04)
+
+
+### 🏗 Chores
+
+* Deploy to Netlify sites via Travis CI. ([c7c0967](https://github.com/darkobits/inspirat/commit/c7c09675b85f4597631a1db983bc32288d73c8b3))
+* Improve logging in webpack-utils. ([6b206eb](https://github.com/darkobits/inspirat/commit/6b206eb2e4e8a759d0ca3ff32d92e1586d96ca26))
+* Migrate to @darkobits/ts(x). ([9186b78](https://github.com/darkobits/inspirat/commit/9186b7827e7d21e9ab33b821f1b5806e4dbb7c95))
+* Update Travis config. ([6ca058e](https://github.com/darkobits/inspirat/commit/6ca058e6a811d6792b25e5dddf940640c8720087))
+
+
+### 📖 Documentation
+
+* Update README. ([56c8efe](https://github.com/darkobits/inspirat/commit/56c8efe67a42d315ff1d7576914e95ffca4438f1))
+
+
+
 ### [0.13.1](https://github.com/darkobits/inspirat/compare/v0.13.0...v0.13.1) (2020-11-12)
 
 
