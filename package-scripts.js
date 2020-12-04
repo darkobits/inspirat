@@ -1,11 +1,12 @@
 const path = require('path');
 
 
-module.exports = require('@darkobits/ts-unified/dist/config/package-scripts')(({ npsUtils }) => {
+module.exports = require('@darkobits/ts').nps(({ npsUtils }) => {
   const scripts = {};
   const runIn = packageName => `cd ${path.resolve(__dirname, 'packages', packageName)} &&`;
 
-  // ----- Backend Scripts -------------------------------------------------------
+
+  // ----- Backend Scripts -----------------------------------------------------
 
   scripts.backend = {
     deps: { check: `${runIn('backend')} nps deps.check` },
@@ -90,8 +91,7 @@ module.exports = require('@darkobits/ts-unified/dist/config/package-scripts')(({
   };
 
   // Lints each package. We use 'lintAll' here so that we do not overwrite the
-  // lint script from ts-unified, which we invoke in client/backend lint
-  // scripts.
+  // lint script from `ts`, which we invoke in client/backend lint scripts.
   scripts.lintAll = npsUtils.series(
     scripts.backend.lint,
     scripts.client.lint

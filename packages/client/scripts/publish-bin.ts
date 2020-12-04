@@ -3,14 +3,12 @@
 import path from 'path';
 
 import env from '@darkobits/env';
-import dotenv from 'dotenv';
-import findUp from 'find-up';
+import { readDotenvUp } from '@darkobits/tsx/lib/utils';
 import publishExtension from './publish-extension';
 
 
 async function main() {
-  const envFilePath = await findUp('.env', { cwd: __dirname });
-  dotenv.config({ path: envFilePath });
+  readDotenvUp(__dirname);
 
   try {
     await publishExtension({

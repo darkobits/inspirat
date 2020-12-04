@@ -1,6 +1,8 @@
 module.exports = {
-  extends: '@darkobits/ts-unified/dist/config/babel',
+  extends: require('@darkobits/ts').babel,
   presets: [
-    ['@babel/preset-typescript', { onlyRemoveTypeImports: true }]
+    ['@babel/preset-typescript', {
+      onlyRemoveTypeImports: true
+    }]
   ]
 };

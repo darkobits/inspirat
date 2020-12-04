@@ -15,7 +15,7 @@
       ],
       "message": "chore(release): %v",
       "conventionalCommits": true,
-      "changelogPreset": "conventional-changelog-conventionalcommits",
+      "changelogPreset": "@darkobits/ts/config/changelog-preset",
       "gitTagVersion": true,
       "push": false
     },

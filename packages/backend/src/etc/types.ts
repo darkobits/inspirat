@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
+
 export interface LooseObject {
   [index: string]: any;
 }

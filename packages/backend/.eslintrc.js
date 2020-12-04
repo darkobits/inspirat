@@ -1,7 +1,5 @@
 module.exports = {
-  extends: [
-    require.resolve('@darkobits/ts-unified/dist/config/eslint')
-  ],
+  extends: require('@darkobits/ts').eslint,
   parserOptions: {
     project: `${__dirname}/tsconfig.json`
   },

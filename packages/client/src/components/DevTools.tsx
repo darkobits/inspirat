@@ -99,7 +99,8 @@ const Progress = ({ photo, progress, onProgressChange, children }: ProgressProps
    * [Callback] Re-compute the element's title attribute when the mouse moves
    * over the element.
    */
-  // const handleMouseMove = React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  // const handleMouseMove =
+  // React.useCallback((e: React.MouseEvent<HTMLDivElement>) => {
   //   const { left, right } = e.currentTarget.getBoundingClientRect();
   //   const { clientX } = e;
   //   const userProgress = (clientX - left) / (right - left);
