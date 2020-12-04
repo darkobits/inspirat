@@ -131,9 +131,6 @@ module.exports = require('@darkobits/ts').nps(({ npsUtils }) => {
   scripts.start = 'nps client.start';
 
   return {
-    scripts,
-    options: {
-      logLevel: 'info'
-    }
+    scripts
   };
 });
