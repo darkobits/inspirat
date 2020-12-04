@@ -98,4 +98,6 @@ jobs:
       workspaces:
         use: build-client
       install: skip
-      script: npx nps client.publish
+      script:
+        - git status
+        - npx nps client.publish
