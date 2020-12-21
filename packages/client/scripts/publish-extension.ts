@@ -137,13 +137,9 @@ async function publishExtension(options: PublishExtensionOptions) {
   const branch = isCi && branchFromCi ? branchFromCi : await getBranchName();
 
   if (options.requireGitBranch) {
-    let isEligibleBranch: boolean;
-
-    if (typeof options.requireGitBranch === 'string') {
-      isEligibleBranch = branch === options.requireGitBranch;
-    } else {
-      isEligibleBranch = options.requireGitBranch.test(branch);
-    }
+    const isEligibleBranch = typeof options.requireGitBranch === 'string'
+      ? branch === options.requireGitBranch
+      : options.requireGitBranch.test(branch);
 
     if (!isEligibleBranch) {
       appendLogMessage(() => log.info(toSingle`

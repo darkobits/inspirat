@@ -77,11 +77,8 @@ export async function getTagsAtHead() {
  * `false` otherwise.
  */
 export async function isWorkingDirectoryClean() {
-  const { exitCode } = await execa('git', ['diff-index', '--quiet', 'HEAD'], {
-    reject: false
-  });
-
-  return !exitCode;
+  const { stdout } = await execa('git', ['status', '--short']);
+  return stdout.trim().length === 0;
 }
 
 
