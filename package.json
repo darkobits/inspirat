@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@babel/node": "^7.12.6",
-    "@darkobits/ts": "^0.1.4",
+    "@darkobits/ts": "^0.2.2",
     "conventional-changelog-conventionalcommits": "^4.5.0",
     "lerna": "^3.22.1"
   }
