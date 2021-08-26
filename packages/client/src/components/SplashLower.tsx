@@ -1,9 +1,9 @@
-import { styled } from 'linaria/react';
+import { styled } from '@linaria/react';
 import * as R from 'ramda';
 import React from 'react';
 
-import InspiratContext from 'contexts/Inspirat';
 import ImageMeta from 'components/ImageMeta';
+import InspiratContext from 'contexts/Inspirat';
 import useQuery from 'hooks/use-query';
 import { capitalizeWords } from 'lib/utils';
 

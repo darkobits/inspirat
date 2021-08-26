@@ -1,5 +1,8 @@
 module.exports = {
-  extends: require('@darkobits/tsx').eslint,
+  extends: [
+    'plugin:@darkobits/tsx',
+    'plugin:react-hooks/recommended'
+  ],
   parserOptions: {
     project: `${__dirname}/tsconfig.json`
   },

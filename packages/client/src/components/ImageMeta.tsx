@@ -1,4 +1,4 @@
-import { styled } from 'linaria/react';
+import { styled } from '@linaria/react';
 import { rgba } from 'polished';
 import * as R from 'ramda';
 import React from 'react';
@@ -25,9 +25,9 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
   color: rgba(255, 255, 255, 0.96);
   display: flex;
   font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
-  font-weight: 600;
+  font-weight: 300;
   font-size: 16px;
-  letter-spacing: 0.35px;
+  letter-spacing: 0.36px;
   text-shadow: ${R.pipe(R.propOr('black', 'shadowColor'), textShadow)};
   user-select: none;
 

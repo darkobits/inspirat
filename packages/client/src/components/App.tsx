@@ -1,4 +1,3 @@
-import { hot } from 'react-hot-loader/root';
 import React from 'react';
 
 import DevTools from 'components/DevTools';
@@ -28,4 +27,4 @@ const App: React.FunctionComponent = () => {
 };
 
 
-export default hot(App);
+export default App;

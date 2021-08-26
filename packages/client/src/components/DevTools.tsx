@@ -1,6 +1,6 @@
+import { css } from '@linaria/core';
+import { styled } from '@linaria/react';
 import { Color, InspiratPhotoResource } from 'inspirat-types';
-import { css } from 'linaria';
-import { styled } from 'linaria/react';
 import mousetrap from 'mousetrap';
 import { darken, desaturate, readableColor, lighten } from 'polished';
 import React from 'react';
@@ -155,7 +155,7 @@ const StyledSource = styled.div<{ fgColor: Color; bgColor: Color }>`
     border-color: ${({ fgColor }) => desaturate(0.6, rgba(fgColor, 0.4))};
     box-shadow: 0px 0px 2px 1px ${({ bgColor }) => rgba(bgColor, 0.16)};
     color: ${({ fgColor }) => desaturate(0, lighten(0.16, rgba(fgColor)))};
-    font-family: sans-serif;
+    /* font-family: sans-serif; */
     font-size: 14px;
     font-size: inherit;
     font-weight: 400;
@@ -410,7 +410,7 @@ const DevTools: React.FunctionComponent = () => {
 
       const imgId = value.startsWith('https://unsplash.com/photos/')
         ? value.replace('https://unsplash.com/photos/', '')
-        : value;
+        : undefined;
 
       if (!imgId) {
         resetPhoto();

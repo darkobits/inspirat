@@ -1,5 +1,5 @@
-import { cx } from 'linaria';
-import { styled } from 'linaria/react';
+import { cx } from '@linaria/core';
+import { styled } from '@linaria/react';
 import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 
@@ -79,7 +79,7 @@ const Introduction: React.FunctionComponent = () => {
             Inspirat
           </div>
           <div style={{ fontSize: '14px', lineHeight: '26px' }}>
-            {process.env.GIT_VERSION}
+            {process.env.GIT_DESC}
           </div>
         </h1>
         <hr className="bg-secondary mb-4 mx-2" />

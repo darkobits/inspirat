@@ -6,7 +6,6 @@
   "author": "darkobits",
   "license": "WTFPL",
   "devDependencies": {
-    "@types/git-rev-sync": "^2.0.0",
-    "execa": "^4.1.0"
+    "@darkobits/tsx": "^0.7.0-beta.13"
   }
 }

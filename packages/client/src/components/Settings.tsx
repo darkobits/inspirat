@@ -1,4 +1,4 @@
-import { cx } from 'linaria';
+import { cx } from '@linaria/core';
 import React from 'react';
 import {
   Button,
@@ -77,7 +77,7 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
             Inspirat
           </div>
           <div style={{ fontSize: '14px', lineHeight: '26px' }}>
-            {process.env.GIT_VERSION}
+            {process.env.GIT_DESC}
           </div>
         </h1>
         <hr className="bg-secondary mb-4 mx-2" />
@@ -101,6 +101,7 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
                 defaultValue={tempName}
                 size="lg"
                 onChange={e => {
+                  console.debug('Got change event:', e.target);
                   setTempName(e.target.value);
                 }}
               />

@@ -1,5 +1,5 @@
+import { styled } from '@linaria/react';
 import { InspiratPhotoResource } from 'inspirat-types';
-import { styled } from 'linaria/react';
 import ms from 'ms';
 import { rgba as polishedRgba } from 'polished';
 import * as R from 'ramda';
@@ -31,17 +31,10 @@ const textShadow = (color: string) => compositeTextShadow([
 
 
 const GreetingWrapper = styled.div<StyledGreetingProps>`
-  /* align-items: center; */
-  /* display: flex; */
-  /* flex-grow: 1; */
-  /* justify-content: center; */
-  /* text-shadow: ${props => textShadow(props.color)}; */
-  /* z-index: 1; */
-
   color: white;
   font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
   font-size: 28px;
-  font-weight: 300;
+  font-weight: 200;
   height: 100%;
   letter-spacing: 1.5px;
   margin-bottom: 128px;

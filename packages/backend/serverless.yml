@@ -3,7 +3,7 @@ app: inspirat
 service: inspirat
 plugins:
   - serverless-dotenv-plugin
-  - serverless-webpack
+  # - serverless-webpack
 package:
   # Package each function as its own bundle to reduce the bundle size of each
   # function. This helps improve cold-start times.
@@ -25,8 +25,8 @@ custom:
       - UNSPLASH_ACCESS_KEY
       - UNSPLASH_SECRET_KEY
   # Configuration for serverless-webpack
-  webpack:
-    webpackConfig: 'webpack.config.babel.ts'
+  # webpack:
+  #   webpackConfig: 'webpack.config.ts'
 
 
 # ----- Serverless Compute Provider Configuration ------------------------------

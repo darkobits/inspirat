@@ -17,7 +17,7 @@ export function daysSinceEpoch(): number {
  * Returns the current Unix timestamp with millisecond precision.
  */
 export function now() {
-  return new Date().valueOf();
+  return Date.now();
 }
 
 /**

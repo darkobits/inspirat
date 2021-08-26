@@ -1,11 +1,11 @@
-import { styled } from 'linaria/react';
+import { styled } from '@linaria/react';
 import ms from 'ms';
 import React from 'react';
 
 import BackgroundImage from 'components/BackgroundImage';
-import InspiratContext from 'contexts/Inspirat';
 import Greeting from 'components/Greeting';
 import SplashLower from 'components/SplashLower';
+import InspiratContext from 'contexts/Inspirat';
 import {
   BACKGROUND_RULE_OVERRIDES,
   BACKGROUND_TRANSITION_DURATION,

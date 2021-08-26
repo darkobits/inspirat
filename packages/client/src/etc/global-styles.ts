@@ -1,13 +1,12 @@
 import 'animate.css/animate.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-import {css} from 'linaria';
-
-import 'assets/fonts/gotham';
-import 'assets/fonts/josefin-sans';
+import { css } from '@linaria/core';
 
 
 export default css`
+  @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@100;200;300&family=Nunito:wght@200;300;400&display=swap');
+
   :global() {
     *, *:before, *:after {
       box-sizing: border-box;
@@ -20,7 +19,7 @@ export default css`
     }
 
     html, body {
-      font-family: Gotham, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
+      font-family: Nunito, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
       height: 100%;
       margin: 0;
       padding: 0;
