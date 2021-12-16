@@ -112,7 +112,6 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
     };
   }, [currentPhoto]);
 
-
   return (
     <SplashEl onMouseDown={onMouseDown}>
       <BackgroundImage

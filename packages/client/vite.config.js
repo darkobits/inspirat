@@ -4,6 +4,15 @@ import { vite } from '@darkobits/tsx';
 import faviconsPlugin from '@darkobits/vite-plugin-favicons';
 
 export default vite(({ config, pkg }) => {
+
+  console.log('USING BUCKET URL:', process.env.BUCKET_URL);
+  console.log('USING TITLE', process.env.TITLE);
+
+  config.define = {
+    'process.env.BUCKET_URL': JSON.stringify(process.env.BUCKET_URL),
+    'process.env.TITLE': JSON.stringify(process.env.TITLE)
+  };
+
   // Disable asset-inlining. This is required because Chrome extensions need to
   // have a manifest.json in their root.
   config.build.assetsInlineLimit = 0;

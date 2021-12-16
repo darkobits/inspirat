@@ -51,7 +51,7 @@ export function AWSLambdaHandlerFactory<TEvent = any>(config: AWSLambdaHandlerFa
       }
 
       return response;
-    } catch (err) {
+    } catch (err: any) {
       const errorResponse: AWSLambdaMiddlewareResponse = {
         statusCode: 500,
         headers: {},

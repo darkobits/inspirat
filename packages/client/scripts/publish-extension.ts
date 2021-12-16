@@ -382,7 +382,7 @@ export default async function publishExtensionRunner(options: PublishExtensionOp
     await publishExtension(options);
     writeLogMessages();
     log.info(`Done in ${timer}.`);
-  } catch (err) {
+  } catch (err: any) {
     log.error(err.message);
     // Remove all lines that are in the error's message from the error's stack.
     log.verbose(err.stack.split(os.EOL).slice(err.message.split(os.EOL).length).join(os.EOL));

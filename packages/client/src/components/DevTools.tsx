@@ -39,7 +39,7 @@ const StyledDevTools = styled.div`
 // ----- Progress Indicator ----------------------------------------------------
 
 interface ProgressProps extends React.PropsWithChildren<any> {
-  photo?: InspiratPhotoResource;
+  photo: InspiratPhotoResource | undefined;
   progress: number;
   onProgressChange?: (progress: number) => void;
 }
@@ -134,7 +134,7 @@ const Progress = ({ photo, progress, onProgressChange, children }: ProgressProps
 // ----- Image Source ----------------------------------------------------------
 
 interface SourceProps extends React.PropsWithChildren<any> {
-  photo?: InspiratPhotoResource;
+  photo: InspiratPhotoResource | undefined;
 }
 
 /**
@@ -200,7 +200,7 @@ interface SwatchProps extends React.PropsWithChildren<any> {
   color?: Color;
 }
 
-const StyledSwatch = styled.div<{ notHtmlColor?: Color }>`
+const StyledSwatch = styled.div<{ notHtmlColor: Color | undefined }>`
   align-items: center;
   background-color: ${({ notHtmlColor }) => rgba(notHtmlColor ?? WHITE)};
   border-radius: 4px;
@@ -251,7 +251,7 @@ const Swatch = ({ color, children, ...props }: SwatchProps) => {
 // ----- Loading Indicator -----------------------------------------------------
 
 interface LoadingIndicatorProps {
-  photo?: InspiratPhotoResource;
+  photo: InspiratPhotoResource | undefined;
   isLoading: boolean;
 }
 
@@ -302,7 +302,7 @@ const LoadingIndicator = ({ photo, isLoading }: LoadingIndicatorProps) => {
 // ----- Palette ---------------------------------------------------------------
 
 interface PaletteProps {
-  photo?: InspiratPhotoResource;
+  photo: InspiratPhotoResource | undefined;
 }
 
 /**

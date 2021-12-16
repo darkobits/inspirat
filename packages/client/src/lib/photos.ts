@@ -64,7 +64,7 @@ async function fetchAndUpdateCollections(): Promise<PhotoCollectionStorageItem |
     void storage.setItem(COLLECTION_CACHE_KEY, cacheData);
 
     return cacheData;
-  } catch (err) {
+  } catch (err: any) {
     console.error('[fetchAndUpdateCollections] Error fetching photo collection:', err.message);
     return null;
   }

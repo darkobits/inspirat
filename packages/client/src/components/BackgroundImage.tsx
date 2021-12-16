@@ -9,13 +9,7 @@ import { BackgroundImageOverrides } from 'etc/types';
  * Props for the BackgroundImage component.
  */
 interface BackgroundImageProps extends BackgroundImageOverrides {
-  backgroundImage?: string;
-  // backgroundPosition?: string;
-  // transform?: string;
-  // opacity?: number;
-  // transitionDuration?: string;
-  // transitionTimingFunction?: string;
-  // backdropBlurRadius?: string;
+  backgroundImage: string | undefined;
 }
 
 

@@ -80,7 +80,7 @@ const handler: AWSLambdaMiddleware = async () => {
   try {
     inspiratPhotoCollections = await getJSON<Array<InspiratPhotoCollection>>({ bucket, key }) ?? [];
     console.log(`[sync-collections] Inspirat data contains ${chalk.green(inspiratPhotoCollections.length)} collections.`);
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[sync-collections] Error fetching existing collections: ${err.message}`);
     inspiratPhotoCollections = [];
   }

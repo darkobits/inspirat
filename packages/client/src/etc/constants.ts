@@ -2,18 +2,18 @@ import ms from 'ms';
 
 import { BackgroundImageOverrides } from 'etc/types';
 
+/**
+ * Document title to use.
+ */
+export const TITLE = process.env.TITLE;
+if (!TITLE) throw new Error('TITLE is not set.');
+
 
 /**
  * AWS S3 Bucket URL.
  */
 export const BUCKET_URL = process.env.BUCKET_URL;
-
-
-// Ensures that the above is set, as we don't make a request on every page load,
-// so if this were broken, we may not find out immediately.
-if (!BUCKET_URL) {
-  throw new Error('BUCKET_URL is not set.');
-}
+if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
 
 
 /**

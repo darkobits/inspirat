@@ -63,7 +63,7 @@ export interface InspiratContext {
   /**
    * Current name that the user has set, persisted in local storage.
    */
-  name?: string;
+  name: string | undefined;
 
   /**
    * Sets the user's name.

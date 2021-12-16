@@ -6,6 +6,6 @@
   "author": "darkobits",
   "license": "WTFPL",
   "devDependencies": {
-    "@darkobits/tsx": "^0.7.0-beta.13"
+    "@darkobits/tsx": "^0.7.0"
   }
 }

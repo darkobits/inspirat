@@ -86,7 +86,7 @@ const GreetingWrapper = styled.div<StyledGreetingProps>`
 
 
 interface GreetingProps {
-  palette?: InspiratPhotoResource['palette'];
+  palette: InspiratPhotoResource['palette'] | undefined;
 }
 
 const GreetingForeground = styled.div<GreetingProps>`

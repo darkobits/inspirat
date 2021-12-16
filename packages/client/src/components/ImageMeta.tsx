@@ -10,7 +10,7 @@ import { compositeTextShadow } from 'lib/typography';
 // ----- Types -----------------------------------------------------------------
 
 export interface ImageMetaElProps {
-  shadowColor?: string;
+  shadowColor: string | undefined;
 }
 
 

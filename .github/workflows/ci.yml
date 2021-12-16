@@ -4,12 +4,12 @@ on:
   - pull_request
 jobs:
   # ----- Build ----------------------------------------------------------------
-  build:
-    name: Build
+  prepare:
+    name: Prepare
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      BUCKET_URL: ${{ secrets.BUCKET_URL }}
+      # BUCKET_URL: ${{ secrets.BUCKET_URL }}
       UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
       UNSPLASH_SECRET_KEY: ${{ secrets.UNSPLASH_SECRET_KEY }}
     steps:
@@ -20,13 +20,14 @@ jobs:
           # repository.
           fetch-depth: 0
       - name: Set-Up Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2
         with:
           node-version: 14
+          cache: npm
       - name: Install Dependencies
-        run: npm ci --ignore-scripts && npx lerna bootstrap
-      - name: Build Project
-        run: npx nps prepare
+        run: |
+          npm i -g npm@7
+          npm ci
       - name: Cache Repo State
         uses: actions/cache@v1
         with:
@@ -34,59 +35,90 @@ jobs:
           path: .
 
   # ----- Deploy Clients -------------------------------------------------------
-  deploy:
-    name: Deploy Clients
-    needs: build
+  deploy-frontlawn:
+    name: Build & Deploy frontlawn.net
+    needs: prepare
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/master' }}
+    env:
+      TITLE: Front Lawn
+      BUCKET_URL: ${{ secrets.BUCKET_URL }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_FRONTLAWN }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
     steps:
       - name: Fetch Repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Set-Up Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 14
       - name: Use Repo Cache
         uses: actions/cache@v1
         with:
           key: inspirat-${{ github.sha }}
           path: .
-      - name: frontlawn.net
+      - name: Set-Up Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          cache: npm
+      - name: Build Project
+        run: npx nr client.build
+      - name: Deploy
         uses: netlify/actions/cli@master
         with:
           args: deploy --prod --dir=packages/client/dist
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_FRONTLAWN }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      - name: inspir.at
+
+  deploy-inspirat:
+    name: Build & Deploy inspir.at
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' }}
+    env:
+      TITLE: Inspirat
+      BUCKET_URL: ${{ secrets.BUCKET_URL }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_INSPIRAT }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Use Repo Cache
+        uses: actions/cache@v1
+        with:
+          key: inspirat-${{ github.sha }}
+          path: .
+      - name: Set-Up Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+          cache: npm
+      - name: Build Project
+        run: npx nr client.build
+      - name: Deploy
         uses: netlify/actions/cli@master
         with:
           args: deploy --prod --dir=packages/client/dist
-        env:
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_INSPIRAT }}
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
 
   # ----- Publish Chrome Extension ---------------------------------------------
-  publish:
-    name: Publish Extension
-    needs: build
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' }}
-    steps:
-      - name: Fetch Repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Set-Up Node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 14
-      - name: Use Repo Cache
-        uses: actions/cache@v1
-        with:
-          key: inspirat-${{ github.sha }}
-          path: .
-      - name: Publish Extension
-        run: npx nps client.publish
+  # publish:
+  #   name: Publish Extension
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.ref == 'refs/heads/master' }}
+  #   steps:
+  #     - name: Fetch Repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Set-Up Node
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 14
+  #         cache: npm
+  #     - name: Use Repo Cache
+  #       uses: actions/cache@v1
+  #       with:
+  #         key: inspirat-${{ github.sha }}
+  #         path: .
+      # - name: Publish Extension
+      #   run: npx @darkobits/nr client.publish

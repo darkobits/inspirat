@@ -15,7 +15,7 @@ import useHideCallback from 'hooks/use-hide-callback';
 // ----- Props -----------------------------------------------------------------
 
 export interface SettingsProps {
-  show?: boolean;
+  show: boolean | undefined;
   onClose?: () => void;
 }
 
@@ -33,9 +33,7 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
    */
   React.useEffect(() => {
     setTempName(name);
-  }, [
-    name
-  ]);
+  }, [name]);
 
 
   /**
@@ -51,19 +49,14 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
         onClose();
       }
     }
-  }, [
-    onClose,
-    setName,
-    tempName
-  ]);
-
+  }, [onClose, setName, tempName]);
 
   return (
     <Modal
       animation={false}
       centered
       onHide={handleClose}
-      show={show}
+      show={show ?? false}
       size="lg"
       backdropClassName={cx('animate__animated', isHiding && 'animate__fadeOut')}
       className={cx('animate__animated', 'animate__faster', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}

@@ -4,7 +4,7 @@ import { createBabelNodeCommand } from '@darkobits/ts/lib/utils';
 import { dirname } from '@darkobits/fd-name';
 
 
-export default nr(({ createCommand, createScript }) => {
+export default nr(({ createCommand, createScript, isCI }) => {
   const BACKEND_CWD = path.resolve(dirname(), 'packages', 'backend');
   const CLIENT_CWD = path.resolve(dirname(), 'packages', 'client');
 
@@ -39,7 +39,7 @@ export default nr(({ createCommand, createScript }) => {
     ]
   });
 
-  createScript('backend.deploy.prod', {
+  createScript('backend.deploy-prod', {
     group: 'Backend',
     description: 'Deploy the backend to the production environment.',
     run: [
@@ -70,19 +70,13 @@ export default nr(({ createCommand, createScript }) => {
 
   // ----- Client Scripts ------------------------------------------------------
 
-  createCommand('client-start', ['vite', ['serve']], {
-    execaOptions: { cwd: CLIENT_CWD }
-  });
-
-  createCommand('client-build', ['vite', ['build']], {
-    execaOptions: { cwd: CLIENT_CWD }
-  });
-
   createScript('client.build', {
     group: 'Client',
     description: 'Build the client app.',
     run: [
-      'client-build'
+      createCommand('client-build', ['vite', ['build', '--emptyOutDir']], {
+        execaOptions: { cwd: CLIENT_CWD }
+      })
     ]
   });
 
@@ -90,7 +84,9 @@ export default nr(({ createCommand, createScript }) => {
     group: 'Client',
     description: 'Start a Vite development server for the client app.',
     run: [
-      'client-start'
+      createCommand('client-start', ['vite', ['serve']], {
+        execaOptions: { cwd: CLIENT_CWD }
+      })
     ]
   });
 
@@ -112,6 +108,36 @@ export default nr(({ createCommand, createScript }) => {
 
 
   // ----- Global Scripts ------------------------------------------------------
+
+  createScript('build', {
+    group: 'Build',
+    description: 'Build the client & backend.',
+    run: [
+      ['client.build', 'backend.build']
+    ]
+  });
+
+  createScript('prepare', {
+    group: 'Lifecycles',
+    description: 'Bootstrap dependencies and – if not in a CI environment – build the project.',
+    run: [
+      createCommand('lerna-bootstrap', ['lerna', ['bootstrap']], {
+        execaOptions: { stdio: 'inherit' }
+      }),
+      !isCI && 'build'
+    ].filter(Boolean)
+  });
+
+  createScript('clean', {
+    group: 'Utility',
+    description: 'Remove all node_modules folders.',
+    run: [
+      createCommand('lerna-clean', ['lerna', ['clean'], { yes: true }]),
+      createCommand('del-root-node-modules', ['del', ['./node_modules']])
+    ]
+  });
+
+
 
   // scripts.clean = {
   //   // Removes node_modules in each package, then the root.
@@ -182,26 +208,7 @@ export default nr(({ createCommand, createScript }) => {
   //   })
   // };
 
-  createScript('prepare', {
-    group: 'Lifecycles',
-    description: '',
-    run: [
-      createCommand('lerna-bootstrap', ['lerna', ['bootstrap']], {
-        execaOptions: { stdio: 'inherit' }
-      }),
-      // ['client.build', 'backend.build']
-      // Also run build.
-    ]
-  });
 
-  createScript('clean', {
-    group: 'Utility',
-    description: 'Remove all node_modules folders.',
-    run: [
-      createCommand('lerna-clean', ['lerna', ['clean'], { yes: true }]),
-      createCommand('del-root-node-modules', ['del', ['./node_modules']])
-    ]
-  });
 
   // Hoisted scripts.
   // scripts.deploy = 'nps backend.deploy';
