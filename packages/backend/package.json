@@ -22,7 +22,7 @@
     "ramda": "^0.27.1"
   },
   "devDependencies": {
-    "@darkobits/tsx": "^0.7.0",
+    "@darkobits/tsx": "^0.7.1",
     "@types/aws-lambda": "^8.10.36",
     "@types/parse-link-header": "^1.0.0",
     "@types/ramda": "^0.27.44",
