@@ -113,8 +113,10 @@ export async function getPhotoCollections() {
     const sortedCollection = shuffleSeed.shuffle(R.sortBy(R.prop('id'), photoCache.photos), name);
 
     ifDebug(() => {
-      const collectionHash = objectHash(sortedCollection);
-      console.debug('[getPhotoCollections] Collection hash:', collectionHash);
+      const collectionHash = objectHash(photoCache?.photos);
+      console.debug(`[getPhotoCollections] Collection hash, unsorted, using seed "${name}":`, collectionHash);
+      const sortedCollectionHash = objectHash(sortedCollection);
+      console.debug(`[getPhotoCollections] Collection hash, sorted, using seed "${name}":`, sortedCollectionHash);
     }, { once: true });
 
     return sortedCollection;

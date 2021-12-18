@@ -11,11 +11,11 @@ export default nr(({ createCommand, createScript, isCI }) => {
 
   // ----- Backend Scripts -----------------------------------------------------
 
-  createBabelNodeCommand('backend-deploy-dev', ['serverless', ['deploy'], { stage: 'prod' }], {
+  createBabelNodeCommand('backend-deploy-dev', ['serverless', ['deploy']], {
     execaOptions: { cwd: BACKEND_CWD }
   });
 
-  createBabelNodeCommand('backend-deploy-prod', ['serverless', ['deploy']], {
+  createBabelNodeCommand('backend-deploy-prod', ['serverless', ['deploy'], { stage: 'prod' }], {
     execaOptions: { cwd: BACKEND_CWD }
   });
 
