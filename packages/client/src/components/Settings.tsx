@@ -37,7 +37,7 @@ export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose
    * [Effect] Replicates global state to local state.
    */
   React.useEffect(() => {
-    setTempName(name);
+    if (typeof name === 'string') setTempName(name);
   }, [name, setTempName, show]);
 
 

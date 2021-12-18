@@ -4,6 +4,7 @@ import { Button } from 'react-bootstrap';
 
 import { AnimatedModal } from 'components/AnimatedModal';
 import { useInspirat } from 'hooks/use-inspirat';
+import { isPending } from 'hooks/use-storage-item';
 import { isChromeExtension } from 'lib/utils';
 
 
@@ -25,9 +26,12 @@ const styles = {
 export const Introduction: React.FunctionComponent = () => {
   const { hasSeenIntroduction, setHasSeenIntroduction } = useInspirat();
 
-
+  /**
+   * [Event Handler] When the modal backdrop is clicked or the 'OK' button is
+   * pressed, update the introduction flag, which will hide the modal.
+   */
   const handleClose = React.useCallback(() => {
-    setHasSeenIntroduction(true);
+    if (setHasSeenIntroduction) setHasSeenIntroduction(true);
   }, [setHasSeenIntroduction]);
 
 
@@ -43,9 +47,8 @@ export const Introduction: React.FunctionComponent = () => {
   ), []);
 
 
-  if (!isChromeExtension()) {
-    return null;
-  }
+  if (!isChromeExtension() || isPending(hasSeenIntroduction)) return null;
+
 
   return (
     <AnimatedModal

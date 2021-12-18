@@ -31,7 +31,7 @@ const SplashEl = styled.div`
   justify-content: center;
   padding: 14px 18px;
   width: 100%;
-  transition: opacity 0.4s ease-in;
+  transition: opacity 1.2s ease-in-out;
 `;
 
 
@@ -49,9 +49,6 @@ export const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) =>
   const [transitionDuration, setTransitionDuration] = React.useState('0s');
   const { currentPhoto, currentPhotoUrls } = useInspirat();
   const [activeElement, toggleActiveElement] = React.useReducer((prev: string) => (prev === 'A' ? 'B' : 'A'), 'A');
-
-  // This is used to delay showing the greeting until the photo has loaded.
-  // const opacity = currentPhoto ? 1 : 0;
 
 
   /**

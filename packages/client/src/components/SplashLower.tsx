@@ -19,7 +19,8 @@ const StyledSplashLower = styled.div<StyledSplashLowerProps>`
   justify-content: space-between;
   opacity: ${R.prop('opacity')};
   transition: opacity 1.2s ease-in;
-  transition-delay: 1.2s;
+  /* Force the element to the flex-end of its parent. */
+  margin-top: auto;
   width: 100%;
   z-index: 1;
 `;

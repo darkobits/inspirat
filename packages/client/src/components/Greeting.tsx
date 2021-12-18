@@ -6,6 +6,7 @@ import * as R from 'ramda';
 import React from 'react';
 
 import { useInspirat } from 'hooks/use-inspirat';
+import { isPending } from 'hooks/use-storage-item';
 import { getPeriodDescriptor } from 'lib/time';
 import { compositeTextShadow } from 'lib/typography';
 import { rgba } from 'lib/utils';
@@ -43,9 +44,9 @@ const GreetingWrapper = styled.div<StyledGreetingProps>`
 
   opacity: ${R.prop('opacity')};
 
-  transition-property: opacity;
+  transition-property: all;
   transition-duration: 1.2s;
-  transition-timing-function: ease-in;
+  transition-timing-function: ease-in-out;
   transition-delay: 0s;
 
   * {
@@ -87,6 +88,7 @@ interface GreetingProps {
   palette: InspiratPhotoResource['palette'] | undefined;
 }
 
+
 const GreetingForeground = styled.div<GreetingProps>`
   align-items: center;
   color: inherit;
@@ -99,6 +101,7 @@ const GreetingForeground = styled.div<GreetingProps>`
 
   text-shadow: 0px 0px 2px rgba(0, 0, 0, 0.8);
 `;
+
 
 const GreetingBackground = styled.div<GreetingProps>`
   align-items: center;
@@ -119,8 +122,6 @@ const GreetingBackground = styled.div<GreetingProps>`
 `;
 
 
-// ----- Greeting --------------------------------------------------------------
-
 /**
  * Renders the greeting copy.
  */
@@ -140,8 +141,9 @@ const Greeting: React.FunctionComponent = () => {
     return () => clearInterval(interval);
   }, []);
 
-
-  const greeting = name ? `Good ${period}, ${name}.` : `Good ${period}.`;
+  const greeting = isPending(name)
+    ? `Good ${period}.`
+    : `Good ${period}, ${name}.`;
   const color = rgba(currentPhoto?.palette?.vibrant ?? {r: 0, g: 0, b: 0});
 
   return (

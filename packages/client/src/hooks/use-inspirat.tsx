@@ -106,6 +106,7 @@ export interface InspiratHook {
 const preloadedPhotos = new Set<string>();
 
 
+// @ts-expect-error
 export const useInspirat = singletonHook({} as InspiratHook, () => {
   const [currentPhotoUrls, setCurrentPhotoUrls] = React.useState<PhotoUrls>();
   const [currentPhotoFromState, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
@@ -114,7 +115,7 @@ export const useInspirat = singletonHook({} as InspiratHook, () => {
   const [showDevTools, setShowDevTools] = React.useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = React.useState(false);
   const [name, setName] = useStorageItem<string>('name');
-  const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean>('hasSeenIntroduction');
+  const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean>('hasSeenIntroduction', false);
   const query = useQuery();
 
 

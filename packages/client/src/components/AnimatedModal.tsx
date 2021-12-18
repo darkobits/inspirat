@@ -14,9 +14,9 @@ interface Props extends ElementProps<HTMLModElement> {
   footer?: React.ReactNode;
 }
 
-export const AnimatedModal = (props: Props) => {
+export const AnimatedModal = React.memo((props: Props) => {
   const { id, show, body, footer, onBeginHide, onClose, className } = props;
-  const [showInternal, setShowInternal] = React.useState(show ?? false);
+  const [showInternal, setShowInternal] = React.useState(false);
 
 
   /**
@@ -31,7 +31,8 @@ export const AnimatedModal = (props: Props) => {
       setShowInternal(false);
       if (onClose) onClose();
     }
-  }, [onBeginHide, onClose]);
+  }, [onClose]);
+
 
   /**
    * [Effect] When `show` becomes truthy, immediately show the modal. When it
@@ -40,13 +41,16 @@ export const AnimatedModal = (props: Props) => {
    * finishes.
    */
   React.useEffect(() => {
-    if (show) {
+    if (show === true) {
       setShowInternal(true);
       return;
     }
 
-    void handleClose();
+    if (show === false) {
+      void handleClose();
+    }
   }, [show, handleClose]);
+
 
   return (
     <Modal
@@ -66,4 +70,4 @@ export const AnimatedModal = (props: Props) => {
       </Modal.Body>
     </Modal>
   );
-};
+});
