@@ -1,47 +1,33 @@
-import { cx } from '@linaria/core';
-import { styled } from '@linaria/react';
+import { css } from '@linaria/core';
 import React from 'react';
-import { Button, Modal } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
-import useHideCallback from 'hooks/use-hide-callback';
+import { AnimatedModal } from 'components/AnimatedModal';
 import { useInspirat } from 'hooks/use-inspirat';
 import { isChromeExtension } from 'lib/utils';
 
-const IntroductionModal = styled(Modal)`
-  /* letter-spacing: 0.08em; */
 
-  a {
-    color: inherit;
-    transition: all 0.25s ease-in-out;
-    text-shadow: 0px 0px 1px rgba(255, 255, 255, 1);
+const styles = {
+  introduction: css`
+    a {
+      color: inherit;
+      transition: all 0.25s ease-in-out;
+      text-shadow: 0px 0px 1px rgba(255, 255, 255, 1);
 
-    &:hover {
-      text-shadow: 0px 0px 1px rgba(255, 255, 255, 1), 0px 0px 6px rgba(255, 255, 255, 0.66);
+      &:hover {
+        text-shadow: 0px 0px 1px rgba(255, 255, 255, 1), 0px 0px 6px rgba(255, 255, 255, 0.66);
+      }
     }
-  }
-
-  p {
-    /* line-height: 1.8; */
-    /* letter-spacing: 0.08em; */
-    /* letter-spacing: 0.018em; */
-  }
-`;
+  `
+};
 
 
-// ----- Introduction ----------------------------------------------------------
-
-const Introduction: React.FunctionComponent = () => {
+export const Introduction: React.FunctionComponent = () => {
   const { hasSeenIntroduction, setHasSeenIntroduction } = useInspirat();
 
-  /**
-   * [Callback] Waits 500ms, then sets the hasSeenIntroduction flag to true.
-   * This will trigger a re-render that will hide the modal.
-   */
-  const [isHiding, handleClose] = useHideCallback({
-    hideTime: 500,
-    onEndHide: () => {
-      setHasSeenIntroduction(true);
-    }
+
+  const handleClose = React.useCallback(() => {
+    setHasSeenIntroduction(true);
   }, [setHasSeenIntroduction]);
 
 
@@ -61,18 +47,13 @@ const Introduction: React.FunctionComponent = () => {
     return null;
   }
 
-
   return (
-    <IntroductionModal
-      animation={false}
-      centered
-      onHide={handleClose}
+    <AnimatedModal
+      id="introduction"
+      className={styles.introduction}
       show={!hasSeenIntroduction}
-      size="lg"
-      backdropClassName={cx('animate__animated', isHiding && 'animate__fadeOut')}
-      className={cx('animate__animated', 'animate__faster', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
-    >
-      <Modal.Body className="bg-dark text-light shadow-lg">
+      onClose={handleClose}
+      body={<>
         <h1
           className="d-flex align-items-end justify-content-between mb-3 mx-2 text-light font-weight-light"
           style={{ letterSpacing: '1px' }}
@@ -84,26 +65,28 @@ const Introduction: React.FunctionComponent = () => {
             {process.env.GIT_DESC}
           </div>
         </h1>
-        <hr className="bg-secondary mb-4 mx-2" />
+        <hr className="bg-secondary mb-4" />
         <div className="mx-2">
           <p>
-            Welcome to Inspirat, a New Tab experience for Chrome and Chromium-based browsers. Each day,
-            Inspirat will display a beautiful photograph from {unsplashLink}. To customize Inspirat,
-            simply click and hold anywhere on the screen to open the settings menu.
+            Welcome to Inspirat, a New Tab experience for Chrome and Chromium-based browsers.
+          </p>
+          <p>
+            Each day, Inspirat will display a beautiful photograph from {unsplashLink}. To customize
+            Inspirat, simply click and hold anywhere on the screen to open the settings menu.
+          </p>
+          <p>
+            – Enjoy!
           </p>
         </div>
-        <footer className="text-right mt-3">
-          <Button
-            variant="secondary"
-            onClick={handleClose}
-          >
-            OK
-          </Button>
-        </footer>
-      </Modal.Body>
-    </IntroductionModal>
+      </>}
+      footer={
+        <Button
+          variant="secondary"
+          onClick={handleClose}
+        >
+          OK
+        </Button>
+      }
+    />
   );
 };
-
-
-export default Introduction;

@@ -41,7 +41,7 @@ const SplashEl = styled.div`
  * TODO: Deprecate usage of maskColor and maskAmount overrides. Use photo
  * palette with a box-shadow around text instead.
  */
-const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
+export const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
   const [aPhotoUrls, setAPhotoUrls] = React.useState<PhotoUrls | void>();
   const [bPhotoUrls, setBPhotoUrls] = React.useState<PhotoUrls | void>();
   const [aPhotoOverrides, setAPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
@@ -147,6 +147,3 @@ const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) => {
     </SplashEl>
   );
 };
-
-
-export default Splash;

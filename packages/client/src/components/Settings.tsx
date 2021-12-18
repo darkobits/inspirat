@@ -4,11 +4,11 @@ import {
   Button,
   Col,
   Form,
-  Modal,
   Row
 } from 'react-bootstrap';
 
-import useHideCallback from 'hooks/use-hide-callback';
+import { AnimatedModal } from 'components/AnimatedModal';
+import { GenericFunction } from 'etc/types';
 import { useInspirat } from 'hooks/use-inspirat';
 
 
@@ -16,69 +16,55 @@ import { useInspirat } from 'hooks/use-inspirat';
 
 export interface SettingsProps {
   show: boolean | undefined;
-  onClose?: () => void;
+  onClose?: GenericFunction | undefined;
 }
 
 
 const styles = {
   version: css`
     font-size: 14px;
-    line-height: 26px;
+    line-height: 1em;
   `
 };
 
 
-// ----- Settings --------------------------------------------------------------
-
-const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => {
+export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => {
   const { name, setName } = useInspirat();
   const [tempName, setTempName] = React.useState<string | undefined>();
 
 
   /**
-   * [Effect] LocalStorage -> Input sync. This _should_ only happen once, when
-   * the component mounts.
+   * [Effect] Replicates global state to local state.
    */
   React.useEffect(() => {
     setTempName(name);
-  }, [name]);
+  }, [name, setTempName, show]);
 
 
   /**
-   * [Callback] Sets the new name, waits 500ms, then invokes onClose.
+   * [Callback] When the form is submitted, replicates internal data to global
+   * state, then closes the modal.
    */
-  const [isHiding, handleClose] = useHideCallback({
-    hideTime: 500,
-    onBeginHide: () => {
-      setName(tempName ?? '');
-    },
-    onEndHide: () => {
-      if (onClose) {
-        onClose();
-      }
-    }
-  }, [onClose, setName, tempName]);
+  const handleSubmit = React.useCallback(() => {
+    if (setName) setName(tempName ?? '');
+    if (onClose) onClose();
+  }, [setName, onClose, tempName]);
+
 
   return (
-    <Modal
-      animation={false}
-      centered
-      onHide={handleClose}
-      show={show ?? false}
-      size="lg"
-      backdropClassName={cx('animate__animated', isHiding && 'animate__fadeOut')}
-      className={cx('animate__animated', 'animate__faster', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
-    >
-      <Modal.Body className={cx('bg-dark', 'text-light', 'shadow-lg')}>
-        <h1 className="d-flex align-items-end justify-content-between mb-3 mx-2 text-light font-weight-light">
+    <AnimatedModal
+      show={show}
+      onClose={onClose}
+      body={<>
+        <h1 className="d-flex align-items-end justify-content-between mb-3 text-light font-weight-light">
           <div>
             Inspirat
           </div>
-          <div className={styles.version}>
+          <div className={cx(styles.version, 'text-secondary')}>
             {import.meta.env.GIT_DESC}
           </div>
         </h1>
-        <hr className="bg-secondary mb-4 mx-2" />
+        <hr className="bg-secondary mb-4" />
         <Form
           noValidate
           onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
@@ -86,7 +72,6 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
           }}
         >
           <Form.Group as={Row} controlId="name">
-
             <Form.Label column="lg" sm={{ span: 2, offset: 1 }} lg={{ span: 2, offset: 2 }}>
               Name
             </Form.Label>
@@ -106,15 +91,12 @@ const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => 
             </Col>
           </Form.Group>
         </Form>
-        <footer className="text-right mt-3">
-          <Button variant="secondary" onClick={handleClose}>
-            Done
-          </Button>
-        </footer>
-      </Modal.Body>
-    </Modal>
+      </>}
+      footer={
+        <Button variant="secondary" onClick={handleSubmit}>
+          Done
+        </Button>
+      }
+    />
   );
 };
-
-
-export default Settings;

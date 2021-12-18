@@ -1,9 +1,9 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 
-import Introduction from 'components/Introduction';
-import Settings from 'components/Settings';
-import Splash from 'components/Splash';
+import { Introduction } from 'components/Introduction';
+import { Settings } from 'components/Settings';
+import { Splash } from 'components/Splash';
 import { DevTools } from 'components/dev-tools/DevTools';
 import { TITLE } from 'etc/constants';
 import { onClickAndHold } from 'lib/utils';
