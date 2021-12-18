@@ -22,8 +22,8 @@ export interface SettingsProps {
 
 const styles = {
   version: css`
-    font-size: 14px;
-    line-height: 1em;
+    font-size: 16px;
+    letter-spacing: 1.4px;
   `
 };
 
@@ -56,14 +56,14 @@ export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose
       show={show}
       onClose={onClose}
       body={<>
-        <h1 className="d-flex align-items-end justify-content-between mb-3 text-light font-weight-light">
-          <div>
+        <div className="d-flex flex-row align-items-end justify-content-between mb-3">
+          <h1 className="text-light font-weight-light mb-0">
             Inspirat
-          </div>
-          <div className={cx(styles.version, 'text-secondary')}>
+          </h1>
+          <div className={cx(styles.version, 'text-secondary', 'text-fancy')}>
             {import.meta.env.GIT_DESC}
           </div>
-        </h1>
+        </div>
         <hr className="bg-secondary mb-4" />
         <Form
           noValidate

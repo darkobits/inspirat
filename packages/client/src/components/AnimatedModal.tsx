@@ -64,7 +64,7 @@ export const AnimatedModal = React.memo((props: Props) => {
       className={cx('animate__animated', 'animate__faster', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
       contentClassName={className ?? ''}
     >
-      <Modal.Body className={cx('bg-dark', 'text-light', 'shadow-lg', 'p-3')}>
+      <Modal.Body className={cx('bg-dark', 'text-light', 'shadow-lg', 'p-4')}>
         {body}
         {footer && <footer className="text-right mt-3">{footer}</footer>}
       </Modal.Body>
