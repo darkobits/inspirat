@@ -1,18 +1,24 @@
 import ms from 'ms';
 
-import { BackgroundImageOverrides } from 'etc/types';
+import type { BackgroundImageOverrides } from 'etc/types';
+import type { Color } from 'inspirat-types';
+
 
 /**
  * Document title to use.
  */
-export const TITLE = process.env.TITLE;
+export const TITLE = import.meta.env.MODE === 'production'
+  ? process.env.TITLE
+  : import.meta.env.VITE_TITLE;
 if (!TITLE) throw new Error('TITLE is not set.');
 
 
 /**
  * AWS S3 Bucket URL.
  */
-export const BUCKET_URL = process.env.BUCKET_URL;
+export const BUCKET_URL = import.meta.env.MODE === 'production'
+  ? process.env.BUCKET_URL
+  : import.meta.env.VITE_BUCKET_URL;
 if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
 
 
@@ -70,6 +76,27 @@ export const DEFAULT_FONTS = [
   'Arial',
   'sans-serif'
 ];
+
+
+/**
+ * Image quality to use for full-quality images.
+ */
+export const QUALITY_FULL = 100;
+
+/**
+ * Image quality to use for low-quality image previews.
+ */
+export const QUALITY_LQIP = 50;
+
+
+// ----- Dev Tools -------------------------------------------------------------
+
+/**
+ * Basis for computing various attributes of the Source and Swatch components.
+ */
+export const BASIS = '32px';
+export const BLACK: Color  = {r: 0, g: 0, b: 0};
+export const WHITE: Color = {r: 255, g: 255, b: 255};
 
 
 // ----- Image Tuning Overrides ------------------------------------------------

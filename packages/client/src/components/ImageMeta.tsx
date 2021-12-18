@@ -3,31 +3,33 @@ import { rgba } from 'polished';
 import * as R from 'ramda';
 import React from 'react';
 
-import InspiratContext from 'contexts/Inspirat';
+import { useInspirat } from 'hooks/use-inspirat';
 import { compositeTextShadow } from 'lib/typography';
 
 
-// ----- Types -----------------------------------------------------------------
-
-export interface ImageMetaElProps {
-  shadowColor: string | undefined;
-}
-
-
-// ----- Styles ----------------------------------------------------------------
-
+/**
+ * Provided a color, returns a composite text-shadow property descriptor that
+ * renders a black shadow followed by a larger shadow in the provided color.
+ */
 const textShadow = (color: string) => compositeTextShadow([
   [0, 0, 2, rgba(0, 0, 0, 1)],
   [0, 0, 8, rgba(color, 0.3)]
 ]);
 
+
+interface ImageMetaElProps {
+  shadowColor: string | undefined;
+}
+
+
 const ImageMetaEl = styled.div<ImageMetaElProps>`
   color: rgba(255, 255, 255, 0.96);
   display: flex;
   font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
-  font-weight: 300;
   font-size: 16px;
-  letter-spacing: 0.36px;
+  font-weight: 300;
+  letter-spacing: 0em;
+  min-height: 1em;
   text-shadow: ${R.pipe(R.propOr('black', 'shadowColor'), textShadow)};
   user-select: none;
 
@@ -42,19 +44,12 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
 `;
 
 
-// ----- Component -------------------------------------------------------------
+export const ImageMeta: React.FunctionComponent = ({ children }) => {
+  const { currentPhoto } = useInspirat();
 
-const ImageMeta: React.FunctionComponent = props => {
-  const { currentPhoto } = React.useContext(InspiratContext);
-
-  // If children is falsy, render a space to ensure the element's height doesn't
-  // collapse.
   return (
     <ImageMetaEl shadowColor={R.propOr(undefined, 'color', currentPhoto)}>
-      {props.children ?? (<span>&nbsp;</span>)}
+      {children}
     </ImageMetaEl>
   );
 };
-
-
-export default ImageMeta;

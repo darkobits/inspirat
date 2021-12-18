@@ -3,11 +3,13 @@ import { styled } from '@linaria/react';
 import React from 'react';
 import { Button, Modal } from 'react-bootstrap';
 
-import InspiratContext from 'contexts/Inspirat';
 import useHideCallback from 'hooks/use-hide-callback';
+import { useInspirat } from 'hooks/use-inspirat';
 import { isChromeExtension } from 'lib/utils';
 
 const IntroductionModal = styled(Modal)`
+  /* letter-spacing: 0.08em; */
+
   a {
     color: inherit;
     transition: all 0.25s ease-in-out;
@@ -19,8 +21,9 @@ const IntroductionModal = styled(Modal)`
   }
 
   p {
-    line-height: 1.8;
-    letter-spacing: 0.018em;
+    /* line-height: 1.8; */
+    /* letter-spacing: 0.08em; */
+    /* letter-spacing: 0.018em; */
   }
 `;
 
@@ -28,8 +31,7 @@ const IntroductionModal = styled(Modal)`
 // ----- Introduction ----------------------------------------------------------
 
 const Introduction: React.FunctionComponent = () => {
-  const { hasSeenIntroduction, setHasSeenIntroduction } = React.useContext(InspiratContext);
-
+  const { hasSeenIntroduction, setHasSeenIntroduction } = useInspirat();
 
   /**
    * [Callback] Waits 500ms, then sets the hasSeenIntroduction flag to true.
@@ -40,7 +42,7 @@ const Introduction: React.FunctionComponent = () => {
     onEndHide: () => {
       setHasSeenIntroduction(true);
     }
-  }, []);
+  }, [setHasSeenIntroduction]);
 
 
   const unsplashLink = React.useMemo(() => (
@@ -90,7 +92,7 @@ const Introduction: React.FunctionComponent = () => {
             simply click and hold anywhere on the screen to open the settings menu.
           </p>
         </div>
-        <footer className="text-right mt-5">
+        <footer className="text-right mt-3">
           <Button
             variant="secondary"
             onClick={handleClose}

@@ -1,6 +1,8 @@
 import { styled } from '@linaria/react';
+import React from 'react';
+import useAsyncEffect from 'use-async-effect';
 
-import { BackgroundImageOverrides } from 'etc/types';
+import { BackgroundImageOverrides, ElementProps, PhotoUrls } from 'etc/types';
 
 
 // ----- Props -----------------------------------------------------------------
@@ -8,8 +10,8 @@ import { BackgroundImageOverrides } from 'etc/types';
 /**
  * Props for the BackgroundImage component.
  */
-interface BackgroundImageProps extends BackgroundImageOverrides {
-  backgroundImage: string | undefined;
+interface BackgroundImageWrapperProps extends BackgroundImageOverrides {
+  backgroundImage?: string | void | undefined;
 }
 
 
@@ -24,7 +26,7 @@ const DEBUG_BLUR = 0;
 /**
  * Renders a full-screen background image
  */
-const BackgroundImage = styled.div<BackgroundImageProps>`
+const BackgroundImageWrapper = styled.div<BackgroundImageWrapperProps>`
   /**
     * We can't use an outer url() here due to an idiosyncrasy in how Linaria
     * handles quotes in url() expressions.
@@ -59,21 +61,55 @@ const BackgroundImage = styled.div<BackgroundImageProps>`
 
   &::after {
     content: ' ';
-    width: 100%;
-    height: 48em;
-    position: absolute;
-    top: calc(50vh - 24em - 64px);
-    left: 0;
-    right: 0;
-    bottom: 0;
-    /* background-color: ${!DEBUG_BLUR ? 'none' : 'rgba(255, 0, 0, 1)'}; */
-    background-color: ${props => (DEBUG_BLUR ? 'rgba(255, 0, 0, 1)' : `rgba(0, 0, 0, ${props.backdrop?.backgroundOpacity ?? 0.2})`)};
     backdrop-filter: ${props => (DEBUG_BLUR ? 'none' : `blur(${props.backdrop?.blurRadius ?? '0px'})`)};
+    background-color: ${props => (DEBUG_BLUR ? 'rgba(255, 0, 0, 1)' : `rgba(0, 0, 0, ${props.backdrop?.backgroundOpacity ?? 0.2})`)};
+    bottom: 0;
+    height: 48em;
+    left: 0;
     mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
-    mask-size: contain;
     mask-repeat: no-repeat;
+    mask-size: contain;
+    position: absolute;
+    right: 0;
+    top: calc(50vh - 24em - 64px);
+    width: 100%;
   }
 `;
+
+export interface Props extends ElementProps<HTMLDivElement> {
+  photoUrls: PhotoUrls | void;
+}
+
+
+const BackgroundImage = ({ photoUrls, ...rest }: Props) => {
+  const [lqipUrl, setLqipUrl] = React.useState<string | void>();
+  const [fullUrl, setFullUrl] = React.useState<string | void>();
+
+  useAsyncEffect(isMounted => {
+    if (!photoUrls) {
+      setLqipUrl();
+      setFullUrl();
+      return;
+    }
+
+    const { lqip, full } = photoUrls;
+
+    void lqip.then(url => {
+      if (!isMounted()) return;
+      setLqipUrl(url);
+    });
+
+    void full.then(url => {
+      if (!isMounted()) return;
+      setFullUrl(url);
+    });
+  }, [photoUrls]);
+
+  return (<>
+    <BackgroundImageWrapper backgroundImage={lqipUrl} {...rest} />
+    <BackgroundImageWrapper backgroundImage={fullUrl} {...rest} />
+  </>);
+};
 
 
 export default BackgroundImage;

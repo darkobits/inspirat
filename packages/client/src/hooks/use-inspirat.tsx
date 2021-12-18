@@ -1,8 +1,11 @@
 import { InspiratPhotoResource } from 'inspirat-types';
 import prettyMs from 'pretty-ms';
+import * as R from 'ramda';
 import React from 'react';
+import { singletonHook } from 'react-singleton-hook';
 import useAsyncEffect from 'use-async-effect';
 
+import { PhotoUrls } from 'etc/types';
 import useQuery from 'hooks/use-query';
 import useStorageItem from 'hooks/use-storage-item';
 import {
@@ -15,16 +18,16 @@ import {
   now
 } from 'lib/time';
 import {
+  buildPhotoUrlSrcSet,
   ifDebug,
-  preloadImage,
-  updateImgixQueryParams
+  preloadImage
 } from 'lib/utils';
 
 
 /**
- * Shape of the object provided by this Context.
+ * Shape of the object provided by this hook.
  */
-export interface InspiratContext {
+export interface InspiratHook {
   /**
    * Whether the user has seen the introduction modal.
    */
@@ -44,6 +47,11 @@ export interface InspiratContext {
    * The photo resource that should be used based on the current day offset.
    */
   currentPhoto: InspiratPhotoResource | undefined;
+
+  /**
+   * Array containing the source set of URLs for the current photo.
+   */
+  currentPhotoUrls: PhotoUrls | undefined;
 
   /**
    * The total number of photos in the collection.
@@ -74,7 +82,7 @@ export interface InspiratContext {
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
-  setDayOffset: (action: 'increment' | 'decrement'| number) => void;
+  setDayOffset: (action: 'increment' | 'decrement' | number) => void;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
@@ -90,10 +98,16 @@ export interface InspiratContext {
 }
 
 
-const Context = React.createContext<InspiratContext>({} as any);
+/**
+ * @private
+ *
+ * Tracks URLs of previously pre-loaded photos.
+ */
+const preloadedPhotos = new Set<string>();
 
 
-export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
+export const useInspirat = singletonHook({} as InspiratHook, () => {
+  const [currentPhotoUrls, setCurrentPhotoUrls] = React.useState<PhotoUrls>();
   const [currentPhotoFromState, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
@@ -127,72 +141,45 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   }, 0);
 
 
-  // ----- [Effect] Determine Dev Tools Visibility -----------------------------
-
-  React.useEffect(() => ifDebug(() => {
-    console.debug('[Debug] Debug mode is enabled.');
-    window.debug = window.debug || {};
-
-    if (Object.keys(query).includes('devtools')) {
-      setShowDevTools(true);
-    }
-  }), []);
+  // ----- [Callbacks] ---------------------------------------------------------
 
 
-  // ----- [Async Effect] Determine Size of Photo Collection -------------------
+  /**
+   * [Callback] Provided a photo resource, computes the URL source set to use,
+   * pre-loads those resources, and resolves when the first URL in the set has
+   * finished loading.
+   */
+  const preloadPhotoUrls = React.useCallback(async (photoResource: InspiratPhotoResource) => {
+    const urls = buildPhotoUrlSrcSet(photoResource.urls.full);
 
-  useAsyncEffect(async () => {
-    const photos = await getPhotoCollections();
-    setNumPhotos(photos.length);
+    const photoUrls: PhotoUrls = R.mapObjIndexed(async (url, key) => {
+      if (!preloadedPhotos.has(url)) {
+        if (key === 'full') {
+          await new Promise<void>(resolve => {
+            setTimeout(() => {
+              resolve();
+            }, 0);
+          });
+        }
 
-    ifDebug(() => {
-      window.debug.photos = photos;
-      window.debug.numPhotos = photos.length;
-    });
+        await preloadImage(url);
+        preloadedPhotos.add(url);
+      }
+
+      return url;
+    }, urls);
+
+    // Wait for the first image in the source set to finish pre-loading, then
+    // update URLs.
+    await Promise.race(Object.values(photoUrls));
+
+    return photoUrls;
   }, []);
 
 
-  // ----- Pre-Fetch & Update Photos -------------------------------------------
-
   /**
-   * If dev tools are open, pre-loads the previous photo for faster seeking.
-   */
-  const preloadPreviousPhoto = React.useCallback(async () => {
-    if (showDevTools) {
-      const prevPhoto = await getCurrentPhotoFromCollection({offset: dayOffset - 1});
-      return preloadImage(updateImgixQueryParams(prevPhoto.urls.full));
-    }
-  }, [
-    dayOffset,
-    showDevTools
-  ]);
-
-
-  /**
-   * Pre-loads the next/tomorrow's photo.
-   */
-  const preloadNextPhoto = React.useCallback(async () => {
-    const nextPhoto = await getCurrentPhotoFromCollection({offset: dayOffset + 1});
-    return preloadImage(updateImgixQueryParams(nextPhoto.urls.full));
-  }, [
-    dayOffset
-  ]);
-
-
-  /**
-   * Provided a descriptor for the current photo, pre-loads the photo, then
-   * sets the provided descriptor as the current photo.
-   */
-  const preloadAndSetCurrentPhoto = React.useCallback(async (photoResource: InspiratPhotoResource) => {
-    await preloadImage(updateImgixQueryParams(photoResource.urls.full));
-    setCurrentPhoto(photoResource);
-  }, [
-    currentPhotoFromState
-  ]);
-
-
-  /**
-   * Updates photos.
+   * [Callback] Updates photos according to the current day offset if dev tools
+   * are being used, or the current cached photo otherwise.
    */
   const updatePhotos = React.useCallback(async () => {
     setIsLoadingPhotos(true);
@@ -206,25 +193,40 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
       : await getCurrentPhotoFromCache();
 
     ifDebug(() => {
+      if (!window.debug) window.debug = {};
       window.debug.currentPhoto = currentPhoto;
     });
 
+    const currentPhotoPromise = preloadPhotoUrls(currentPhoto).then(urls => {
+      setCurrentPhoto(currentPhoto);
+      setCurrentPhotoUrls(urls);
+    });
+
+    const prevPhotoPromise = showDevTools
+      ? getCurrentPhotoFromCollection({offset: dayOffset - 1 }).then(preloadPhotoUrls)
+      : false;
+
+    const nextPhotoPromise = showDevTools
+      ? getCurrentPhotoFromCollection({offset: dayOffset + 1 }).then(preloadPhotoUrls)
+      : false;
+
     await Promise.all([
-      preloadPreviousPhoto(),
-      preloadNextPhoto(),
-      preloadAndSetCurrentPhoto(currentPhoto)
-    ]);
+      currentPhotoPromise,
+      prevPhotoPromise,
+      nextPhotoPromise
+    ] as Array<Promise<any>>);
 
     setIsLoadingPhotos(false);
   }, [
     dayOffset,
-    showDevTools
+    showDevTools,
+    setCurrentPhoto
   ]);
 
 
   /**
-   * Updates photos, then sets a timeout that will trigger another update at
-   * midnight.
+   * [Callback] Updates photos, then sets a timeout that will trigger another
+   * update at midnight.
    */
   const updatePhotosWithTimer = React.useCallback(() => {
     void updatePhotos();
@@ -234,6 +236,7 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
     ifDebug(() => {
       console.debug(`[setPhotoUpdateTimer] Current photo will update in ${prettyMs(timeToUpdate)}.`);
 
+      if (!window.debug) window.debug = {};
       Reflect.defineProperty(window.debug, 'expiresIn', {
         get: () => prettyMs(midnight() - now())
       });
@@ -250,8 +253,10 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   ]);
 
 
+  // ----- Effects -------------------------------------------------------------
+
   /**
-   * Initiates the photo update routine.
+   * [Effect] Initiates the photo update routine.
    */
   React.useEffect(() => {
     const timeoutHandle = updatePhotosWithTimer();
@@ -266,31 +271,66 @@ export const Provider = (props: React.PropsWithChildren<React.ReactNode>) => {
   ]);
 
 
-  // ----- Context API ---------------------------------------------------------
+  /**
+   * [Effect] Updates photo URLs when the current photo is changed.
+   */
+  React.useEffect(() => {
+    if (!currentPhotoFromState) return;
+    void preloadPhotoUrls(currentPhotoFromState).then(urls => {
+      setCurrentPhotoUrls(urls);
+    });
+  }, [currentPhotoFromState]);
 
-  const contextApi = {
+
+  /**
+   * [Effect] When the `devtools` query param is present, enables dev tools.
+   */
+  React.useEffect(() => {
+    if (Object.keys(query).includes('devtools')) {
+      window.debug = window.debug || {};
+      setShowDevTools(true);
+    }
+  }, []);
+
+
+  /**
+   * [Effect] Initializes debug data.
+   */
+  useAsyncEffect(async isMounted => {
+    const photos = await getPhotoCollections();
+
+    if (!isMounted()) return;
+
+    setNumPhotos(photos.length);
+
+    ifDebug(() => {
+      if (!window.debug) window.debug = {};
+      window.debug.photos = photos;
+      window.debug.numPhotos = photos.length;
+    });
+  }, []);
+
+
+  // ----- Hook API ------------------------------------------------------------
+
+  return {
     hasSeenIntroduction,
     setHasSeenIntroduction,
     dayOffset,
-    setDayOffset,
+    // TODO: This breaks if we don't use a one-off wrapper here. Figure out why.
+    setDayOffset: (offset: 'increment' | 'decrement' | number) => {
+      setDayOffset(offset);
+    },
     showDevTools,
     isLoadingPhotos,
     name,
     setName,
     currentPhoto: currentPhotoFromState,
+    currentPhotoUrls,
     setCurrentPhoto,
     resetPhoto: () => {
       resetPhoto(shouldResetPhoto + 1);
     },
     numPhotos
   };
-
-  return (
-    <Context.Provider value={contextApi}>
-      {props.children}
-    </Context.Provider>
-  );
-};
-
-
-export default Context;
+});

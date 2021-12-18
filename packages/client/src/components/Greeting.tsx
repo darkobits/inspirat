@@ -5,8 +5,7 @@ import { rgba as polishedRgba } from 'polished';
 import * as R from 'ramda';
 import React from 'react';
 
-import InspiratContext from 'contexts/Inspirat';
-// import { BACKGROUND_TRANSITION_DURATION } from 'etc/constants';
+import { useInspirat } from 'hooks/use-inspirat';
 import { getPeriodDescriptor } from 'lib/time';
 import { compositeTextShadow } from 'lib/typography';
 import { rgba } from 'lib/utils';
@@ -36,7 +35,6 @@ const GreetingWrapper = styled.div<StyledGreetingProps>`
   font-size: 28px;
   font-weight: 200;
   height: 100%;
-  letter-spacing: 1.5px;
   margin-bottom: 128px;
   pointer-events: none;
   position: relative;
@@ -127,7 +125,7 @@ const GreetingBackground = styled.div<GreetingProps>`
  * Renders the greeting copy.
  */
 const Greeting: React.FunctionComponent = () => {
-  const { currentPhoto, name } = React.useContext(InspiratContext);
+  const { currentPhoto, name } = useInspirat();
   const [period, setPeriod] = React.useState(getPeriodDescriptor());
 
 

@@ -13,6 +13,8 @@ export default css`
       font-family: inherit;
       font-size: inherit;
       font-weight: inherit;
+      letter-spacing: inherit;
+      line-height: inherit;
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
@@ -21,6 +23,8 @@ export default css`
     html, body {
       font-family: Nunito, -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif;
       height: 100%;
+      letter-spacing: 0.04em;
+      line-height: 1.8em;
       margin: 0;
       padding: 0;
       width: 100%;
@@ -47,9 +51,14 @@ export default css`
       }
     }
 
+    h1 {
+      /* letter-spacing: 0.04em; */
+      line-height: 1em;
+    }
+
     #root {
       background-color: rgb(42, 42, 42);
       height: 100%;
     }
-  }
+  } // End :global()
 `;

@@ -2,8 +2,8 @@ import { styled } from '@linaria/react';
 import * as R from 'ramda';
 import React from 'react';
 
-import ImageMeta from 'components/ImageMeta';
-import InspiratContext from 'contexts/Inspirat';
+import { ImageMeta } from 'components/ImageMeta';
+import { useInspirat } from 'hooks/use-inspirat';
 import useQuery from 'hooks/use-query';
 import { capitalizeWords } from 'lib/utils';
 
@@ -56,7 +56,7 @@ const BottomGradient = styled.div`
 // ----- Splash (Lower) --------------------------------------------------------
 
 const SplashLower: React.FunctionComponent = () => {
-  const { currentPhoto } = React.useContext(InspiratContext);
+  const { currentPhoto } = useInspirat();
   const query = useQuery();
 
   // If we have a `meta=false` query param, hide image metadata.

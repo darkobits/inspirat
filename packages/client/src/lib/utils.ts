@@ -1,12 +1,12 @@
-import { Color } from 'inspirat-types';
+import { Color, InspiratPhotoResource } from 'inspirat-types';
 import { rgba as polishedRgba, parseToRgb } from 'polished';
 import queryString from 'query-string';
 import * as R from 'ramda';
-// @ts-ignore
+// @ts-expect-error
 import urlParseLax from 'url-parse-lax';
 
+import { QUALITY_LQIP, QUALITY_FULL } from 'etc/constants';
 import { GenericFunction, LooseObject } from 'etc/types';
-
 
 /**
  * Provided an Inspirat color object or a color string and an optional alpha
@@ -128,7 +128,7 @@ export function isChromeExtension() {
  * no 'mouseup' event was received in the interim.
  */
 export function onClickAndHold(interval: number, cb: GenericFunction) {
-  return (e: React.MouseEvent) => {
+  const handler: React.EventHandler<React.MouseEvent> = e => {
     const target = e.currentTarget;
 
     // This was not a primary click, or target is falsy; bail.
@@ -136,17 +136,22 @@ export function onClickAndHold(interval: number, cb: GenericFunction) {
       return;
     }
 
+    // Set a timer that will invoke `cb` when it expires.
     const timeoutHandle = setTimeout(() => cb(target), interval);
 
+    // Clear the above timeout if the mouse button is released or the mouse
+    // moves.
     ['mouseup', 'mousemove'].forEach(event => {
-      const handler = () => {
+      const cancelHandler = () => {
         clearTimeout(timeoutHandle);
-        target.removeEventListener(event, handler);
+        target.removeEventListener(event, cancelHandler);
       };
 
-      target.addEventListener(event, handler);
+      target.addEventListener(event, cancelHandler);
     });
   };
+
+  return handler;
 }
 
 
@@ -165,12 +170,12 @@ function buildImgixOptions(base?: LooseObject, overrides?: LooseObject): string 
 
   const params = {
     ...base,
-    fm: 'png',
+    fm: 'jpeg',
     // Sets several baseline parameters.
-    auto: 'format',
+    // auto: 'format',
     // Fit the image to the provided width/height without cropping and while
     // maintaining its aspect ratio.
-    fit: 'max',
+    fit: 'clip',
     // Do not crop images.
     crop: undefined,
     // Desired maximum image width.
@@ -220,4 +225,68 @@ export async function preloadImage(imgUrl: string) {
     // N.B. Setting this property will cause the browser to fetch the image.
     img.src = imgUrl;
   });
+}
+
+
+/**
+ * Used by DevTools to transform a URL pasted into the URL input into a sparse
+ * InspiratPhotoResource.
+ */
+export function mockPhotoResourceFromUrl(url: string) {
+  const imgId = url.startsWith('https://unsplash.com/photos/')
+    ? url.replace('https://unsplash.com/photos/', '')
+    : undefined;
+
+  if (!imgId) return;
+
+  const width = window.innerWidth * window.devicePixelRatio;
+  const height = window.innerHeight * window.devicePixelRatio;
+
+  const newUrl = new URL(`https://source.unsplash.com/${imgId}/${width}x${height}`);
+
+  return {
+    id: imgId,
+    urls: {
+      full: newUrl.href
+    }
+  } as InspiratPhotoResource;
+}
+
+
+/**
+ * Provided a single photo URL, returns an object containing a URL for a
+ * low-quality image preview and the full-quality URL.
+ */
+export function buildPhotoUrlSrcSet(url: string) {
+  return {
+    lqip: updateImgixQueryParams(url, {
+      q: QUALITY_LQIP,
+      w: window.screen.width / 2,
+      h: window.screen.width / 2
+    }),
+    full: updateImgixQueryParams(url, {
+      q: QUALITY_FULL
+    })
+  };
+}
+
+
+/**
+ * Type used by `filterFalsy` to type-narrow arrays.
+ */
+export type WithoutFalsy<T> = T extends Array<infer U>
+  ? Array<U extends (null | false | true |undefined | void | never)
+    ? never : U
+  > : T;
+
+
+/**
+ * Provided an array, returns a new array with all falsy values removed.
+ *
+ * TODO: Not used here, consider making own package.
+ */
+export function filterFalsy<T extends Array<any>>(arr: T) {
+  return arr.filter(value => {
+    return ![null, false, undefined, Number.NaN].includes(value);
+  }) as WithoutFalsy<T>;
 }

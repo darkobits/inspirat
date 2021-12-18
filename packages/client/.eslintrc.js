@@ -22,6 +22,8 @@ module.exports = {
       SwitchCase: 1
     }],
     '@typescript-eslint/restrict-template-expressions': 'off',
-    'unicorn/no-useless-undefined': 'off'
+    'unicorn/no-useless-undefined': 'off',
+    // This was throwing false positives with R.map.
+    'unicorn/no-array-method-this-argument': 'off'
   }
 };
