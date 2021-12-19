@@ -27,10 +27,14 @@
     "@types/parse-link-header": "^1.0.0",
     "@types/ramda": "^0.27.44",
     "aws-sdk": "^2.774.0",
+    "babel-loader": "^8.2.3",
+    "fork-ts-checker-webpack-plugin": "^6.5.0",
     "inspirat-types": "^0.13.0",
     "serverless": "^2.8.0",
     "serverless-dotenv-plugin": "^3.0.0",
     "serverless-webpack": "^5.2.0",
-    "source-map-support": "^0.5.19"
+    "source-map-support": "^0.5.19",
+    "webpack-cli": "^4.9.1",
+    "webpack-node-externals": "^3.0.0"
   }
 }

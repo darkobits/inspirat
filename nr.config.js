@@ -31,7 +31,7 @@ export default nr(({ createCommand, createScript, isCI }) => {
     ]
   });
 
-  createScript('backend.deploy', {
+  createScript('backend.dev-deploy', {
     group: 'Backend',
     description: 'Deploy the backend to the development environment.',
     run: [
@@ -39,7 +39,7 @@ export default nr(({ createCommand, createScript, isCI }) => {
     ]
   });
 
-  createScript('backend.deploy-prod', {
+  createScript('backend.prod-deploy', {
     group: 'Backend',
     description: 'Deploy the backend to the production environment.',
     run: [

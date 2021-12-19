@@ -1,13 +1,16 @@
 org: darkobits
 app: inspirat
 service: inspirat
+useDotenv: true
 plugins:
-  - serverless-dotenv-plugin
-  # - serverless-webpack
+  - serverless-webpack
+  # - serverless-dotenv-plugin
 package:
+  individually: true
+  excludeDevDependencies: true
   # Package each function as its own bundle to reduce the bundle size of each
   # function. This helps improve cold-start times.
-  individually: true
+  # individually: true
 
 
 # ----- Custom Config Data -----------------------------------------------------
@@ -17,24 +20,23 @@ custom:
   basePaths:
     dev: inspirat-dev
     prod: inspirat
-  # Configuration for the serverless-dotenv plugin.
-  dotenv:
-    basePath: ../../
-    logging: false
-    include:
-      - UNSPLASH_ACCESS_KEY
-      - UNSPLASH_SECRET_KEY
   # Configuration for serverless-webpack
   # webpack:
   #   webpackConfig: 'webpack.config.ts'
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: true # Node modules configuration for packaging
+    # packager: 'npm' # Packager that will be used to package your external modules
+    # excludeFiles: src/**/*.test.js # Provide a glob for files to ignore
 
 
 # ----- Serverless Compute Provider Configuration ------------------------------
 
 provider:
+  lambdaHashingVersion: 20201221
   name: aws
-  runtime: nodejs12.x
-  region: ${env:AWS_REGION}
+  runtime: nodejs14.x
+  region: us-west-1
   stage: ${self:custom.stage}
   environment:
     STAGE: ${self:custom.stage}

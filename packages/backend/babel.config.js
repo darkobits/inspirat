@@ -1,8 +1,4 @@
 module.exports = {
-  extends: require('@darkobits/ts').babel,
-  presets: [
-    ['@babel/preset-typescript', {
-      onlyRemoveTypeImports: true
-    }]
-  ]
+  extends: require('@darkobits/tsx').babel,
+  // showConfig: true
 };

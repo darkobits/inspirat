@@ -1,10 +1,9 @@
 import axios from 'axios';
+import Chance from 'chance';
 import { InspiratPhotoCollection, InspiratPhotoResource } from 'inspirat-types';
 import objectHash from 'object-hash';
 import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
-// @ts-ignore
-import shuffleSeed from 'shuffle-seed';
 
 import {
   BUCKET_URL,
@@ -110,7 +109,8 @@ export async function getPhotoCollections() {
     // First sort photos by their ID to ensure consistent initial ordering.
     // Then, use the user's 'name' to deterministically shuffle the
     // collection.
-    const sortedCollection = shuffleSeed.shuffle(R.sortBy(R.prop('id'), photoCache.photos), name);
+    const chance = new Chance(name ?? '');
+    const sortedCollection = chance.shuffle(R.sortBy(R.prop('id'), photoCache.photos));
 
     ifDebug(() => {
       const collectionHash = objectHash(photoCache?.photos);
