@@ -1,58 +1,89 @@
+import localforage from 'localforage';
 import React from 'react';
-import useAsyncEffect from 'use-async-effect';
-
-import storage from 'lib/storage';
-
-/**
- * @private
- *
- * Value we compare to to determine if a storage value is pending sync.
- */
-const PENDING = Symbol('PENDING');
 
 
-/**
- * Returns true if the provided value is pending.
- */
-export function isPending(value: any) {
-  return value === PENDING;
-}
+type LocalForage = ReturnType<typeof localforage['createInstance']>;
+type UseStorageItem<T = any> = [T, React.Dispatch<React.SetStateAction<T>>];
 
 
-type HookReturnValue<T = any> = [
-  T,
-  React.Dispatch<React.SetStateAction<T>>
-];
+const instances = new Map<string, LocalForage>();
+
 
 /**
  * Provided a key, returns a tuple value and setter function that will sync the
  * provided value to Local Storage.
- *
- * TODO: Make own package.
  */
-function useStorageItem<T = any>(key: string): HookReturnValue<T | typeof PENDING | undefined>;
-function useStorageItem<T = any>(key: string, initialValue: T): HookReturnValue<T | typeof PENDING>;
-function useStorageItem<T = any>(key: string, initialValue?: T) {
-  const [localValue, setLocalValue] = React.useState<T | typeof PENDING | undefined>(PENDING);
+function useStorageItem<T = any>(namespace: string, key: string): UseStorageItem<T | undefined>;
+function useStorageItem<T = any>(namespace: string, key: string, initialValue: T): UseStorageItem<T>;
+function useStorageItem<T = any>(namespace: string, key: string, initialValue?: T) {
+  const [localValue, setLocalValue] = React.useState<T | undefined>();
+  const [storage, setStorage] = React.useState<LocalForage>();
 
-  const setValue: React.Dispatch<React.SetStateAction<T>> = value => {
+  /**
+   * Updates the tracked value locally and in storage.
+   */
+  const setValue: React.Dispatch<React.SetStateAction<T>> = React.useCallback(value => {
+    if (!storage) return;
+
     void storage.setItem(key, value);
     setLocalValue(value as T);
-  };
+  }, [storage]);
 
-  useAsyncEffect(async () => {
-    const valueFromStorage = await storage.getItem<T>(key);
 
-    if (valueFromStorage !== null) {
-      setLocalValue(valueFromStorage);
-    } else if (initialValue !== undefined) {
-      setValue(initialValue);
+  /**
+   * Initialize storage instance.
+   */
+  React.useEffect(() => {
+    if (!instances.has(namespace)) {
+      instances.set(namespace, localforage.createInstance({
+        driver: localforage.LOCALSTORAGE,
+        name: namespace,
+        version: 1
+      }));
     }
 
-  }, [setLocalValue]);
+    setStorage(instances.get(namespace));
+  }, [setStorage]);
+
+
+  /**
+   * Sync value from storage to local state.
+   */
+  React.useEffect(() => {
+    if (!storage) return;
+
+    void storage?.getItem<T>(key).then(valueFromStorage => {
+    // If we got a value back from storage, set the local value accordingly.
+      if (valueFromStorage !== null) {
+        setLocalValue(valueFromStorage);
+        return;
+      }
+
+      // If storage was empty and an initial value was provided, set it locally
+      // and in storage.
+      if (initialValue !== undefined) {
+        setValue(initialValue);
+        return;
+      }
+    });
+  }, [storage, setValue]);
+
 
   return [localValue, setValue];
 }
 
 
-export default useStorageItem;
+export function withNamespace(namespace: string) {
+  function boundUseStorageItem<T = any>(key: string): UseStorageItem<T | undefined>;
+  function boundUseStorageItem<T = any>(key: string, initialValue: T): UseStorageItem<T>;
+  // eslint-disable-next-line prefer-arrow/prefer-arrow-functions
+  function boundUseStorageItem<T = any>(key: string, initialValue?: T) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useStorageItem(namespace, key, initialValue);
+  }
+
+  return boundUseStorageItem;
+}
+
+
+export default withNamespace;

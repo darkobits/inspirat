@@ -1,13 +1,10 @@
 import { styled } from '@linaria/react';
 import { InspiratPhotoResource } from 'inspirat-types';
-import ms from 'ms';
 import { rgba as polishedRgba } from 'polished';
 import * as R from 'ramda';
 import React from 'react';
 
 import { useInspirat } from 'hooks/use-inspirat';
-import { isPending } from 'hooks/use-storage-item';
-import { getPeriodDescriptor } from 'lib/time';
 import { compositeTextShadow } from 'lib/typography';
 import { rgba } from 'lib/utils';
 
@@ -126,24 +123,12 @@ const GreetingBackground = styled.div<GreetingProps>`
  * Renders the greeting copy.
  */
 const Greeting: React.FunctionComponent = () => {
-  const { currentPhoto, name } = useInspirat();
-  const [period, setPeriod] = React.useState(getPeriodDescriptor());
+  const { currentPhoto, name, period } = useInspirat();
 
+  const greeting = name
+    ? `Good ${period}, ${name}.`
+    : `Good ${period}.`;
 
-  /**
-   * [Effect] Update period every minute.
-   */
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setPeriod(getPeriodDescriptor());
-    }, ms('1 minute'));
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const greeting = isPending(name)
-    ? `Good ${period}.`
-    : `Good ${period}, ${name}.`;
   const color = rgba(currentPhoto?.palette?.vibrant ?? {r: 0, g: 0, b: 0});
 
   return (

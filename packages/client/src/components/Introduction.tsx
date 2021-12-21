@@ -4,7 +4,6 @@ import { Button } from 'react-bootstrap';
 
 import { AnimatedModal } from 'components/AnimatedModal';
 import { useInspirat } from 'hooks/use-inspirat';
-import { isPending } from 'hooks/use-storage-item';
 import { isChromeExtension } from 'lib/utils';
 
 
@@ -34,7 +33,6 @@ export const Introduction: React.FunctionComponent = () => {
     if (setHasSeenIntroduction) setHasSeenIntroduction(true);
   }, [setHasSeenIntroduction]);
 
-
   const unsplashLink = React.useMemo(() => (
     <a
       href="https://unsplash.com/"
@@ -46,9 +44,11 @@ export const Introduction: React.FunctionComponent = () => {
     </a>
   ), []);
 
-
-  if (!isChromeExtension() || isPending(hasSeenIntroduction)) return null;
-
+  if (
+    !isChromeExtension() ||
+    hasSeenIntroduction === undefined ||
+    hasSeenIntroduction
+  ) return null;
 
   return (
     <AnimatedModal

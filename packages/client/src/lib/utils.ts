@@ -2,7 +2,7 @@ import { Color, InspiratPhotoResource } from 'inspirat-types';
 import { rgba as polishedRgba, parseToRgb } from 'polished';
 import queryString from 'query-string';
 import * as R from 'ramda';
-// @ts-expect-error
+// @ts-expect-error - No declarations for this package.
 import urlParseLax from 'url-parse-lax';
 
 import { QUALITY_LQIP, QUALITY_FULL } from 'etc/constants';

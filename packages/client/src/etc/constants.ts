@@ -4,21 +4,31 @@ import type { BackgroundImageOverrides } from 'etc/types';
 import type { Color } from 'inspirat-types';
 
 
+// @ts-expect-error - See: https://github.com/vitejs/vite/issues/6194
+const MODE = import.meta.env.MODE;
+
+// @ts-expect-error - See: https://github.com/vitejs/vite/issues/6194
+const VITE_TITLE = import.meta.env.VITE_TITLE;
+
+// @ts-expect-error - See: https://github.com/vitejs/vite/issues/6194
+const VITE_BUCKET_URL = import.meta.env.VITE_BUCKET_URL;
+
+
 /**
  * Document title to use.
  */
-export const TITLE = import.meta.env.MODE === 'production'
+export const TITLE = MODE === 'production'
   ? process.env.TITLE
-  : import.meta.env.VITE_TITLE;
+  : VITE_TITLE;
 if (!TITLE) throw new Error('TITLE is not set.');
 
 
 /**
  * AWS S3 Bucket URL.
  */
-export const BUCKET_URL = import.meta.env.MODE === 'production'
+export const BUCKET_URL = MODE === 'production'
   ? process.env.BUCKET_URL
-  : import.meta.env.VITE_BUCKET_URL;
+  : VITE_BUCKET_URL;
 if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
 
 
@@ -56,7 +66,7 @@ export const CACHE_TTL = ms('1 day');
 /**
  * Storage key used to cache the photo collection.
  */
-export const COLLECTION_CACHE_KEY = 'photoCollection';
+export const COLLECTION_CACHE_KEY = 'photoCollections';
 
 
 /**

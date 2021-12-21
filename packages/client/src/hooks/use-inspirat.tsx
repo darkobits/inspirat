@@ -1,4 +1,5 @@
 import { InspiratPhotoResource } from 'inspirat-types';
+import ms from 'ms';
 import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
 import React from 'react';
@@ -7,13 +8,14 @@ import useAsyncEffect from 'use-async-effect';
 
 import { PhotoUrls } from 'etc/types';
 import useQuery from 'hooks/use-query';
-import useStorageItem from 'hooks/use-storage-item';
+import withNamespace from 'hooks/use-storage-item';
 import {
   getPhotoCollections,
   getCurrentPhotoFromCollection,
   getCurrentPhotoFromCache
 } from 'lib/photos';
 import {
+  getPeriodDescriptor,
   midnight,
   now
 } from 'lib/time';
@@ -79,6 +81,11 @@ export interface InspiratHook {
   setName: (value: string) => void;
 
   /**
+   * Current period of the day ('morning', 'afternoon', 'evening').
+   */
+  period: string;
+
+  /**
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
@@ -106,16 +113,22 @@ export interface InspiratHook {
 const preloadedPhotos = new Set<string>();
 
 
-// @ts-expect-error
-export const useInspirat = singletonHook({} as InspiratHook, () => {
-  const [currentPhotoUrls, setCurrentPhotoUrls] = React.useState<PhotoUrls>();
+const useStorageItem = withNamespace('inspirat');
+
+
+const initialValue = {} as InspiratHook;
+
+
+export const useInspirat = singletonHook(initialValue, () => {
+  const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean | undefined>('hasSeenIntroduction', false);
   const [currentPhotoFromState, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
+  const [currentPhotoUrls, setCurrentPhotoUrls] = React.useState<PhotoUrls>();
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = React.useState(false);
   const [name, setName] = useStorageItem<string>('name');
-  const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean>('hasSeenIntroduction', false);
+  const [period, setPeriod] = React.useState(getPeriodDescriptor());
   const query = useQuery();
 
 
@@ -312,6 +325,18 @@ export const useInspirat = singletonHook({} as InspiratHook, () => {
   }, []);
 
 
+  /**
+   * [Effect] Update period.
+   */
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setPeriod(getPeriodDescriptor());
+    }, ms('30 seconds'));
+
+    return () => clearInterval(interval);
+  }, []);
+
+
   // ----- Hook API ------------------------------------------------------------
 
   return {
@@ -326,6 +351,7 @@ export const useInspirat = singletonHook({} as InspiratHook, () => {
     isLoadingPhotos,
     name,
     setName,
+    period,
     currentPhoto: currentPhotoFromState,
     currentPhotoUrls,
     setCurrentPhoto,
