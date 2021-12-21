@@ -60,8 +60,7 @@ export const AnimatedModal = React.memo((props: Props) => {
       onHide={handleClose}
       show={showInternal}
       size="lg"
-      backdropClassName={cx('animate__animated', isHiding && 'animate__fadeOut', 'FOO')}
-      className={cx('animate__animated', 'animate__faster', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
+      className={cx('animate__animated', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
       contentClassName={className ?? ''}
     >
       <Modal.Body className={cx('bg-dark', 'text-light', 'shadow-lg', 'p-4')}>

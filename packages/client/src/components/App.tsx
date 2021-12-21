@@ -23,7 +23,7 @@ const App: React.FunctionComponent = () => {
       onClose={() => setShowSettings(false)}
     />
     <Splash
-      onMouseDown={onClickAndHold(750, () => setShowSettings(true))}
+      onMouseDown={onClickAndHold(320, () => setShowSettings(true))}
     />
   </>);
 };
