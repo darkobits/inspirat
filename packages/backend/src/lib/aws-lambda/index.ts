@@ -1,5 +1,7 @@
-import type { Context, Handler } from 'aws-lambda';
-
+import {
+  defaultErrorHandler,
+  serializeBody
+} from './middleware';
 import {
   AWSLambdaErrorHandler,
   AWSLambdaHandlerFactoryConfig,
@@ -7,10 +9,8 @@ import {
   AWSLambdaMiddlewareResponse
 } from './types';
 
-import {
-  defaultErrorHandler,
-  serializeBody
-} from './middleware';
+// eslint-disable-next-line import/no-unresolved, import/first
+import type { Context, Handler } from 'aws-lambda';
 
 
 function ensureIsArray<T = any, R = T extends Array<any> ? T : Array<T>>(value: T): R {

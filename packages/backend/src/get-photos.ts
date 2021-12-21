@@ -1,5 +1,4 @@
 import env from '@darkobits/env';
-import type { APIGatewayEvent } from 'aws-lambda';
 import { InspiratPhotoResource } from 'inspirat-types';
 
 import {
@@ -11,6 +10,9 @@ import {
   setVersionHeader
 } from 'lib/aws-lambda/middleware';
 import { getJSON } from 'lib/aws-s3';
+
+// eslint-disable-next-line import/no-unresolved
+import type { APIGatewayEvent } from 'aws-lambda';
 
 
 // ----- Get Photos ------------------------------------------------------------
@@ -25,17 +27,17 @@ import { getJSON } from 'lib/aws-s3';
 const handler: AWSLambdaMiddleware = async ({ response }) => {
   const stage = env<string>('STAGE', true);
   const bucket = `inspirat-${stage}`;
-  const key = 'photoCollection';
+  const key = 'photoCollections';
 
-  const photoCollection = await getJSON<Array<InspiratPhotoResource>>({ bucket, key });
+  const photoCollections = await getJSON<Array<InspiratPhotoResource>>({ bucket, key });
 
-  if (!photoCollection) {
+  if (!photoCollections) {
     response.statusCode = 500;
     response.body = { message: 'Response from S3 did not contain any photos.' };
     return;
   }
 
-  response.body = photoCollection;
+  response.body = photoCollections;
 };
 
 

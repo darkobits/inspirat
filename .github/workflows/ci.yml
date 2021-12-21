@@ -3,7 +3,7 @@ on:
   - push
   - pull_request
 jobs:
-  # ----- Build ----------------------------------------------------------------
+  # ----- Prepare --------------------------------------------------------------
   prepare:
     name: Prepare
     runs-on: ubuntu-latest
@@ -33,7 +33,6 @@ jobs:
         with:
           key: inspirat-${{ github.sha }}
           path: .
-
   # ----- Deploy Clients -------------------------------------------------------
   deploy-frontlawn:
     name: Build & Deploy frontlawn.net

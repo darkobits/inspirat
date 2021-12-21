@@ -1,12 +1,17 @@
 {
   "extends": "@darkobits/ts/tsconfig.json",
   "compilerOptions": {
+    "rootDir": "./",
     "baseUrl": "src",
-    "outDir": "dist",
-    // [Serverless Best Practice] Emit nothing, including declaration files.
-    // This reduces bundle size uploaded to AWS and thus reduces cold-start
-    // times.
-    "noEmit": true,
-    "skipLibCheck": true
+    "outDir": ".build",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es2020",
+    "lib": ["es2020"],
+    "allowJs": true,
+    "declaration": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "sourceMap": false
   }
 }

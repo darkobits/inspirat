@@ -12,7 +12,11 @@ import {
 import { getJSON, putJSON } from 'lib/aws-s3';
 import chalk from 'lib/chalk';
 import getPalette from 'lib/get-palette';
-import { getPhotoIdsForCollection, getPhoto } from 'lib/unsplash';
+import {
+  getPhotoIdsForCollection,
+  getPhoto,
+  getCollection
+} from 'lib/unsplash';
 
 
 /**
@@ -64,12 +68,12 @@ async function computeInspiratPhotoData(unsplashPhotoId: string): Promise<Inspir
  * the database. In a subsequent function call, we update the incomplete record
  * with a response from the /photos API.
  */
-const handler: AWSLambdaMiddleware = async () => {
+const handlerImpl: AWSLambdaMiddleware = async () => {
   const startTime = Date.now();
 
   const stage = env<string>('STAGE', true);
   const bucket = `inspirat-${stage}`;
-  const key = 'photoCollection';
+  const key = 'photoCollections';
 
   let totalPhotos = 0;
   let totalAdditions = 0;
@@ -98,6 +102,7 @@ const handler: AWSLambdaMiddleware = async () => {
     '64480821'
   ];
 
+  console.log('');
 
   /**
    * Map our list of collection IDs into a list of Inspirat photo collection
@@ -107,25 +112,29 @@ const handler: AWSLambdaMiddleware = async () => {
   const body = await pSeries(R.map(collectionId => async () => {
     const inspiratCollection = R.find(R.propEq('id', collectionId), inspiratPhotoCollections);
 
+    const [collectionMeta, collectionPhotoIds] = await Promise.all([
+      getCollection(collectionId),
+      getPhotoIdsForCollection(collectionId)
+    ]);
+
     if (inspiratCollection) {
-      console.log(`[sync-collections] Processing collection ${chalk.blue(collectionId)} (${chalk.green(inspiratCollection.photos.length)} existing photos)...`);
+      console.log(`[sync-collections] Processing collection ${chalk.bold(collectionMeta.title)} (${chalk.green(inspiratCollection.photos.length)} synced photos)...`);
     } else {
-      console.log(`[sync-collections] Processing ${chalk.bold('new')} collection ${chalk.green(collectionId)}...`);
+      console.log(`[sync-collections] Processing ${chalk.bold('new')} collection ${chalk.bold(collectionMeta.title)}...`);
     }
 
-    const unsplashCollectionIds = await getPhotoIdsForCollection(collectionId);
-    console.log(`[sync-collections] Unsplash collection contains ${chalk.green(unsplashCollectionIds.length)} photos.`);
+    console.log(`[sync-collections]   Collection contains ${chalk.yellow(collectionPhotoIds.length)} photos on Unsplash.`);
 
     // Compute a list of all photo IDs found in the Unsplash collection that are
     // not in the current collection.
     const photoIdsToAdd = R.differenceWith(
       (id, photo) => id === photo.id,
-      unsplashCollectionIds,
+      collectionPhotoIds,
       inspiratCollection?.photos ?? []
     );
 
     const photosToAdd = await asyncTaskQueue.addAll(photoIdsToAdd.map(photoId => async () => {
-      console.log(`[sync-collections] Computing data for new photo ${chalk.green(photoId)}.`);
+      console.log(`[sync-collections]   Computing data for new photo ${chalk.green(photoId)}.`);
       return computeInspiratPhotoData(photoId);
     }));
 
@@ -133,15 +142,15 @@ const handler: AWSLambdaMiddleware = async () => {
     // Unsplash collection. This ensures that if a photo is deleted from an
     // Unsplash collection, it will be removed here as well.
     const photosToKeep = R.filter(
-      photo => R.includes(photo.id, unsplashCollectionIds),
+      photo => R.includes(photo.id, collectionPhotoIds),
       inspiratCollection?.photos ?? []
     );
 
-    const numDeletedPhotos = inspiratCollection ? inspiratCollection.photos.length - unsplashCollectionIds.length : 0;
+    const numDeletedPhotos = inspiratCollection ? inspiratCollection.photos.length - collectionPhotoIds.length : 0;
     const photos = R.sortBy(R.prop('id'), R.concat(photosToAdd, photosToKeep));
 
     console.log([
-      `[sync-collections] ${chalk.green(photoIdsToAdd.length)} photos added, `,
+      `[sync-collections]   ${chalk.green(photoIdsToAdd.length)} photos added, `,
       `${chalk.yellow(numDeletedPhotos)} photos removed.`
     ].join(''));
 
@@ -149,7 +158,13 @@ const handler: AWSLambdaMiddleware = async () => {
     totalAdditions += photoIdsToAdd.length;
     totalDeletions += numDeletedPhotos;
 
-    return { id: collectionId, photos };
+    console.log('');
+
+    return {
+      id: collectionId,
+      title: collectionMeta.title,
+      photos
+    } as InspiratPhotoCollection;
   }, COLLECTION_IDS));
 
 
@@ -161,8 +176,10 @@ const handler: AWSLambdaMiddleware = async () => {
   console.log(`[sync-collections] Totals: ${chalk.green(totalAdditions)} additions, ${chalk.yellow(totalDeletions)} deletions, ${chalk.bold(totalPhotos)} photos across all collections.`);
 
   const runTime = Date.now() - startTime;
-  console.log(`[sync-collections] Done in ${prettyMs(runTime)}`);
+  console.log(`[sync-collections] Done in ${chalk.yellow(prettyMs(runTime))}`);
 };
 
 
-export default AWSLambdaHandlerFactory({ handler });
+export default AWSLambdaHandlerFactory({
+  handler: handlerImpl
+});

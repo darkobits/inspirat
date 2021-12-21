@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import type { Context, APIGatewayProxyResult } from 'aws-lambda';
 
 

@@ -5,7 +5,10 @@ import axios, { AxiosRequestConfig } from 'axios';
 import parseLinkHeader from 'parse-link-header';
 import * as R from 'ramda';
 
-import { UnsplashCollectionPhotoResource } from 'etc/types';
+import type {
+  UnsplashCollectionPhotoResource,
+  UnsplashCollection
+} from 'etc/types';
 
 
 /**
@@ -43,7 +46,7 @@ const client = axios.create({
  * Provided a URL for an API that returns "link" headers containing pagination
  * hints, fetches all pages and returns the results.
  */
-async function getAllPages(options: AxiosRequestConfig): Promise<Array<any>> {
+async function getAllPages<T = any>(options: AxiosRequestConfig): Promise<Array<T>> {
   const page = await client.request(options);
 
   // Response has no pagination information; return data.
@@ -64,10 +67,25 @@ async function getAllPages(options: AxiosRequestConfig): Promise<Array<any>> {
 
   // Otherwise, if additional pages are available, make the next request using
   // the same request configuration provided.
-  return page.data.concat(await getAllPages({
+  const nextPage = await getAllPages({
     ...options,
     url: parsedLinkHeader.next.url
-  }));
+  });
+
+  return [...page.data, ...nextPage];
+}
+
+
+/**
+ * Provided a collection ID, returns metadata about the collection.
+ */
+export async function getCollection(collectionId: string) {
+  const res = await client.request<UnsplashCollection>({
+    method: 'GET',
+    url: `/collections/${collectionId}`
+  });
+
+  return res.data;
 }
 
 
@@ -76,13 +94,13 @@ async function getAllPages(options: AxiosRequestConfig): Promise<Array<any>> {
  * photos in the collection.
  */
 export async function getPhotoIdsForCollection(collectionId: string) {
-  const unsplashPhotoCollection: Array<UnsplashCollectionPhotoResource> = await getAllPages({
+  const unsplashCollectionPhotos = await getAllPages<UnsplashCollectionPhotoResource>({
     method: 'GET',
     url: `/collections/${collectionId}/photos`,
     params: { per_page: MAX_PAGE_SIZE }
   });
 
-  return R.map(R.prop('id'), unsplashPhotoCollection);
+  return R.map(R.prop('id'), unsplashCollectionPhotos);
 }
 
 

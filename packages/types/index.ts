@@ -46,5 +46,6 @@ export interface InspiratPhotoResource {
  */
 export interface InspiratPhotoCollection {
   id: string;
+  title: string;
   photos: Array<InspiratPhotoResource>;
 }
