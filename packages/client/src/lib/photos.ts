@@ -16,6 +16,7 @@ import {
   PhotoCollectionStorageItem
 } from 'etc/types';
 import PendingPromiseCache from 'lib/pending-promise-cache';
+// import randomSeason from 'lib/seasons';
 import storage from 'lib/storage';
 import { now, midnight, daysSinceEpoch } from 'lib/time';
 import { ifDebug, modIndex } from 'lib/utils';
@@ -40,7 +41,7 @@ async function fetchAndUpdateCollections(): Promise<PhotoCollectionStorageItem |
   try {
     const photoCollections = (await axios.request<Array<InspiratPhotoCollection>>({
       method: 'GET',
-      url: `${BUCKET_URL}/photoCollection`
+      url: `${BUCKET_URL}/photoCollections`
     })).data;
 
     // Map over all photo collections and concat them into a single array.
@@ -113,7 +114,7 @@ export async function getPhotoCollections() {
     const sortedCollection = chance.shuffle(R.sortBy(R.prop('id'), photoCache.photos));
 
     ifDebug(() => {
-      const collectionHash = objectHash(photoCache?.photos);
+      const collectionHash = objectHash(photoCache?.photos ?? {});
       console.debug(`[getPhotoCollections] Collection hash, unsorted, using seed "${name}":`, collectionHash);
       const sortedCollectionHash = objectHash(sortedCollection);
       console.debug(`[getPhotoCollections] Collection hash, sorted, using seed "${name}":`, sortedCollectionHash);

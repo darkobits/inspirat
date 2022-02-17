@@ -64,7 +64,7 @@ export const DevTools = () => {
       mousetrap.unbind('left');
       mousetrap.unbind('right');
     };
-  }, [showDevTools]);
+  }, [setDayOffset, showDevTools]);
 
 
   /**
@@ -120,9 +120,8 @@ export const DevTools = () => {
    * from the progress bar.
    */
   const handleProgressChange = React.useCallback((newProgress: number) => {
-    console.warn('GOT NEW PROGRESS YO', newProgress);
     setDayOffset(Math.floor(numPhotos * newProgress));
-  }, [setDayOffset]);
+  }, [numPhotos, setDayOffset]);
 
 
   if (!showDevTools) {

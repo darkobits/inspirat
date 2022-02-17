@@ -4,14 +4,11 @@ import type { BackgroundImageOverrides } from 'etc/types';
 import type { Color } from 'inspirat-types';
 
 
-// @ts-expect-error - See: https://github.com/vitejs/vite/issues/6194
-const MODE = import.meta.env.MODE;
+const MODE = import.meta.env.MODE as 'development' | 'production';
 
-// @ts-expect-error - See: https://github.com/vitejs/vite/issues/6194
-const VITE_TITLE = import.meta.env.VITE_TITLE;
+const VITE_TITLE = import.meta.env.VITE_TITLE as string | undefined;
 
-// @ts-expect-error - See: https://github.com/vitejs/vite/issues/6194
-const VITE_BUCKET_URL = import.meta.env.VITE_BUCKET_URL;
+const VITE_BUCKET_URL = import.meta.env.VITE_BUCKET_URL as string | undefined;
 
 
 /**

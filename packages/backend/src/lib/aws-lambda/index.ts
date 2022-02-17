@@ -74,6 +74,5 @@ export function AWSLambdaHandlerFactory<TEvent = any>(config: AWSLambdaHandlerFa
   };
 }
 
-export {
-  AWSLambdaMiddleware
-};
+
+export {AWSLambdaMiddleware} from './types';

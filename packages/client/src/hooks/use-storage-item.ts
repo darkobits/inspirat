@@ -19,6 +19,7 @@ function useStorageItem<T = any>(namespace: string, key: string, initialValue?: 
   const [localValue, setLocalValue] = React.useState<T | undefined>();
   const [storage, setStorage] = React.useState<LocalForage>();
 
+
   /**
    * Updates the tracked value locally and in storage.
    */
@@ -27,7 +28,7 @@ function useStorageItem<T = any>(namespace: string, key: string, initialValue?: 
 
     void storage.setItem(key, value);
     setLocalValue(value as T);
-  }, [storage]);
+  }, [key, storage]);
 
 
   /**
@@ -43,7 +44,7 @@ function useStorageItem<T = any>(namespace: string, key: string, initialValue?: 
     }
 
     setStorage(instances.get(namespace));
-  }, [setStorage]);
+  }, [namespace, setStorage]);
 
 
   /**
@@ -66,7 +67,12 @@ function useStorageItem<T = any>(namespace: string, key: string, initialValue?: 
         return;
       }
     });
-  }, [storage, setValue]);
+  }, [
+    initialValue,
+    key,
+    setValue,
+    storage
+  ]);
 
 
   return [localValue, setValue];

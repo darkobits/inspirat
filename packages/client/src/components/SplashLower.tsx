@@ -25,6 +25,7 @@ const StyledSplashLower = styled.div<StyledSplashLowerProps>`
   z-index: 1;
 `;
 
+// @ts-expect-error - Typings issue.
 const ImageLocation = styled(ImageMeta)`
   display: none;
 
@@ -33,6 +34,7 @@ const ImageLocation = styled(ImageMeta)`
   }
 `;
 
+// @ts-expect-error - Typings issue.
 const ImageAttribution = styled(ImageMeta)`
   margin-left: auto;
 `;

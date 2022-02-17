@@ -50,7 +50,6 @@ export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose
     if (onClose) onClose();
   }, [setName, onClose, tempName]);
 
-  // @ts-expect-error
   const version = import.meta.env.GIT_DESC;
 
   return (

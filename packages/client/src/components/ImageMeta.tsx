@@ -18,6 +18,7 @@ const textShadow = (color: string) => compositeTextShadow([
 
 
 interface ImageMetaElProps {
+  // className: string;
   shadowColor: string | undefined;
 }
 
@@ -44,7 +45,12 @@ const ImageMetaEl = styled.div<ImageMetaElProps>`
 `;
 
 
-export const ImageMeta: React.FunctionComponent = ({ children }) => {
+export interface Props {
+  children: React.ReactNode;
+}
+
+
+export const ImageMeta = ({ children }: Props) => {
   const { currentPhoto } = useInspirat();
 
   return (

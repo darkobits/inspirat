@@ -8,6 +8,7 @@ module.exports = {
     // purposes.
     'no-console': 'off',
     // Gets confused by Ramda.
-    'unicorn/no-array-method-this-argument': 'off'
+    'unicorn/no-array-method-this-argument': 'off',
+    'unicorn/prefer-spread': 'off'
   }
 };

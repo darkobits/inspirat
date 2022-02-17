@@ -231,11 +231,7 @@ export const useInspirat = singletonHook(initialValue, () => {
     ] as Array<Promise<any>>);
 
     setIsLoadingPhotos(false);
-  }, [
-    dayOffset,
-    showDevTools,
-    setCurrentPhoto
-  ]);
+  }, [showDevTools, dayOffset, preloadPhotoUrls]);
 
 
   /**
@@ -278,11 +274,7 @@ export const useInspirat = singletonHook(initialValue, () => {
     return () => {
       clearTimeout(timeoutHandle);
     };
-  }, [
-    dayOffset,
-    shouldResetPhoto,
-    showDevTools
-  ]);
+  }, [dayOffset, shouldResetPhoto, showDevTools, updatePhotosWithTimer]);
 
 
   /**
@@ -293,7 +285,7 @@ export const useInspirat = singletonHook(initialValue, () => {
     void preloadPhotoUrls(currentPhotoFromState).then(urls => {
       setCurrentPhotoUrls(urls);
     });
-  }, [currentPhotoFromState]);
+  }, [currentPhotoFromState, preloadPhotoUrls]);
 
 
   /**
@@ -304,7 +296,7 @@ export const useInspirat = singletonHook(initialValue, () => {
       window.debug = window.debug || {};
       setShowDevTools(true);
     }
-  }, []);
+  }, [query]);
 
 
   /**

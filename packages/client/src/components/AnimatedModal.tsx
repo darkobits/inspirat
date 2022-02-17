@@ -6,7 +6,7 @@ import { GenericFunction, ElementProps } from 'etc/types';
 import useHideCallback from 'hooks/use-hide-callback';
 
 
-interface Props extends ElementProps<HTMLModElement> {
+interface Props extends ElementProps {
   onClose?: GenericFunction | undefined;
   onBeginHide?: () => void;
   show?: boolean | undefined;

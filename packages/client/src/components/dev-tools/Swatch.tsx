@@ -52,8 +52,8 @@ export const Swatch = ({ color, children, ...props }: SwatchProps) => {
         placement="auto"
         flip
       >
-        {props => (
-          <Tooltip id={tooltipId} {...props}>
+        {overlayProps => (
+          <Tooltip id={tooltipId} {...overlayProps as any}>
             {children}
           </Tooltip>
         )}

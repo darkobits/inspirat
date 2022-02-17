@@ -2,6 +2,7 @@ import type { Serverless } from 'serverless/aws';
 
 
 const serverlessConfiguration: Serverless = {
+  frameworkVersion: '3',
   org: 'darkobits',
   app: 'inspirat',
   service: 'inspirat',
@@ -20,16 +21,19 @@ const serverlessConfiguration: Serverless = {
     name: 'aws',
     region: 'us-west-1',
     runtime: 'nodejs14.x',
-    lambdaHashingVersion: 20201221,
     stage: '${self:custom.stage}',
     environment: {
       STAGE: '${self:custom.stage}'
     },
-    iamRoleStatements: [{
-      Effect: 'Allow',
-      Action: ['s3:*'],
-      Resource: 'arn:aws:s3:::inspirat-${self:custom.stage}/*'
-    }],
+    iam: {
+      role: {
+        statements: [{
+          Effect: 'Allow',
+          Action: ['s3:*'],
+          Resource: 'arn:aws:s3:::inspirat-${self:custom.stage}/*'
+        }]
+      }
+    },
     apiGateway: {
       shouldStartNameWithService: true
     }
