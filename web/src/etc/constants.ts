@@ -146,5 +146,6 @@ export const BACKGROUND_RULE_OVERRIDES: {[key: string]: BackgroundImageOverrides
   'qpemSW6_1Z0': {
     backgroundPosition: 'center top',
     transform: 'scale(1.2) translateY(8.3333333%)'
-  }
+  },
+  'aO1jND20GHA': { backgroundPosition: 'center bottom' }
 };
