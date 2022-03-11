@@ -1,0 +1,9 @@
+{
+  "extends": "@darkobits/ts",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "./*", "../*"]
+    }
+  }
+}

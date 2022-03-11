@@ -1,122 +1,86 @@
 import path from 'path';
-import { nr } from '@darkobits/ts';
-import { dirname } from '@darkobits/fd-name';
 
 
-export default nr(({
+export default ({
   createCommand,
-  createBabelNodeCommand,
-  createScript,
-  isCI
+  createNodeCommand,
+  createScript
 }) => {
-  const BACKEND_CWD = path.resolve(dirname(), 'packages', 'backend');
-  const CLIENT_CWD = path.resolve(dirname(), 'packages', 'client');
+  const cmdOpts = {
+    execaOptions: {
+      env: {
+        AWS_PROFILE: 'inspirat'
+      },
+      stdio: 'inherit'
+    }
+  };
 
 
-  // ----- Backend Scripts -----------------------------------------------------
-
-  createBabelNodeCommand('backend-deploy-dev', ['serverless', ['deploy']], {
-    execaOptions: { cwd: BACKEND_CWD }
-  });
-
-  createBabelNodeCommand('backend-deploy-prod', ['serverless', ['deploy'], { stage: 'prod' }], {
-    execaOptions: { cwd: BACKEND_CWD }
-  });
-
-  createBabelNodeCommand('backend-build', ['serverless', ['package']], {
-    execaOptions: { cwd: BACKEND_CWD }
-  });
-
-  createBabelNodeCommand('backend-invoke-dev', ['serverless', ['invoke'], {
-    function: 'sync-collection',
-    stage: 'dev'
-  }], {
-    execaOptions: { cwd: BACKEND_CWD }
-  });
-
-  createScript('backend.build', {
-    group: 'Backend',
-    description: 'Build the backend app.',
-    run: [
-      'cmd:backend-build'
-    ]
-  });
-
-  createScript('backend.deploy.dev', {
-    group: 'Backend',
-    description: 'Deploy the backend to the development environment.',
-    run: [
-      'cmd:backend-deploy-dev'
-    ]
-  });
-
-  createScript('backend.deploy.prod', {
-    group: 'Backend',
-    description: 'Deploy the backend to the production environment.',
-    run: [
-      'cmd:backend-deploy-prod'
-    ]
-  });
-
-  createScript('backend.invoke.dev', {
-    group: 'Backend',
-    description: 'Invoke the backend sync function in the "dev" environment.',
-    run: [
-      'cmd:backend-invoke-dev'
-    ]
-  });
-
-
-  // ----- Client Scripts ------------------------------------------------------
-
-  createScript('client.build', {
-    group: 'Client',
-    description: 'Build the client app.',
-    run: [
-      createCommand('client-build', ['vite', ['build', '--emptyOutDir']], {
-        execaOptions: { cwd: CLIENT_CWD }
-      })
-    ]
-  });
-
-  createScript('start', {
-    group: 'Client',
-    description: 'Start a Vite development server for the client app.',
-    run: [
-      createCommand('client-start', ['vite', ['serve']], {
-        execaOptions: { cwd: CLIENT_CWD }
-      })
-    ]
-  });
-
-
-  // ----- Global Scripts ------------------------------------------------------
+  // ----- Build ---------------------------------------------------------------
 
   createScript('build', {
     group: 'Build',
-    description: 'Build the client & backend.',
+    description: 'Build the app and synthesize stacks.',
     run: [
-      ['client.build', 'backend.build']
+      createCommand('sst', ['sst', ['build']], cmdOpts)
     ]
   });
 
-  createScript('prepare', {
-    group: 'Lifecycles',
-    description: 'Bootstrap dependencies and – if not in a CI environment – build the project.',
+
+  // ----- Develop -------------------------------------------------------------
+
+  const CLIENT_ROOT = path.resolve('web');
+
+  createScript('backend.start', {
+    group: 'Development',
+    description: 'Start a live development environment using Serverless Stack.',
     run: [
-      createCommand('lerna-bootstrap', ['lerna', ['bootstrap']], {
+      createCommand('sst', ['sst', ['start']], cmdOpts)
+    ]
+  });
+
+  createScript('web.start', {
+    group: 'Development',
+    description: 'Start the Vite development server.',
+    run: [
+      createNodeCommand('wait', [path.resolve('./scripts/wait-for-stack.js')]),
+      createNodeCommand('sst-env', ['sst-env', ['--', 'vite']], {
+        execaOptions: {
+          cwd: CLIENT_ROOT,
+          env: {
+            TSX_ROOT: CLIENT_ROOT
+          }
+        }
+      })
+    ]
+  });
+
+
+  // ----- Housekeeping --------------------------------------------------------
+
+  createScript('deps.check', {
+    group: 'Housekeeping',
+    description: 'Check for newer versions of installed dependencies.',
+    run: [
+      createCommand('npm-check-updates', ['npm-check-updates'], {
         execaOptions: { stdio: 'inherit' }
-      }),
-      !isCI && 'build'
-    ].filter(Boolean)
-  });
-
-  createScript('clean', {
-    group: 'Utility',
-    description: 'Remove all node_modules folders.',
-    run: [
-      createCommand('lerna-clean', ['lerna', ['clean'], { yes: true }]),
-      createCommand('del-root-node-modules', ['del', ['./node_modules']])
+      })
     ]
   });
-});
+
+  createScript('remove', {
+    group: 'Housekeeping',
+    description: 'Remove all stacks and resources from AWS.',
+    run: [
+      createCommand('sst', ['sst', ['remove']], cmdOpts)
+    ]
+  });
+
+  createScript('console', {
+    group: 'Housekeeping',
+    description: 'Start a debug session.',
+    run: [
+      createCommand('sst', ['sst', ['console']], cmdOpts)
+    ]
+  });
+};

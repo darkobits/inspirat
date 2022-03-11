@@ -1,0 +1,6 @@
+{
+  "extends": "@darkobits/ts",
+  "compilerOptions": {
+    "skipLibCheck": true
+  }
+}

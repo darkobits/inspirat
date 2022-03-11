@@ -89,7 +89,10 @@ dist
 # Linaria's cache folder.
 .linaria-cache
 
-NOTES.md
+/NOTES.md
 
 # Local Netlify folder
 .netlify
+
+/.build
+/.sst

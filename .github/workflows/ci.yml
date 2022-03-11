@@ -4,99 +4,100 @@ on:
   - pull_request
 jobs:
   # ----- Prepare --------------------------------------------------------------
-  prepare:
-    name: Prepare
-    runs-on: ubuntu-latest
-    env:
-      AWS_REGION: ${{ secrets.AWS_REGION }}
-      # BUCKET_URL: ${{ secrets.BUCKET_URL }}
-      UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-      UNSPLASH_SECRET_KEY: ${{ secrets.UNSPLASH_SECRET_KEY }}
-    steps:
-      - name: Fetch Repository
-        uses: actions/checkout@v2
-        with:
-          # N.B. Ensures all tags are fetched so we can introspect the
-          # repository.
-          fetch-depth: 0
-      - name: Set-Up Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-          cache: npm
-      - name: Install Dependencies
-        run: |
-          npm i -g npm@7
-          npm ci
-      - name: Cache Repo State
-        uses: actions/cache@v1
-        with:
-          key: inspirat-${{ github.sha }}
-          path: .
-  # ----- Deploy Clients -------------------------------------------------------
-  deploy-frontlawn:
-    name: Build & Deploy frontlawn.net
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' }}
-    env:
-      TITLE: Front Lawn
-      BUCKET_URL: ${{ secrets.BUCKET_URL }}
-      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_FRONTLAWN }}
-      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-    steps:
-      - name: Fetch Repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Use Repo Cache
-        uses: actions/cache@v1
-        with:
-          key: inspirat-${{ github.sha }}
-          path: .
-      - name: Set-Up Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-          cache: npm
-      - name: Build Project
-        run: npx nr client.build
-      - name: Deploy
-        uses: netlify/actions/cli@master
-        with:
-          args: deploy --prod --dir=packages/client/dist
+  # prepare:
+  #   name: Prepare
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     AWS_REGION: ${{ secrets.AWS_REGION }}
+  #     # BUCKET_URL: ${{ secrets.BUCKET_URL }}
+  #     UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+  #     UNSPLASH_SECRET_KEY: ${{ secrets.UNSPLASH_SECRET_KEY }}
+  #   steps:
+  #     - name: Fetch Repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         # N.B. Ensures all tags are fetched so we can introspect the
+  #         # repository.
+  #         fetch-depth: 0
+  #     - name: Set-Up Node
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 14
+  #         cache: npm
+  #     - name: Install Dependencies
+  #       run: |
+  #         npm i -g npm@7
+  #         npm ci
+  #     - name: Cache Repo State
+  #       uses: actions/cache@v1
+  #       with:
+  #         key: inspirat-${{ github.sha }}
+  #         path: .
 
-  deploy-inspirat:
-    name: Build & Deploy inspir.at
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' }}
-    env:
-      TITLE: Inspirat
-      BUCKET_URL: ${{ secrets.BUCKET_URL }}
-      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_INSPIRAT }}
-      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-    steps:
-      - name: Fetch Repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Use Repo Cache
-        uses: actions/cache@v1
-        with:
-          key: inspirat-${{ github.sha }}
-          path: .
-      - name: Set-Up Node
-        uses: actions/setup-node@v2
-        with:
-          node-version: 14
-          cache: npm
-      - name: Build Project
-        run: npx nr client.build
-      - name: Deploy
-        uses: netlify/actions/cli@master
-        with:
-          args: deploy --prod --dir=packages/client/dist
+  # ----- Deploy Clients -------------------------------------------------------
+  # deploy-frontlawn:
+  #   name: Build & Deploy frontlawn.net
+  #   needs: prepare
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.ref == 'refs/heads/master' }}
+  #   env:
+  #     TITLE: Front Lawn
+  #     BUCKET_URL: ${{ secrets.BUCKET_URL }}
+  #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_FRONTLAWN }}
+  #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+  #   steps:
+  #     - name: Fetch Repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Use Repo Cache
+  #       uses: actions/cache@v1
+  #       with:
+  #         key: inspirat-${{ github.sha }}
+  #         path: .
+  #     - name: Set-Up Node
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 14
+  #         cache: npm
+  #     - name: Build Project
+  #       run: npx nr client.build
+  #     - name: Deploy
+  #       uses: netlify/actions/cli@master
+  #       with:
+  #         args: deploy --prod --dir=packages/client/dist
+
+  # deploy-inspirat:
+  #   name: Build & Deploy inspir.at
+  #   needs: prepare
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.ref == 'refs/heads/master' }}
+  #   env:
+  #     TITLE: Inspirat
+  #     BUCKET_URL: ${{ secrets.BUCKET_URL }}
+  #     NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID_INSPIRAT }}
+  #     NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+  #   steps:
+  #     - name: Fetch Repository
+  #       uses: actions/checkout@v2
+  #       with:
+  #         fetch-depth: 0
+  #     - name: Use Repo Cache
+  #       uses: actions/cache@v1
+  #       with:
+  #         key: inspirat-${{ github.sha }}
+  #         path: .
+  #     - name: Set-Up Node
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: 14
+  #         cache: npm
+  #     - name: Build Project
+  #       run: npx nr client.build
+  #     - name: Deploy
+  #       uses: netlify/actions/cli@master
+  #       with:
+  #         args: deploy --prod --dir=packages/client/dist
 
   # ----- Publish Chrome Extension ---------------------------------------------
   # publish:
