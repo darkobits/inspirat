@@ -48,7 +48,12 @@ export default class ApiStack extends sst.Stack {
         UNSPLASH_SECRET_KEY: env<string>('UNSPLASH_SECRET_KEY', true)
       },
       // TODO: Try to use more granular permissions here.
-      permissions: [this.bucket]
+      permissions: [this.bucket],
+      // Try to keep our AWS bill down by reducing the volume of logs we keep in
+      // CloudWatch.
+      logRetention: local
+        ? cdk.aws_logs.RetentionDays.ONE_DAY
+        : cdk.aws_logs.RetentionDays.ONE_WEEK
     });
 
 
