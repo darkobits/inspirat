@@ -1,6 +1,7 @@
 {
   "extends": "@darkobits/ts",
   "compilerOptions": {
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "module": "ESNext"
   }
 }

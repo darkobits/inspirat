@@ -1,36 +1,9 @@
-import os from 'os';
 import * as sst from '@serverless-stack/resources';
-import execa from 'execa';
-import { machineIdSync } from 'node-machine-id';
 
 import ApiStack from 'stacks/api';
 import WebStack from 'stacks/web';
 
-const USERNAME = os.userInfo().username;
-const UID = `${USERNAME}-${machineIdSync().slice(0, 7)}`;
-
-
-function gitShaShort() {
-  const result = execa.sync('git', ['rev-parse', '--short', 'HEAD']);
-  return result.stdout.trim();
-}
-
-
-/**
- * Wraps an SST app callback, modifying the `stage` of the provided app.
- */
-function withDynamicStage(callback: (app: sst.App) => void) {
-  return (app: sst.App) => {
-    if (app.local || app.stage.startsWith('local') || app.stage === app.name) {
-      // @ts-expect-error
-      app.stage = `local-${UID}`;
-      // @ts-expect-error
-      app.local = true;
-    }
-
-    callback(app);
-  }
-}
+import { gitShaShort, username, withDynamicStage } from 'utils';
 
 
 /**
@@ -41,7 +14,7 @@ function withDynamicStage(callback: (app: sst.App) => void) {
 export default withDynamicStage((app: sst.App) => {
   const api = new ApiStack(app, 'api', {
     description: app.local
-      ? `Development Inspirat API stack for ${USERNAME}.`
+      ? `Development Inspirat API stack for ${username()}.`
       : `Inspirat ${app.stage} API stack.`,
     tags: {
       'sst:stack': 'api',
@@ -51,7 +24,7 @@ export default withDynamicStage((app: sst.App) => {
 
   new WebStack(app, 'web', {
     description: app.local
-      ? `Development Inspirat Web stack for ${USERNAME}.`
+      ? `Development Inspirat Web stack for ${username()}.`
       : `Inspirat ${app.stage} Web stack.`,
     tags: {
       'sst:stack': 'web',
@@ -73,7 +46,7 @@ export const debugApp = withDynamicStage((app: sst.DebugApp) => {
   // there are no conflicts when multiple users are managing debug stacks at the
   // same time.
   new sst.DebugStack(app, 'debug', {
-    description: `Debug stack for ${USERNAME}.`,
+    description: `Debug stack for ${username()}.`,
     tags: { 'sst:stack': 'debug' }
   });
 });

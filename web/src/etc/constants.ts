@@ -19,6 +19,7 @@ if (!TITLE) throw new Error('TITLE is not set.');
  */
 export const BUCKET_URL = VITE_BUCKET_URL as string;
 if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
+console.debug('BUCKET_URL', BUCKET_URL);
 
 
 /**

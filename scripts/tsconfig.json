@@ -1,0 +1,10 @@
+{
+  "extends": "@darkobits/ts",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "paths": {
+      "*": ["*", "./*", "../*"]
+    }
+  }
+}

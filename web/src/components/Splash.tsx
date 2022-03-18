@@ -66,8 +66,6 @@ export const Splash: React.FunctionComponent<SplashProps> = ({ onMouseDown }) =>
 
     const newPhotoOverrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
 
-    console.log('active', activeElement);
-
     if (newPhotoOverrides) {
       if (activeElement === 'A') {
         setAPhotoOverrides(newPhotoOverrides);

@@ -1,7 +1,12 @@
 import path from 'path';
+import { createRequire } from 'module';
+
+
+const require = createRequire(import.meta.url);
 
 
 export default ({
+  createBabelNodeCommand,
   createCommand,
   createNodeCommand,
   createScript
@@ -27,6 +32,25 @@ export default ({
   });
 
 
+  createScript('publish', {
+    group: 'Build',
+    description: 'Publish the Inspirat client to the Chrome Web Store.',
+    run: [
+      createCommand('publish', ['babel-node', [
+        // '--loader',
+        // 'ts-node/esm',
+        '--extensions=".ts,.js"',
+        '--',
+        'publish-bin.ts'
+      ]], {
+        execaOptions: {
+          cwd: path.resolve('scripts')
+        }
+      })
+    ]
+  });
+
+
   // ----- Develop -------------------------------------------------------------
 
   const CLIENT_ROOT = path.resolve('web');
@@ -45,16 +69,21 @@ export default ({
     run: [
       createNodeCommand('wait', [path.resolve('./scripts/wait-for-stack.js')]),
       createNodeCommand('sst-env', ['sst-env', ['--', 'vite']], {
-        execaOptions: {
-          cwd: CLIENT_ROOT,
-          env: {
-            TSX_ROOT: CLIENT_ROOT
-          }
-        }
+        execaOptions: { cwd: CLIENT_ROOT }
       })
     ]
   });
 
+
+  // ----- Release -------------------------------------------------------------
+
+  createScript('release.local', {
+    group: 'Release',
+    description: 'Run a local release',
+    run: [
+      createCommand('semantic-release', ['dotenv', ['--', 'semantic-release', '--no-ci']])
+    ]
+  })
 
   // ----- Housekeeping --------------------------------------------------------
 

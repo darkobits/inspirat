@@ -22,9 +22,7 @@ export default class WebStack extends sst.Stack {
 
     const webOptions: Mutable<sst.ViteStaticSiteProps> = {
       path: WEB_PATH,
-      // Set TSX_ROOT here so that Babel and Vite use the correct root directory
-      // when compiling the project. Needed mostly for module resolution.
-      buildCommand: `TSX_ROOT=${WEB_PATH} vite build`,
+      buildCommand: 'vite build --emptyOutDir',
       buildOutput: 'dist',
       typesPath: 'src/sst-env.d.ts',
       environment: {
