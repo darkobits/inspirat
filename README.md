@@ -29,3 +29,8 @@ display a beautiful photograph from Unsplash along with a customizable greeting.
 To use Inspirat with Plash, simply point Plash to [`https://inspir.at`](https://inspir.at). To open the
 Inspirat settings menu, enable **Browsing Mode** from the Plash menu, then click and hold anywhere on
 the screen. When you're done, disable Browsing Mode from the Plash menu.
+
+<br />
+<a href="#top">
+  <img src="https://user-images.githubusercontent.com/441546/189774318-67cf3578-f4b4-4dcc-ab5a-c8210fbb6838.png" style="max-width: 100%;">
+</a>

@@ -1,0 +1,24 @@
+{
+  "private": true,
+  "name": "inspirat-backend",
+  "dependencies": {
+    "@darkobits/log": "2.0.0-beta.16",
+    "@darkobits/env": "^1.3.5",
+    "aws-sdk": "^2.1075.0",
+    "axios": "^0.26.1",
+    "camelcase": "^6.3.0",
+    "node-vibrant": "^3.1.6",
+    "p-retry": "^5.0.0",
+    "p-series": "^2.1.0",
+    "p-queue": "^7.2.0",
+    "parse-link-header": "^2.0.0",
+    "pretty-ms": "^7.0.1",
+    "ramda": "^0.28.0"
+  },
+  "devDependencies": {
+    "@darkobits/fd-name": "^0.1.4",
+    "@types/aws-lambda": "^8.10.92",
+    "@types/parse-link-header": "^1.0.1",
+    "@types/ramda": "^0.27.64"
+  }
+}

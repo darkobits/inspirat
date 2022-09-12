@@ -1,9 +1,0 @@
-{
-  "extends": "@darkobits/tsx/tsconfig.json",
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "*": ["*", "./src/*", "../*"]
-    }
-  }
-}

@@ -16,17 +16,19 @@ export default class ApiStack extends sst.Stack {
 
     // ----- Bucket ------------------------------------------------------------
 
-    this.bucket = new sst.Bucket(this, 's3:inspirat', {
-      s3Bucket: {
-        // Allows deletion of the bucket if it is not empty by automatically
-        // deleting all objects in the bucket.
-        autoDeleteObjects: true,
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-        publicReadAccess: true,
-        cors: [{
-          allowedMethods: ['GET' as any],
-          allowedOrigins: ['*']
-        }],
+    this.bucket = new sst.Bucket(this, 'bucket-inspirat', {
+      cdk: {
+        bucket: {
+          // Allows deletion of the bucket if it is not empty by automatically
+          // deleting all objects in the bucket.
+          autoDeleteObjects: true,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+          publicReadAccess: true,
+          cors: [{
+            allowedMethods: ['GET' as any],
+            allowedOrigins: ['*']
+          }]
+        }
       }
     });
 
@@ -35,9 +37,9 @@ export default class ApiStack extends sst.Stack {
 
     // ----- Function: Sync Collection -----------------------------------------
 
-    this.functions.syncCollection = new sst.Function(this, 'fn:sync-collection', {
-      runtime: 'nodejs14.x',
-      handler: 'backend/src/sync-collection.handler',
+    this.functions.syncCollection = new sst.Function(this, 'fn-sync-collection', {
+      runtime: 'nodejs16.x',
+      handler: 'packages/backend/src/sync-collection.handler',
       timeout: 300,
       environment: {
         STAGE: stage,
@@ -48,12 +50,10 @@ export default class ApiStack extends sst.Stack {
         UNSPLASH_SECRET_KEY: env<string>('UNSPLASH_SECRET_KEY', true)
       },
       // TODO: Try to use more granular permissions here.
-      permissions: [this.bucket],
+      bind: [this.bucket],
       // Try to keep our AWS bill down by reducing the volume of logs we keep in
       // CloudWatch.
-      logRetention: local
-        ? cdk.aws_logs.RetentionDays.ONE_DAY
-        : cdk.aws_logs.RetentionDays.ONE_WEEK
+      logRetention: local ? 'one_day' : 'one_week'
     });
 
 
@@ -61,7 +61,7 @@ export default class ApiStack extends sst.Stack {
 
     // Note: sync-collection is only run automatically in production.
     if (!local) {
-      new sst.Cron(this, 'cron:inspirat', {
+      new sst.Cron(this, 'cron-inspirat', {
         schedule: 'rate(1 hour)',
         job: this.functions.syncCollection
       });
@@ -72,7 +72,7 @@ export default class ApiStack extends sst.Stack {
 
     // Note: sync-collection is only reachable via HTTP for local development.
     if (local) {
-      this.api = new sst.Api(this, 'api:sync-collection', {
+      this.api = new sst.Api(this, 'api-sync-collection', {
         routes: {
           'GET /': this.functions.syncCollection
         }

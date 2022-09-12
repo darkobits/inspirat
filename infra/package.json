@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "name": "inspirat-infra",
+  "devDependencies": {
+    "@darkobits/env": "^1.3.5",
+    "@serverless-stack/resources": "^1.18.4",
+    "aws-cdk-lib": "^2.63.0",
+    "node-machine-id": "^1.1.12"
+  }
+}

@@ -86,9 +86,6 @@ dist
 # Webpack directories.
 .webpack
 
-# Linaria's cache folder.
-.linaria-cache
-
 /NOTES.md
 
 # Local Netlify folder

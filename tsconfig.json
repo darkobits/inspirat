@@ -1,7 +1,8 @@
 {
-  "extends": "@darkobits/ts",
+  "extends": "@darkobits/tsx/tsconfig.json",
   "compilerOptions": {
-    "skipLibCheck": true,
-    "module": "ESNext"
+    "outDir": "dist",
+    "composite": true,
+    "skipLibCheck": true
   }
 }
