@@ -76,7 +76,6 @@ export interface DynamicStageContext {
     // when developing locally.
     if (!Reflect.has(app, 'local') || app.local) {
       Reflect.set(app, 'stage', `local-${localUid}`);
-      console.log('SET STAGE TO', app.stage);
     }
 
     callback({
