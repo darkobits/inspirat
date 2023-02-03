@@ -3,6 +3,11 @@
   "include": ["src"],
   "compilerOptions": {
     "baseUrl": "src",
-    "outDir": "dist"
+    "outDir": "dist",
+    "types": [
+      "node",
+      "vite/client",
+      "vite-plugin-pwa/client"
+    ]
   }
 }
