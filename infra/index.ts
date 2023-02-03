@@ -3,7 +3,7 @@ import * as sst from '@serverless-stack/resources';
 import ApiStack from 'stacks/api';
 import WebStack from 'stacks/web';
 
-import { gitShaShort, username, withDynamicStage } from 'utils';
+import { withUniqueLocalStage } from 'utils';
 
 
 /**
@@ -11,24 +11,24 @@ import { gitShaShort, username, withDynamicStage } from 'utils';
  *
  * See: https://docs.serverless-stack.com/installation#infrastructure
  */
-export default withDynamicStage((app: sst.App) => {
+export default withUniqueLocalStage(({ app, username, gitShaShort }) => {
   const api = new ApiStack(app, 'api', {
     description: app.local
-      ? `Development Inspirat API stack for ${username()}.`
+      ? `Development Inspirat API stack for ${username}.`
       : `Inspirat ${app.stage} API stack.`,
     tags: {
       'sst:stack': 'api',
-      'sst:git': gitShaShort()
+      'sst:git': gitShaShort
     }
   });
 
   new WebStack(app, 'web', {
     description: app.local
-      ? `Development Inspirat Web stack for ${username()}.`
+      ? `Development Inspirat Web stack for ${username}.`
       : `Inspirat ${app.stage} Web stack.`,
     tags: {
       'sst:stack': 'web',
-      'sst:git': gitShaShort()
+      'sst:git': gitShaShort
     }
   }, api);
 });
@@ -37,16 +37,19 @@ export default withDynamicStage((app: sst.App) => {
 
 /**
  * Configures the DebugStack that will be deployed along with the default stacks
- * (above) when `sst start` is used.
+ * (above) when `sst start` is used for local development.
  *
  * See: https://docs.serverless-stack.com/constructs/DebugApp
  */
-export const debugApp = withDynamicStage((app: sst.DebugApp) => {
+export const debugApp = withUniqueLocalStage(({ app, username, gitShaShort }) => {
   // We want to include an ID unique to the current machine/user here to ensure
   // there are no conflicts when multiple users are managing debug stacks at the
   // same time.
   new sst.DebugStack(app, 'debug', {
-    description: `Debug stack for ${username()}.`,
-    tags: { 'sst:stack': 'debug' }
+    description: `Debug stack for ${username}.`,
+    tags: {
+      'sst:stack': 'debug',
+      'sst:git': gitShaShort
+    }
   });
 });
