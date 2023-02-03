@@ -3,12 +3,3 @@
 # Node version to use when building the project in Seed.
 before_compile:
   - n 18.8.0
-
-before_build:
-  # Run the lint command. We need this here because Seed does not invoke our
-  # 'nr build' command to build the project, so this ensures the project is
-  # linted in Seed's CI/CD.
-  # - npx nr lint
-
-after_deploy:
-  - aws lambda invoke --function-name fn-sync-collection /dev/stdout

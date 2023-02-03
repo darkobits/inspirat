@@ -59,8 +59,13 @@ export default class ApiStack extends sst.Stack {
 
     // ----- Cron Job / API Endpoint -------------------------------------------
 
-    // Note: sync-collection is run automatically in stage "production" and
-    // available as an HTTP endpoint for all other stages.
+    /**
+     * Production:
+     * - Run hourly.
+     *
+     * Development & Local:
+     * - Available as an HTTP endpoint for manual invocation.
+     */
     if (stage === 'production') {
       new sst.Cron(this, 'cron-inspirat', {
         schedule: 'rate(1 hour)',
@@ -73,7 +78,7 @@ export default class ApiStack extends sst.Stack {
         }
       });
 
-      this.addOutputs({ 'Sync Collections': this.api.url });
+      this.addOutputs({ 'SyncCollectionsEndpoint': this.api.url });
     }
   }
 }
