@@ -57,21 +57,16 @@ export default class ApiStack extends sst.Stack {
     });
 
 
-    // ----- Cron Job (Production Only) ----------------------------------------
+    // ----- Cron Job / API Endpoint -------------------------------------------
 
-    // Note: sync-collection is only run automatically in production.
-    if (!local) {
+    // Note: sync-collection is run automatically in stage "production" and
+    // available as an HTTP endpoint for all other stages.
+    if (stage === 'production') {
       new sst.Cron(this, 'cron-inspirat', {
         schedule: 'rate(1 hour)',
         job: this.functions.syncCollection
       });
-    }
-
-
-    // ----- API Endpoint (Local Development Only) -----------------------------
-
-    // Note: sync-collection is only reachable via HTTP for local development.
-    if (local) {
+    } else {
       this.api = new sst.Api(this, 'api-sync-collection', {
         routes: {
           'GET /': this.functions.syncCollection
