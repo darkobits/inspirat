@@ -1,7 +1,52 @@
-# Change Log
+# Changelog
 
-All notable changes to this project will be documented in this file.
-See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [0.14.0](https://github.com/darkobits/inspirat/compare/v0.13.2...v0.14.0) (2023-02-03)
+
+
+### ✨ Features
+
+* Use LQIP for progressive enchancement. ([98b367c](https://github.com/darkobits/inspirat/commit/98b367ca8ca2c60452d63331a749e2b6a4ba93ea))
+
+
+### 🐞 Bug Fixes
+
+* Clean up useStorageItem logic. ([199f8f3](https://github.com/darkobits/inspirat/commit/199f8f3bf574db1f451583e0141f52bbcb882b5b))
+
+
+### 📖 Documentation
+
+* Update README. ([8729cd2](https://github.com/darkobits/inspirat/commit/8729cd2796a3cdb1ba88d8c04a640b12b824a8ed))
+* Update README. ([ce5ca25](https://github.com/darkobits/inspirat/commit/ce5ca25c83d9d5c7e1c69a40d21858391fa8b763))
+
+
+### 🏗 Chores
+
+* **client:** Update dependencies. ([9f708c9](https://github.com/darkobits/inspirat/commit/9f708c96872e7a7cc5fe18d402ae51c80514b824))
+* Debugging. ([2c901b3](https://github.com/darkobits/inspirat/commit/2c901b3731d340ec183e9c7fc225f97864e20061))
+* **deps:** Update dependencies. ([253d6dd](https://github.com/darkobits/inspirat/commit/253d6dd14384c93438cae3b4d74259999a775339))
+* Disable GitHub Actions. ([86aac23](https://github.com/darkobits/inspirat/commit/86aac23d9d30595110647507bf41242e92e94b13))
+* **infra:** Add log retention policies. ([296d763](https://github.com/darkobits/inspirat/commit/296d763e1094407e777b55f4034983764585107e))
+* Migrate to `serverless-stack`. ([30540e0](https://github.com/darkobits/inspirat/commit/30540e07f6abc0295960f5e00c791e2156c6d9db))
+* Misc. backend updates. ([6dbbe53](https://github.com/darkobits/inspirat/commit/6dbbe5325520134fd6310e30aec353c257514f19))
+* Misc. client updates. ([1c5b400](https://github.com/darkobits/inspirat/commit/1c5b400e3c7a418b36e536e1eb21515daa1f3b6b))
+* Update dependencies. ([a698bf8](https://github.com/darkobits/inspirat/commit/a698bf88fe552c210ef6760e65806060ca82d0ff))
+* Update dependencies. ([f5d3820](https://github.com/darkobits/inspirat/commit/f5d38205f07b3159cf7c0dd766b42042b891e959))
+* Update to tsx/vite. ([bd84c9c](https://github.com/darkobits/inspirat/commit/bd84c9c2874cbdbd132b8e39773384808ccce24d))
+* Use `semantic-release`. ([011ad54](https://github.com/darkobits/inspirat/commit/011ad545992df08232fb32040af6ff966c86a77c))
+* **web:** Add preliminary support for seasons. ([f83f148](https://github.com/darkobits/inspirat/commit/f83f1482ed763cbc89432d1ca0ab8cae0b490386))
+* **web:** Update overrides. ([09e7dde](https://github.com/darkobits/inspirat/commit/09e7ddeba8005cad26370e78ac02330169a4c625))
+
+
+### 🛠 Refactoring
+
+* **backend:** Use Webpack Serverless preset. ([c72b028](https://github.com/darkobits/inspirat/commit/c72b0284de5b20e01243d397ef07f9a147cb3b25))
+* Reduce hold time for settings. ([095ecb9](https://github.com/darkobits/inspirat/commit/095ecb9fb695dddb341f9e3ad742fddabb8e3459))
+* Switch to chance.js. ([d2a2186](https://github.com/darkobits/inspirat/commit/d2a21865fb96b84b557018753bd74adf4bef4319))
+* Update dependencies, reorganize code, migrate from Linaria to Vanilla Extract. ([78021e3](https://github.com/darkobits/inspirat/commit/78021e3f00a652fe7e75b6f9f279fc900876459d))
+* Update styles. ([8b7450c](https://github.com/darkobits/inspirat/commit/8b7450c59322c40329c142482efe06b7e4e9ec82))
+* Update styles. ([1147722](https://github.com/darkobits/inspirat/commit/1147722649c12296e7e050c26d93a38435055659))
 
 ### [0.13.2](https://github.com/darkobits/inspirat/compare/v0.13.1...v0.13.2) (2020-12-04)
 
