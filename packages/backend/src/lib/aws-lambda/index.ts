@@ -11,8 +11,6 @@ import {
   AWSLambdaMiddlewareResponse
 } from './types';
 
-// eslint-disable-next-line import/no-unresolved, import/first
-
 
 function ensureIsArray<T = any, R = T extends Array<any> ? T : Array<T>>(value: T): R {
   if (!value) {
