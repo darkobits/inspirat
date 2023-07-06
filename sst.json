@@ -1,5 +1,0 @@
-{
-  "name": "inspirat",
-  "region": "us-west-1",
-  "main": "infra/index.ts"
-}

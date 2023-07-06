@@ -1,7 +1,21 @@
 {
   "extends": "@darkobits/tsx/tsconfig.json",
   "compilerOptions": {
-    "composite": true,
-    "skipLibCheck": true
-  }
+    "baseUrl": "src",
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "types": [
+      "node",
+      "vite/client",
+      "vite-plugin-svgr/client",
+      "vite-plugin-pwa/client"
+    ]
+  },
+  "include": [
+    "**/.eslintrc.cjs",
+    "src/**/*",
+    "./nr.config.ts",
+    "./sst.config.ts",
+    "./vite.config.ts"
+  ]
 }
