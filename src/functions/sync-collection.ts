@@ -23,7 +23,7 @@ import {
 const PHOTO_RESOURCE_PATHS = [
   ['id'],
   ['links', 'html'],
-  ['location', 'title'],
+  ['location'],
   ['urls', 'full'],
   ['user', 'links', 'html'],
   ['user', 'name']
@@ -81,7 +81,7 @@ async function computeInspiratPhotoData(unsplashPhotoId: string): Promise<Inspir
  * the database. In a subsequent function call, we update the incomplete record
  * with a response from the /photos API.
  */
-const handlerImpl: AWSLambdaMiddleware = async () => {
+const handlerImpl: AWSLambdaMiddleware = async ({ response }) => {
   const startTime = Date.now();
 
   const STAGE = env('STAGE', true);
@@ -115,8 +115,10 @@ const handlerImpl: AWSLambdaMiddleware = async () => {
    * objects. This process will conserve existing photos, handle new photos, and
    * ensure deleted photos are removed.
    */
-  const body = await pSeries(R.map(collectionId => async () => {
-    const inspiratCollection = R.find(R.propEq('id', collectionId), inspiratPhotoCollections);
+  const body = await pSeries(COLLECTION_IDS.map(collectionId => async () => {
+    const inspiratCollection = inspiratPhotoCollections.find(curCollection => {
+      return curCollection.id === collectionId;
+    });
 
     const [collectionMeta, collectionPhotoIds] = await Promise.all([
       getCollection(collectionId),
@@ -133,11 +135,13 @@ const handlerImpl: AWSLambdaMiddleware = async () => {
 
     // Compute a list of all photo IDs found in the Unsplash collection that are
     // not in the current collection.
-    const photoIdsToAdd = R.differenceWith(
-      (id, photo) => id === photo.id,
-      collectionPhotoIds,
-      inspiratCollection?.photos ?? []
-    );
+    const photoIdsToAdd = collectionPhotoIds.filter(curPhotoId => {
+      const photoIsInExistingCollection = inspiratCollection?.photos.find(existingPhoto => {
+        return existingPhoto.id === curPhotoId;
+      });
+
+      return !photoIsInExistingCollection;
+    });
 
     const photosToAdd = R.reject(R.isNil, await asyncTaskQueue.addAll(photoIdsToAdd.map(photoId => async () => {
       log.info(`├─ Computing data for new photo ${log.chalk.green(photoId)}.`);
@@ -166,10 +170,9 @@ const handlerImpl: AWSLambdaMiddleware = async () => {
     // Filter the existing list of photos based on whether its ID appears in the
     // Unsplash collection. This ensures that if a photo is deleted from an
     // Unsplash collection, it will be removed here as well.
-    const photosToKeep = R.filter(
-      photo => R.includes(photo.id, collectionPhotoIds),
-      inspiratCollection?.photos ?? []
-    );
+    const photosToKeep = inspiratCollection?.photos.filter(curPhoto => {
+      return collectionPhotoIds.includes(curPhoto.id);
+    }) ?? [];
 
     const numDeletedPhotos = inspiratCollection ? inspiratCollection.photos.length - collectionPhotoIds.length : 0;
     const photos = R.sortBy(R.prop('id'), R.concat(photosToAdd, photosToKeep));
@@ -190,7 +193,7 @@ const handlerImpl: AWSLambdaMiddleware = async () => {
       title: collectionMeta.title,
       photos
     } as InspiratPhotoCollection;
-  }, COLLECTION_IDS));
+  }));
 
 
   // ----- [4] Upload Collection to S3 -----------------------------------------
@@ -207,6 +210,13 @@ const handlerImpl: AWSLambdaMiddleware = async () => {
 
   const runTime = Date.now() - startTime;
   log.info(`Done in ${log.chalk.yellow(prettyMs(runTime))}`);
+
+  response.body = {
+    totalAdditions,
+    totalDeletions,
+    totalPhotos,
+    runTime: prettyMs(runTime)
+  };
 };
 
 

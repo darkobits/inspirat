@@ -24,7 +24,13 @@ export interface InspiratPhotoResource {
     html: string;
   };
   location: {
-    title: string;
+    name: string | null;
+    city: string | null;
+    country: string | null;
+    position: {
+      latitude: number | null;
+      longitude: number | null;
+    };
   };
   urls: {
     full: string;
