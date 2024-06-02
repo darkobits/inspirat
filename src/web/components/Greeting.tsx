@@ -1,9 +1,9 @@
-import { rgba as polishedRgba } from 'polished';
+// import { rgba as polishedRgba } from 'polished';
 import React from 'react';
 
 import { InspiratPhotoResource } from 'etc/types';
 import { useInspirat } from 'web/hooks/use-inspirat';
-import { compositeTextShadow } from 'web/lib/typography';
+// import { compositeTextShadow } from 'web/lib/typography';
 import { rgba } from 'web/lib/utils';
 
 
@@ -14,10 +14,10 @@ import classes from './Greeting.css';
  * Returns a compound text-shadow string based on the swatch color for the
  * current photo.
  */
-const textShadow = (color: string) => compositeTextShadow([
-  [0, 0, 3.2, polishedRgba(0, 0, 0, 0.72)],
-  [0, 0, 24, polishedRgba(color, 0.1)]
-]);
+// const textShadow = (color: string) => compositeTextShadow([
+//   [0, 0, 6, polishedRgba(0, 0, 0, 0.24)],
+//   [0, 0, 16, polishedRgba(color, 0.18)]
+// ]);
 
 
 // ----- Greeting Wrapper ------------------------------------------------------
@@ -52,8 +52,7 @@ const GreetingBackground = (props: GreetingBackgroundProps) => {
     <div
       className={classes.greetingBackground}
       style={{
-        color: rgba(props.palette?.darkMuted ?? 'black'),
-        filter: `drop-shadow(0px 0px 10px ${rgba(props.palette?.lightVibrant ?? 'black', 0.5)})`
+        color: rgba(props.palette?.darkMuted ?? 'black')
       }}
     >
       {props.children}
@@ -73,10 +72,11 @@ const GreetingForeground = (props: GreetingForegroundProps) => {
     <div
       className={classes.greetingForeground}
       style={{
-        color: 'white',
-        // color: rgba(props.palette?.lightMuted ?? 'black'),
-        opacity: 1,
-        textShadow: textShadow(rgba(props.palette?.darkMuted ?? 'black'))
+        color: rgba(props.palette?.lightVibrant ?? 'white', 1),
+        backgroundColor: rgba(props.palette?.darkMuted ?? 'black', 0.12),
+        borderColor: rgba(props.palette?.lightVibrant ?? 'white', 0.24),
+        textShadow: `0px 0px 4px ${rgba(props.palette?.darkMuted ?? 'black', 0.72)}`,
+        opacity: 1
       }}
     >
       {props.children}

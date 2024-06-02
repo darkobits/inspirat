@@ -1,8 +1,9 @@
-import { assignInlineVars } from '@vanilla-extract/dynamic';
+/* eslint-disable react/jsx-props-no-spreading */
+// import { assignInlineVars } from '@vanilla-extract/dynamic';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
-import classes, { vars } from './BackgroundImage.css';
+import classes from './BackgroundImage.css';
 
 import type { BackgroundImageOverrides, ElementProps, PhotoUrls } from 'web/etc/types';
 
@@ -15,7 +16,7 @@ import type { BackgroundImageOverrides, ElementProps, PhotoUrls } from 'web/etc/
  * pseudo-element, but we also cannot pass props to static vanilla-extract
  * styles. Consider avoiding the ::after approach and using an empty div.
  */
-const DEBUG_BLUR = 1;
+const DEBUG_BLUR = 0;
 
 
 // ----- Background Image Wrapper ----------------------------------------------
@@ -23,38 +24,29 @@ const DEBUG_BLUR = 1;
 /**
  * Props for the BackgroundImage component.
  */
-interface BackgroundImageWrapperProps extends BackgroundImageOverrides {
+interface BackgroundImageWrapperProps extends ElementProps<HTMLDivElement> {
   backgroundImage?: string | void | undefined;
+  overrides: BackgroundImageOverrides;
 }
 
 
 const BackgroundImageWrapper = (props: BackgroundImageWrapperProps) => {
-  const { backgroundImage, ...restProps } = props;
+  const { backgroundImage, overrides = {}, style, ...restProps } = props;
 
   return (
     <div
       className={classes.backgroundImageWrapper}
-      style={assignInlineVars({
-        [vars.backgroundImageWrapper.backdropFilter]: DEBUG_BLUR
-          ? 'none'
-          : `blur(${props.backdrop?.blurRadius ?? '0px'})`,
-        [vars.backgroundImageWrapper.backgroundColor]: DEBUG_BLUR
-          ? 'rgba(255, 0, 0, 0.5)'
-          : `rgba(0, 0, 0, ${props.backdrop?.backgroundOpacity ?? 0.2})`,
-        [vars.backgroundImageWrapper.backgroundImage]: backgroundImage ? `url(${backgroundImage})` : 'none',
-        [vars.backgroundImageWrapper.backgroundPosition]: props.backgroundPosition ?? 'center center',
-        /**
-         * If we don't have a background-image prop, use a default opacity of 0.
-         * Otherwise, if we have an explicit opacity prop, use it. Otherwise,
-         * use an opacity of 1.
-         */
-        [vars.backgroundImageWrapper.opacity]: backgroundImage
-          ? String(props.opacity) || '1'
-          : '0',
-        [vars.backgroundImageWrapper.transitionDuration]: props.transitionDuration ?? 'initial',
-        [vars.backgroundImageWrapper.transitionTimingFunction]: props.transitionTimingFunction ?? 'initial',
-        [vars.backgroundImageWrapper.transform]: props.transform ?? 'initial'
-      })}
+      style={{
+        backdropFilter: DEBUG_BLUR ? 'none' : `blur(${overrides.backdrop?.blurRadius ?? '0px'})`,
+        backgroundColor: DEBUG_BLUR ? 'rgba(255, 0, 0, 0.5)' : `rgba(0, 0, 0, ${overrides.backdrop?.backgroundOpacity ?? 0.2})`,
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
+        backgroundPosition: overrides.backgroundPosition ?? 'center center',
+        opacity: backgroundImage ? overrides.opacity ?? 1 : 0,
+        transitionDuration: overrides.transitionDuration ?? 'initial',
+        transitionTimingFunction: overrides.transitionTimingFunction ?? 'initial',
+        transform: overrides.transform ?? 'initial',
+        ...style
+      }}
       // eslint-disable-next-line react/jsx-props-no-spreading
       {...restProps}
     />
@@ -65,12 +57,13 @@ const BackgroundImageWrapper = (props: BackgroundImageWrapperProps) => {
 // ----- Background Image ------------------------------------------------------
 
 
-export interface Props extends ElementProps<HTMLDivElement> {
+export interface BackgroundImageProps extends ElementProps<HTMLDivElement> {
   photoUrls: PhotoUrls | void;
+  overrides: BackgroundImageOverrides;
 }
 
 
-const BackgroundImage = ({ photoUrls }: Props) => {
+const BackgroundImage = ({ photoUrls, overrides, ...restProps }: BackgroundImageProps) => {
   const [lqipUrl, setLqipUrl] = React.useState<string | void>();
   const [fullUrl, setFullUrl] = React.useState<string | void>();
 
@@ -95,8 +88,8 @@ const BackgroundImage = ({ photoUrls }: Props) => {
   }, [photoUrls]);
 
   return (<>
-    <BackgroundImageWrapper backgroundImage={lqipUrl} />
-    <BackgroundImageWrapper backgroundImage={fullUrl} />
+    <BackgroundImageWrapper backgroundImage={lqipUrl} overrides={overrides} {...restProps} />
+    <BackgroundImageWrapper backgroundImage={fullUrl} overrides={overrides} {...restProps} />
   </>);
 };
 

@@ -32,8 +32,15 @@ const classes = {
     position: 'absolute',
     width: 'max-content',
     zIndex: 0,
-    mixBlendMode: 'plus-lighter'
-    // backdropFilter: 'blur(2px)'
+    mixBlendMode: 'plus-lighter',
+    backdropFilter: 'blur(16px)',
+    boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.12)',
+    borderRadius: '1rem',
+    paddingTop: '32px',
+    paddingLeft: '32px',
+    paddingRight: '32px',
+    paddingBottom: '12px'
+    // border: '1px solid red'
     // background: `radial-gradient(
     //   circle at center,
     //   transparent 0%,
@@ -42,7 +49,14 @@ const classes = {
     /* mix-blend-mode: color-burn; */
   }),
   greetingForeground: style({
+    borderRadius: '1rem',
+    borderWidth: '1px',
+    borderStyle: 'solid',
     alignItems: 'center',
+    paddingTop: '32px',
+    paddingLeft: '32px',
+    paddingRight: '32px',
+    paddingBottom: '12px',
     color: 'inherit',
     display: 'flex',
     height: 'min-content',
@@ -57,7 +71,7 @@ const classes = {
 globalStyle(`${classes.greetingWrapper} *`, {
   fontFamily: 'inherit',
   fontSize: 'inherit',
-  fontWeight: 'inherit',
+  fontWeight: 500,
   letterSpacing: 'inherit',
   lineHeight: 'inherit',
   pointerEvents: 'inherit'

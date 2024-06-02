@@ -1,5 +1,6 @@
 import mousetrap from 'mousetrap';
 import React from 'react';
+import { throttle } from 'throttle-debounce';
 
 import { LoadingIndicator } from 'web/components/dev-tools/LoadingIndicator';
 import { Palette } from 'web/components/dev-tools/Palette';
@@ -35,13 +36,13 @@ export const DevTools = () => {
       return;
     }
 
-    mousetrap.bind('left', () => {
+    mousetrap.bind('left', throttle(5000, () => {
       setDayOffset('decrement');
-    });
+    }, { noTrailing: true, debounceMode: true }));
 
-    mousetrap.bind('right', () => {
+    mousetrap.bind('right', throttle(5000, () => {
       setDayOffset('increment');
-    });
+    }, { noTrailing: true, debounceMode: true }));
 
     return () => {
       mousetrap.unbind('left');

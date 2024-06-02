@@ -1,18 +1,4 @@
-import { style, createVar } from '@vanilla-extract/css';
-
-
-export const vars = {
-  backgroundImageWrapper: {
-    backdropFilter: createVar(),
-    backgroundColor: createVar(),
-    backgroundImage: createVar(),
-    backgroundPosition: createVar(),
-    opacity: createVar(),
-    transitionDuration: createVar(),
-    transitionTimingFunction: createVar(),
-    transform: createVar()
-  }
-};
+import { style } from '@vanilla-extract/css';
 
 export default {
   /**
@@ -20,22 +6,22 @@ export default {
    */
   backgroundImageWrapper: style({
     backgroundAttachment: 'fixed',
-    backgroundImage: vars.backgroundImageWrapper.backgroundImage,
-    backgroundPosition: vars.backgroundImageWrapper.backgroundPosition,
+    // backgroundImage: vars.backgroundImageWrapper.backgroundImage,
+    // backgroundPosition: vars.backgroundImageWrapper.backgroundPosition,
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
     bottom: 0,
     display: 'block',
     left: 0,
-    opacity: vars.backgroundImageWrapper.opacity,
+    // opacity: vars.backgroundImageWrapper.opacity,
     pointerEvents: 'none',
     position: 'fixed',
     right: 0,
     top: 0,
-    transform: vars.backgroundImageWrapper.transform,
-    transitionDuration: vars.backgroundImageWrapper.transitionDuration,
+    // transform: vars.backgroundImageWrapper.transform,
+    // transitionDuration: vars.backgroundImageWrapper.transitionDuration,
     transitionProperty: 'opacity',
-    transitionTimingFunction: vars.backgroundImageWrapper.transitionTimingFunction,
+    // transitionTimingFunction: vars.backgroundImageWrapper.transitionTimingFunction,
     zIndex: 0
 
     // TODO: This isn't working, fix later.

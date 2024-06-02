@@ -31,7 +31,7 @@ if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
  */
 export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'production'
   ? '5s'
-  : '0.25s';
+  : '0.5s';
 
 
 /**
@@ -42,8 +42,8 @@ export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'prod
  * animations.
  */
 export const BACKGROUND_TRANSITION_FUNCTION = import.meta.env.NODE_ENV === 'production'
-  ? 'ease-in'
-  : 'linear';
+  ? 'ease-in-out'
+  : 'ease-in';
 
 
 /**
@@ -147,5 +147,6 @@ export const BACKGROUND_RULE_OVERRIDES: {[key: string]: BackgroundImageOverrides
     backgroundPosition: 'center top',
     transform: 'scale(1.2) translateY(8.3333333%)'
   },
-  'aO1jND20GHA': { backgroundPosition: 'center bottom' }
+  'aO1jND20GHA': { backgroundPosition: 'center bottom' },
+  'Fkwj-xk6yck': { transform: 'rotate(-1.2deg) scale(1.1)' }
 };

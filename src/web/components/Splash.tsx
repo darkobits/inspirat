@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import ms from 'ms';
 import React from 'react';
 
@@ -31,49 +32,32 @@ export const Splash = ({ onMouseDown }: SplashProps) => {
   const [bPhotoUrls, setBPhotoUrls] = React.useState<PhotoUrls | void>();
   const [aPhotoOverrides, setAPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
   const [bPhotoOverrides, setBPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
-  const [transitionDuration, setTransitionDuration] = React.useState('0s');
+  const [transitionDuration, setTransitionDuration] = React.useState(BACKGROUND_TRANSITION_DURATION);
   const { currentPhoto, currentPhotoUrls } = useInspirat();
-  const [activeElement, toggleActiveElement] = React.useReducer((prev: string) => (prev === 'A' ? 'B' : 'A'), 'A');
+  const [turnCount, setTurnCount] = React.useState(0);
+  const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
 
-
-  /**
-   * [Effect] When the current photo changes, updates the background-image URL
-   * of the inactive BackgroundImage component, toggles the active component,
-   * then clears the URL of the new inactive component after the transition
-   * duration has elapsed.
-   *
-   * N.B. This effect must not use activeElement in its dependency array or an
-   * infinite loop will occur because this effect triggers an update to
-   * activeElement.
-   */
   React.useEffect(() => {
-    if (!currentPhoto) return;
-
-    const newPhotoOverrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
-
-    if (newPhotoOverrides) {
-      if (activeElement === 'A') {
-        setAPhotoOverrides(newPhotoOverrides);
-      } else {
-        setBPhotoOverrides(newPhotoOverrides);
-      }
-    }
-
-    // Toggle active elements to trigger CSS opacity transition.
-    toggleActiveElement();
-  }, [currentPhoto]);
+    setTurnCount(prev => prev + 1);
+  }, [currentPhoto?.id]);
 
 
   /**
    * [Effect] Handles changes to photo URLs.
    */
   React.useEffect(() => {
+    if (!currentPhoto) return;
     if (!currentPhotoUrls) return;
+
+    const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
+    const newPhotoOverrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
 
     if (activeElement === 'A') {
       setAPhotoUrls(currentPhotoUrls);
+      setAPhotoOverrides(newPhotoOverrides);
     } else {
       setBPhotoUrls(currentPhotoUrls);
+      setBPhotoOverrides(newPhotoOverrides);
     }
 
     // To ensure the first photo always appears immediately, but that subsequent
@@ -95,43 +79,47 @@ export const Splash = ({ onMouseDown }: SplashProps) => {
     const timeoutHandle = setTimeout(() => {
       if (activeElement === 'A') {
         setBPhotoUrls();
+        setBPhotoOverrides({});
       } else {
         setAPhotoUrls();
+        setAPhotoOverrides({});
       }
     }, ms(transitionDuration));
 
     return () => {
       clearTimeout(timeoutHandle);
     };
-  }, [
-    aPhotoUrls,
-    activeElement,
-    bPhotoUrls,
-    currentPhotoUrls,
-    transitionDuration
-  ]);
+  }, [activeElement]);
 
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={classes.splash}
       onMouseDown={onMouseDown}
     >
       <BackgroundImage
         id="A"
         photoUrls={aPhotoUrls}
-        opacity={activeElement === 'A' ? 1 : 0}
-        transitionDuration={transitionDuration}
-        transitionTimingFunction={BACKGROUND_TRANSITION_FUNCTION}
-        {...aPhotoOverrides}
+        overrides={aPhotoOverrides}
+        style={{
+          opacity: activeElement === 'A' ? 1 : 0,
+          transitionProperty: 'opacity',
+          transitionDuration,
+          transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
+        }}
       />
       <BackgroundImage
         id="B"
         photoUrls={bPhotoUrls}
-        opacity={activeElement === 'B' ? 1 : 0}
-        transitionDuration={transitionDuration}
-        transitionTimingFunction={BACKGROUND_TRANSITION_FUNCTION}
-        {...bPhotoOverrides}
+        overrides={bPhotoOverrides}
+        style={{
+          opacity: activeElement === 'B' ? 1 : 0,
+          transitionProperty: 'opacity',
+          transitionDuration,
+          transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
+        }}
       />
       <Greeting />
       <SplashLower />
