@@ -37,7 +37,6 @@ const config: SSTConfig = {
   stacks: app => {
     app.stack(ApiStack);
     app.stack(WebStack);
-    // @ts-expect-error
     Tags.of(app).add('version', gitDescribe());
   }
 };

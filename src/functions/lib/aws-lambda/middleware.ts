@@ -86,9 +86,20 @@ const isAxiosError = (err: any): err is AxiosError => err && (err.response || er
 export const defaultErrorHandler: AWSLambdaErrorHandler = ({ err, response }) => {
   if (!err) return;
 
-  response.statusCode = isAxiosError(err) && err.response?.status || 500;
-  const statusText = isAxiosError(err) && err.response?.statusText || 'Internal Server Error';
-  const message = err.message ?? 'Internal Server Error';
+  response.statusCode = 500;
+  let statusText = 'Internal Server Error';
+
+  if (isAxiosError(err)) {
+    if (err.response?.status) {
+      response.statusCode = err.response.status;
+    }
+
+    if (err.response?.statusText) {
+      statusText = err.response.statusText;
+    }
+  }
+
+  const message = err.message ?? statusText;
 
   response.body = {
     statusText,

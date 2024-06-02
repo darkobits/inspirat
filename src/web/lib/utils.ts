@@ -3,7 +3,6 @@ import type React from 'react';
 import { rgba as polishedRgba, parseToRgb } from 'polished';
 import queryString from 'query-string';
 import * as R from 'ramda';
-// @ts-expect-error - No declarations for this package.
 import urlParseLax from 'url-parse-lax';
 
 import { Color, InspiratPhotoResource } from 'etc/types';
@@ -168,7 +167,7 @@ export function onClickAndHold(interval: number, cb: GenericFunction) {
  *
  * See: https://docs.imgix.com/apis/url
  */
-function buildImgixOptions(base?: LooseObject, overrides?: LooseObject): string {
+function buildImgixOptions(base?: Record<string, any>, overrides?: LooseObject): string {
   const w = window.screen.width;
   const h = window.screen.height;
   const dpr = window.devicePixelRatio;
@@ -204,8 +203,11 @@ function buildImgixOptions(base?: LooseObject, overrides?: LooseObject): string 
  * params optimized for the current viewport size and desired quality settings.
  */
 export function updateImgixQueryParams(baseUrl: string, options?: LooseObject) {
-  const {protocol, host, pathname, query} = urlParseLax(baseUrl);
-  const parsedQuery = queryString.parse(query);
+  const { protocol, host, pathname, query } = urlParseLax(baseUrl);
+
+  const parsedQuery = query
+    ? typeof query === 'string' ? queryString.parse(query) : query
+    : {};
   const updatedQuery = buildImgixOptions(parsedQuery, options);
   return `${protocol}//${host}${pathname}?${updatedQuery}`;
 }

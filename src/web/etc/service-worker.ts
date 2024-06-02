@@ -50,7 +50,7 @@ if (import.meta.env.NODE_ENV === 'production') {
           if (debug) console.debug('[ServiceWorker] Update check completed.');
           updateCheckTimeout = setTimeout(doUpdateCheck, updateCheckInterval);
         }).catch(() => {
-          updateErrorCount++;
+          updateErrorCount += 1;
 
           if (updateErrorCount >= maxUpdateErrors) {
             if (debug) console.error('[ServiceWorker] Maximum failed update check attempts reached; cancelling further update checks.');
