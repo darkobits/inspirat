@@ -1,14 +1,13 @@
-import { assignInlineVars } from '@vanilla-extract/dynamic';
-import { InspiratPhotoResource } from 'etc/types';
 import { rgba as polishedRgba } from 'polished';
 import React from 'react';
 
+import { InspiratPhotoResource } from 'etc/types';
 import { useInspirat } from 'web/hooks/use-inspirat';
 import { compositeTextShadow } from 'web/lib/typography';
 import { rgba } from 'web/lib/utils';
 
 
-import classes, { vars } from './Greeting.css';
+import classes from './Greeting.css';
 
 
 /**
@@ -16,9 +15,8 @@ import classes, { vars } from './Greeting.css';
  * current photo.
  */
 const textShadow = (color: string) => compositeTextShadow([
-  [0, 0, 8, polishedRgba(0, 0, 0, 1)],
-  [0, 0, 32, polishedRgba(color, 0.3)],
-  [0, 0, 96, polishedRgba(color, 0.6)]
+  [0, 0, 3.2, polishedRgba(0, 0, 0, 0.72)],
+  [0, 0, 24, polishedRgba(color, 0.1)]
 ]);
 
 
@@ -33,9 +31,9 @@ const GreetingWrapper = (props: GreetingWrapperProps) => {
   return (
     <div
       className={classes.greetingWrapper}
-      style={assignInlineVars({
-        [vars.greetingWrapper.opacity]: String(props.opacity)
-      })}
+      style={{
+        opacity: props.opacity
+      }}
     >
       {props.children}
     </div>
@@ -53,11 +51,10 @@ const GreetingBackground = (props: GreetingBackgroundProps) => {
   return (
     <div
       className={classes.greetingBackground}
-      style={assignInlineVars({
-        [vars.greetingBackground.color]: rgba(props.palette?.darkVibrant ?? 'black'),
-        [vars.greetingBackground.filter]: `drop-shadow(0px 0px 10px ${rgba(props.palette?.darkVibrant ?? 'black', 0.5)})`,
-        [vars.greetingBackground.textShadow]: textShadow(rgba(props.palette?.darkMuted ?? 'black'))
-      })}
+      style={{
+        color: rgba(props.palette?.darkMuted ?? 'black'),
+        filter: `drop-shadow(0px 0px 10px ${rgba(props.palette?.lightVibrant ?? 'black', 0.5)})`
+      }}
     >
       {props.children}
     </div>
@@ -73,7 +70,15 @@ interface GreetingForegroundProps extends React.PropsWithChildren {
 
 const GreetingForeground = (props: GreetingForegroundProps) => {
   return (
-    <div className={classes.greetingForeground}>
+    <div
+      className={classes.greetingForeground}
+      style={{
+        color: 'white',
+        // color: rgba(props.palette?.lightMuted ?? 'black'),
+        opacity: 1,
+        textShadow: textShadow(rgba(props.palette?.darkMuted ?? 'black'))
+      }}
+    >
       {props.children}
     </div>
   );
@@ -95,17 +100,11 @@ const Greeting = () => {
   // const color = rgba(currentPhoto?.palette?.vibrant ?? {r: 0, g: 0, b: 0});
 
   return (
-    <GreetingWrapper
-      opacity={currentPhoto ? 1 : 0}
-    >
-      <GreetingBackground
-        palette={currentPhoto?.palette}
-      >
+    <GreetingWrapper opacity={currentPhoto ? 1 : 0}>
+      <GreetingBackground palette={currentPhoto?.palette}>
         {greeting}
       </GreetingBackground>
-      <GreetingForeground
-        palette={currentPhoto?.palette}
-      >
+      <GreetingForeground palette={currentPhoto?.palette}>
         {greeting}
       </GreetingForeground>
     </GreetingWrapper>

@@ -1,12 +1,8 @@
-// import 'animate.css/animate.min.css';
-// import 'bootstrap/dist/css/bootstrap.min.css';
-
 import { globalStyle } from '@vanilla-extract/css';
 
 const FONT_FAMILY_PLAIN = '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif';
 const FONT_FAMILY_FANCY = `"Josefin Sans", ${FONT_FAMILY_PLAIN} !important`;
 const FONT_FAMILY_SANS_SERIF = `"Raleway", ${FONT_FAMILY_PLAIN} !important`;
-
 
 globalStyle('*, *:before, *:after', {
   boxSizing: 'border-box',

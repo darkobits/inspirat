@@ -16,7 +16,7 @@ export default {
     color: vars.color,
     display: 'flex',
     fontSize: '12px',
-    height: vars.height,
+    height: '12px',
     justifyContent: 'center',
     textTransform: 'capitalize',
     width: '32px'

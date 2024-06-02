@@ -9,14 +9,14 @@
  * TODO: Move to own package.
  */
 export default class PendingPromiseCache<K extends string> {
-  private readonly _map = new Map();
+  readonly #map = new Map();
 
 
   /**
    * Returns true if the provided key exists in the cache.
    */
   has(key: K) {
-    return this._map.has(key);
+    return this.#map.has(key);
   }
 
 
@@ -24,7 +24,7 @@ export default class PendingPromiseCache<K extends string> {
    * Returns the value for the provided key from the cache.
    */
   async get<P = any>(key: K): Promise<P> {
-    return this._map.get(key) as Promise<P>;
+    return this.#map.get(key) as Promise<P>;
   }
 
 
@@ -42,20 +42,20 @@ export default class PendingPromiseCache<K extends string> {
       throw new TypeError('[PendingPromiseCache] Values must be Promise-returning functions.');
     }
 
-    if (!this._map.has(key)) {
+    if (!this.#map.has(key)) {
       const taskFnPromise = taskFn();
 
       if (typeof taskFnPromise.finally !== 'function') {
         throw new TypeError('[PendingPromiseCache] Value returned from function does not implement "finally".');
       }
 
-      taskFnPromise.finally(() => {
-        this._map.delete(key);
+      void taskFnPromise.finally(() => {
+        this.#map.delete(key);
       });
 
-      this._map.set(key, taskFnPromise);
+      this.#map.set(key, taskFnPromise);
     }
 
-    return this._map.get(key);
+    return this.#map.get(key);
   }
 }

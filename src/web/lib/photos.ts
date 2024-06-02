@@ -1,6 +1,5 @@
 import axios from 'axios';
 import Chance from 'chance';
-
 import objectHash from 'object-hash';
 import prettyMs from 'pretty-ms';
 import * as R from 'ramda';

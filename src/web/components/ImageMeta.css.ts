@@ -1,6 +1,5 @@
 import { style, createVar, globalStyle } from '@vanilla-extract/css';
 
-
 export const vars = {
   textShadow: createVar()
 };
@@ -10,7 +9,7 @@ const classes = {
     color: 'rgba(255, 255, 255, 0.96)',
     display: 'flex',
     fontFamily: '"Josefin Sans", -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif',
-    fontSize: '16px',
+    fontSize: 'clamp(0.72rem, 0.4400rem + 1.2444vw, 1rem)',
     fontWeight: 300,
     letterSpacing: '0em',
     minHeight: '1em',

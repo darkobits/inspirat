@@ -13,9 +13,8 @@ export default {
   }),
   imageLocation: style({
     display: 'none',
-    // TODO: Why are we hiding this below 700px??
     '@media': {
-      '(min-width: 700px)': {
+      '(min-width: 300px)': {
         display: 'block'
       }
     }

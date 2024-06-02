@@ -1,14 +1,14 @@
-import { assignInlineVars } from '@vanilla-extract/dynamic';
-import { Color } from 'etc/types';
+import cx from 'classnames';
 import { darken, readableColor } from 'polished';
 import React from 'react';
 import { Overlay, Tooltip } from 'react-bootstrap';
 import { v4 as uuid } from 'uuid';
 
+import { Color } from 'etc/types';
 import { BASIS, WHITE, BLACK } from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
 
-import classes, { vars } from './Swatch.css';
+import classes from './Swatch.css';
 
 
 interface SwatchProps extends React.PropsWithChildren<any> {
@@ -19,23 +19,25 @@ interface SwatchProps extends React.PropsWithChildren<any> {
  * Renders a div whose background color is the provided color and whose text
  * color will be a 'readable' color according to Polished.
  */
-export const Swatch = ({ color, children, ...props }: SwatchProps) => {
+export const Swatch = ({ color, children, className, ...props }: SwatchProps) => {
   const [tooltipId] = React.useState(uuid());
   const tooltipTarget = React.useRef(null);
   const [showTooltip, setShowTooltip] = React.useState(false);
 
   return (
     <div
-      className={classes.swatch}
-      style={assignInlineVars({
-        [vars.backgroundColor]: rgba(color ?? WHITE),
-        [vars.border]: `1px solid ${darken(0.2, rgba(color ?? BLACK, 0.42))}`,
-        [vars.color]: readableColor(rgba(color ?? WHITE)),
-        [vars.height]: BASIS
-      })}
+      className={cx(classes.swatch, className)}
+      style={{
+        height: BASIS,
+        width: BASIS,
+        backgroundColor: rgba(color ?? WHITE),
+        border: `1px solid ${darken(0.2, rgba(color ?? BLACK, 0.42))}`,
+        color: readableColor(rgba(color ?? WHITE))
+      }}
       ref={tooltipTarget}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
+      // eslint-disable-next-line react/jsx-props-no-spreading
       {...props}
     >
       <Overlay
@@ -45,6 +47,7 @@ export const Swatch = ({ color, children, ...props }: SwatchProps) => {
         flip
       >
         {overlayProps => (
+          // eslint-disable-next-line react/jsx-props-no-spreading
           <Tooltip id={tooltipId} {...overlayProps as any}>
             {children}
           </Tooltip>

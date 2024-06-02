@@ -1,4 +1,3 @@
-import { InspiratPhotoResource } from 'etc/types';
 import ms from 'ms';
 import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
@@ -6,7 +5,7 @@ import React from 'react';
 import { singletonHook } from 'react-singleton-hook';
 import useAsyncEffect from 'use-async-effect';
 
-
+import { InspiratPhotoResource } from 'etc/types';
 import useQuery from 'web/hooks/use-query';
 import withNamespace from 'web/hooks/use-storage-item';
 import {
@@ -118,7 +117,9 @@ const preloadedPhotos = new Set<string>();
 const useStorageItem = withNamespace('inspirat');
 
 
-const initialValue = {} as InspiratHook;
+const initialValue = {
+  dayOffset: 0
+} as InspiratHook;
 
 
 export const useInspirat = singletonHook(initialValue, () => {

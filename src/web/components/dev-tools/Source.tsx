@@ -1,8 +1,8 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
-import { InspiratPhotoResource } from 'etc/types';
 import { darken, desaturate, lighten } from 'polished';
 import React from 'react';
 
+import { InspiratPhotoResource } from 'etc/types';
 import { BASIS, WHITE, BLACK } from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
 
@@ -19,7 +19,7 @@ interface SourceProps extends React.PropsWithChildren<any> {
  * Image override component.
  */
 export const Source = ({ photo, children }: SourceProps) => {
-  const fgColor = photo?.palette?.lightMuted ?? WHITE;
+  const fgColor = photo?.palette?.lightVibrant ?? WHITE;
   const bgColor = photo?.palette?.darkVibrant ?? BLACK;
 
   return (

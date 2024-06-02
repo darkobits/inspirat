@@ -20,17 +20,16 @@ const SplashLower: React.FunctionComponent = () => {
   }
 
   // Location.
-  const location = currentPhoto?.location?.title;
+  const location = currentPhoto?.location?.name;
 
   // Attribution.
   const author = capitalizeWords(currentPhoto?.user?.name ?? '');
   const authorHref = currentPhoto?.user?.links?.html;
-  const unsplashHref = currentPhoto?.links?.html;
+  const photoHref = currentPhoto?.links?.html;
   const attribution = author && (
     <span>
-      Photo by <a href={authorHref} target="_blank" rel="noopener noreferrer">{author}</a>
-      {' '}on{' '}
-      <a href={unsplashHref} target="_blank" rel="noopener noreferrer">Unsplash</a>
+      <a href={photoHref} target="_blank" rel="noopener noreferrer">Photo</a> by{' '}
+      <a href={authorHref} target="_blank" rel="noopener noreferrer">{author}</a>
     </span>
   );
 

@@ -124,7 +124,6 @@ export const BACKGROUND_RULE_OVERRIDES: {[key: string]: BackgroundImageOverrides
   '47HoSotxeRQ': { backgroundPosition: 'center bottom' },
   'u0cSubf5F-E': { backgroundPosition: 'center top' },
   '-N_UwPdUs7E': { backgroundPosition: 'center top' },
-  '0NhhIdDUcqw': { backgroundPosition: 'center 20%' },
   '1HkVV14d8Bg': { backgroundPosition: 'right center' },
   '3TmLV0fLzfU': { backgroundPosition: 'center 20%' },
   'FxU8KV7psMY': { backgroundPosition: 'center top' },
