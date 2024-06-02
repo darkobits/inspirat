@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.15.3](https://github.com/darkobits/inspirat/compare/v0.15.2...v0.15.3) (2024-06-02)
+
+
+### 🐞 Bug Fixes
+
+* Roll-back `serverless-kit` update. ([d602f74](https://github.com/darkobits/inspirat/commit/d602f74d49ca70ff346f01ed661cd0fc2812c423))
+
+
+### 🛠 Refactoring
+
+* Add glass effect. ([7f72796](https://github.com/darkobits/inspirat/commit/7f7279627c5a6e67264c00957a9428e4b9630498))
+
 ## [0.15.2](https://github.com/darkobits/inspirat/compare/v0.15.1...v0.15.2) (2024-06-02)
 
 
