@@ -2,4 +2,4 @@
 
 # Node version to use when building the project in Seed.
 before_compile:
-  - n 18.8.0
+  - n 20.9.0
