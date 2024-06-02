@@ -15,7 +15,7 @@
   "dependencies": {
     "@darkobits/env": "^2.0.0",
     "@darkobits/log": "2.0.0-beta.16",
-    "@darkobits/serverless-kit": "^0.2.5",
+    "@darkobits/serverless-kit": "0.2.4",
     "@vanilla-extract/dynamic": "^2.1.1",
     "animate.css": "^4.1.1",
     "aws-sdk": "^2.1632.0",
