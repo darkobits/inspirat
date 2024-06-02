@@ -21,12 +21,13 @@ export default vite.react(({ config, packageJson, root, ms, manualChunks, mode }
     name: 'react',
     vendor: true,
     include: [
+      '@restart/',
       'object-assign/',
-      'scheduler',
-      'react',
-      'react-dom',
       'react-bootstrap',
-      '@restart/'
+      'react-dom',
+      'react',
+      'scheduler',
+      'use-async-effect'
     ]
   }, {
     name: 'chance',
