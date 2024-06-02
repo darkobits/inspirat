@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.15.0](https://github.com/darkobits/inspirat/compare/v0.14.1...v0.15.0) (2024-06-02)
+
+
+### ✨ Features
+
+* Add PWA support. ([2800868](https://github.com/darkobits/inspirat/commit/28008688f68d9ba293446784d63abddad44db62c))
+
+
+### 🐞 Bug Fixes
+
+* Reference cron function correctly. ([b9d5f76](https://github.com/darkobits/inspirat/commit/b9d5f76f206ac869afaeab8481e6f269701db9f2))
+
+
+### 🏗 Chores
+
+* Cleanup. ([3b0746a](https://github.com/darkobits/inspirat/commit/3b0746af500023d0bd30adfaeffe08b6f4ef9408))
+* **deps:** Update dependencies. ([f5a8224](https://github.com/darkobits/inspirat/commit/f5a8224c45506022861b325615f9ba8a5f124f35))
+* **deps:** Update dependencies. ([4f50dcf](https://github.com/darkobits/inspirat/commit/4f50dcf9abc1007cd507ab326825ae184ad71e19))
+* **deps:** Update dependencies. ([9e7ede4](https://github.com/darkobits/inspirat/commit/9e7ede4ed3dae90f44037af9ce49ce18ec56876a))
+* **deps:** Update dependencies. ([1ceff45](https://github.com/darkobits/inspirat/commit/1ceff456c03ade85800cdbdbfe223e161ca3279c))
+* **deps:** Update dependencies. ([d49c483](https://github.com/darkobits/inspirat/commit/d49c4838ae3247857cf3f04f5f65d6e7b5d58483))
+* **infra:** Invoke update lambda after deploys. ([181362d](https://github.com/darkobits/inspirat/commit/181362dc67ec66a5eefbc05a0845d06f726c2105))
+* **infra:** Only run cron in `production`. ([6eba7bb](https://github.com/darkobits/inspirat/commit/6eba7bba622d2956464d323f408603d561d8057f))
+* **infra:** Update infra utils. ([83d3e16](https://github.com/darkobits/inspirat/commit/83d3e16bc05e11507f4686e70775f7cb14433fac))
+* Update Node version in CI. ([d4f9a77](https://github.com/darkobits/inspirat/commit/d4f9a77658fda60d6f8db66a08cf1041dc83591e))
+
+
+### 🛠 Refactoring
+
+* Improve sync-collections. ([756ac73](https://github.com/darkobits/inspirat/commit/756ac73147c53bd06d00192fe95aa65e03be29e4))
+* Misc. stylistic updates. ([42928d0](https://github.com/darkobits/inspirat/commit/42928d05d66eaa8ef81316ff50eace63c035af73))
+* Update dependencies, reorganize project. ([0b16944](https://github.com/darkobits/inspirat/commit/0b16944864907805a370cdbca14f11289d7f29a8))
+
 ## [0.14.1](https://github.com/darkobits/inspirat/compare/v0.14.0...v0.14.1) (2023-02-03)
 
 ## [0.14.0](https://github.com/darkobits/inspirat/compare/v0.13.2...v0.14.0) (2023-02-03)

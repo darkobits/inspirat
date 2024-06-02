@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "inspirat",
-  "version": "0.14.1",
+  "version": "0.15.0",
   "description": "A new tab experience for Chromium-based browsers.",
   "author": "darkobits",
   "license": "Hippocratic",
