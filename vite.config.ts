@@ -4,7 +4,7 @@ import { vite } from '@darkobits/tsx';
 import { faviconsPlugin } from '@darkobits/vite-plugin-favicons';
 // import devcert from 'devcert';
 import { visualizer } from 'rollup-plugin-visualizer';
-import { VitePluginFonts } from 'vite-plugin-fonts';
+import FontsPlugin from 'unplugin-fonts/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 
@@ -57,7 +57,7 @@ export default vite.react(({ config, packageJson, root, ms, manualChunks, mode }
   }));
 
   // Loads Google fonts.
-  config.plugins.push(VitePluginFonts({
+  config.plugins.push(FontsPlugin({
     google: {
       preconnect: true,
       display: 'swap',
