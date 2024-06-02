@@ -19,21 +19,26 @@ export default vite.react(({ config, packageJson, root, ms, manualChunks, mode }
 
   manualChunks([{
     name: 'react',
+    vendor: true,
     include: [
-      'node_modules/object-assign/',
-      'node_modules/scheduler/',
-      'node_modules/react/',
-      'node_modules/react-dom/'
+      'object-assign/',
+      'scheduler',
+      'react',
+      'react-dom',
+      'react-bootstrap',
+      '@restart/'
     ]
   }, {
     name: 'chance',
+    vendor: true,
     include: [
-      'node_modules/chance'
+      'chance'
     ]
   }, {
     name: 'storage',
+    vendor: true,
     include: [
-      'node_modules/localforage'
+      'localforage'
     ]
   }, {
     name: 'vendor',
