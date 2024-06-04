@@ -1,16 +1,34 @@
+import cx from 'classnames';
 import mousetrap from 'mousetrap';
+import ms from 'ms';
 import React from 'react';
+// @ts-expect-error - This package has no type definitions.
+import SwipeListener from 'swipe-listener';
 import { throttle } from 'throttle-debounce';
 
 import { LoadingIndicator } from 'web/components/dev-tools/LoadingIndicator';
 import { Palette } from 'web/components/dev-tools/Palette';
-import { Progress } from 'web/components/dev-tools/Progress';
+import { ProgressBar } from 'web/components/dev-tools/Progress';
 import { Source } from 'web/components/dev-tools/Source';
-import { useInspirat } from 'web/hooks/use-inspirat';
-import { modIndex, mockPhotoResourceFromUrl } from 'web/lib/utils';
+import InspiratContext from 'web/contexts/Inspirat';
+import {
+  DEVTOOLS_MOUSE_LEAVE_TIMEOUT,
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION
+} from 'web/etc/constants';
+import { safePadding } from 'web/etc/global-styles.css';
+import { getCurrentPhotoFromCollection } from 'web/lib/photos';
+import { modIndex, mockPhotoResourceFromUrl, preloadImage, isTouchEvent } from 'web/lib/utils';
 
-import classes from './DevTools.css';
+import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
 
+/**
+ * @private
+ *
+ * Tracks the amount of time elapsed since the mouse last left our container
+ * element.
+ */
+let mouseLeaveTimeout: NodeJS.Timeout;
 
 /**
  * TODO: Showing the dev tools currently changes the photo shown. Should use the
@@ -25,30 +43,72 @@ export const DevTools = () => {
     setCurrentPhoto,
     setDayOffset,
     resetPhoto,
-    numPhotos
-  } = useInspirat();
+    numPhotos,
+    buildPhotoUrls
+  } = React.useContext(InspiratContext);
+  const [show, setShow] = React.useState(true);
 
   /*
    * [Effect] Dev Tools initialization.
    */
   React.useEffect(() => {
-    if (!showDevTools) {
-      return;
-    }
+    if (!showDevTools) return;
 
-    mousetrap.bind('left', throttle(5000, () => {
+    mousetrap.bind('left', throttle(ms(BACKGROUND_TRANSITION_DURATION) * 1.5, () => {
       setDayOffset('decrement');
-    }, { noTrailing: true, debounceMode: true }));
+    }, { noLeading: false }));
 
-    mousetrap.bind('right', throttle(5000, () => {
+    mousetrap.bind('right', throttle(ms(BACKGROUND_TRANSITION_DURATION) * 1.5, () => {
       setDayOffset('increment');
-    }, { noTrailing: true, debounceMode: true }));
+    }, { noLeading: false }));
+
+    const swipeListener = SwipeListener(document);
+
+    // TODO: Finish implementing touch events.
+    document.addEventListener('swipe', event => {
+      if (isTouchEvent(event)) {
+        console.log('TOUCH EVENT', event);
+      }
+    });
+
+    mouseLeaveTimeout = setTimeout(() => {
+      setShow(false);
+    }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
 
     return () => {
+      clearTimeout(mouseLeaveTimeout);
       mousetrap.unbind('left');
       mousetrap.unbind('right');
+      swipeListener.off();
     };
-  }, [setDayOffset, showDevTools]);
+  }, [showDevTools]);
+
+  /**
+   * [Effect] If DevTools are active, when `dayOffset` changes, pre-load images
+   * for the previous and next photo based on day offset.
+   */
+  React.useEffect(() => {
+    if (!showDevTools) return;
+
+    void Promise.all([
+      getCurrentPhotoFromCollection({ offset: dayOffset + 1 }).then(photo => {
+        if (!photo) return;
+        const { lowQuality, highQuality } = buildPhotoUrls(photo);
+        return Promise.all([
+          preloadImage(lowQuality),
+          preloadImage(highQuality)
+        ]);
+      }),
+      getCurrentPhotoFromCollection({ offset: dayOffset - 1 }).then(photo => {
+        if (!photo) return;
+        const { lowQuality, highQuality } = buildPhotoUrls(photo);
+        return Promise.all([
+          preloadImage(lowQuality),
+          preloadImage(highQuality)
+        ]);
+      })
+    ]);
+  }, [showDevTools, dayOffset]);
 
 
   /**
@@ -83,14 +143,12 @@ export const DevTools = () => {
       const mockPhotoResource = mockPhotoResourceFromUrl(value);
 
       if (!mockPhotoResource) {
-        console.error('NO MOCK RESOURCE FOR YOU');
         resetPhoto();
         return;
       }
 
       setCurrentPhoto(mockPhotoResource);
-    } catch (err) {
-      console.error('WTF', err);
+    } catch {
       resetPhoto();
     }
   }, [
@@ -107,35 +165,68 @@ export const DevTools = () => {
     setDayOffset(Math.floor(numPhotos * newProgress));
   }, [numPhotos, setDayOffset]);
 
-
-  if (!showDevTools) {
-    return null;
-  }
-
+  if (!showDevTools) return null;
 
   const progress = modIndex(dayOffset, numPhotos) / numPhotos;
 
-
   return (
-    <div className={classes.devTools}>
-      <Progress
+    <div
+      className={cx(classes.devToolsWrapper, safePadding)}
+      style={{
+        transition: 'opacity 2s ease',
+        opacity: show ? 1 : 0
+      }}
+      onMouseEnter={() => {
+        clearTimeout(mouseLeaveTimeout);
+        setShow(true);
+      }}
+      onMouseLeave={() => {
+        mouseLeaveTimeout = setTimeout(() => {
+          setShow(false);
+        }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
+      }}
+    >
+      {/* Progress Bar (Fixed Position) */}
+      <ProgressBar
         progress={progress}
-        photo={currentPhoto}
         onProgressChange={handleProgressChange}
+        style={{ height: PROGRESS_BAR_HEIGHT }}
       />
-      <Source photo={currentPhoto}>
-        <input
-          type="text"
-          onChange={onImgIdChange}
-          onFocus={handleImgIdFocus}
-          placeholder="https://unsplash.com/photos/:id"
-          spellCheck={false}
-          autoCorrect="false"
-          autoComplete="false"
+
+      {/* Address Bar & Loading Indicator */}
+      <div className={classes.devToolsRow}>
+        <Source photo={currentPhoto}>
+          <input
+            type="text"
+            onChange={onImgIdChange}
+            onFocus={handleImgIdFocus}
+            placeholder="https://unsplash.com/photos/:id"
+            spellCheck={false}
+            autoCorrect="false"
+            autoComplete="false"
+            style={{
+              height: '100%'
+            }}
+          />
+        </Source>
+        <LoadingIndicator photo={currentPhoto} isLoading={isLoadingPhotos} />
+      </div>
+
+      {/* Palette */}
+      <div className={classes.devToolsRow}>
+        <Palette
+          photo={currentPhoto}
+          swatchProps={{
+            style: {
+              transition: [
+                `background-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+                `border-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+                `color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`
+              ].join(', ')
+            }
+          }}
         />
-      </Source>
-      <LoadingIndicator photo={currentPhoto} isLoading={isLoadingPhotos} />
-      <Palette photo={currentPhoto} />
+      </div>
     </div>
   );
 };

@@ -1,21 +1,36 @@
-import { style } from '@vanilla-extract/css';
+import { style, createVar } from '@vanilla-extract/css';
 
+import { BACKGROUND_TRANSITION_DURATION, BACKGROUND_TRANSITION_FUNCTION } from 'web/etc/constants';
+
+export const vars = {
+  progressBarBackgroundColor: createVar(),
+  progressBarForegroundColor: createVar()
+};
 
 export default {
   progress: style({
-    // background-color: ${({ bgColor }) => rgba(bgColor)};
-    // border-left-color: ${({ fgColor }) => rgba(fgColor)};
-    // border-left-width: ${({ progress }) => (progress || 0) * 100}vw;
-    borderLeftStyle: 'solid',
-    height: '4px',
+    appearance: 'none',
+    position: 'fixed',
     left: 0,
-    position: 'absolute',
     right: 0,
     top: 0,
-    transition: 'border-left-width 0.2s ease-in, height 0.2s linear',
+    width: '100%',
+    height: '100%',
     ':hover': {
       cursor: 'pointer',
-      height: '10px'
+      height: '6px !important'
+    },
+    '::-webkit-progress-bar': {
+      backgroundColor: vars.progressBarBackgroundColor,
+      transitionProperty: 'background-color',
+      transitionDuration: BACKGROUND_TRANSITION_DURATION,
+      transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
+    },
+    '::-webkit-progress-value': {
+      backgroundColor: vars.progressBarForegroundColor,
+      transitionProperty: 'background-color',
+      transitionDuration: BACKGROUND_TRANSITION_DURATION,
+      transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
     }
   })
 };

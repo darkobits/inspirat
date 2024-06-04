@@ -1,28 +1,14 @@
-import { style, createVar, keyframes, globalStyle } from '@vanilla-extract/css';
-
-
-export const vars = {
-  loadingIndicator: {
-    height: createVar(),
-    width: createVar(),
-    backgroundColor: createVar(),
-    svg: {
-      color: createVar()
-    }
-  }
-};
+import { style, keyframes, globalStyle } from '@vanilla-extract/css';
 
 const classes = {
   loadingIndicator: style({
+    flexShrink: 0,
+    display: 'flex',
     alignItems: 'center',
-    backgroundColor: vars.loadingIndicator.backgroundColor,
+    justifyContent: 'center',
     borderRadius: '4px',
     boxShadow: '0px 0px 4px rgba(0, 0, 0, 0.16)',
-    display: 'flex',
-    height: vars.loadingIndicator.height,
-    justifyContent: 'center',
-    transition: 'background-color 1s ease',
-    width: vars.loadingIndicator.width
+    transition: 'background-color 1s ease'
   }),
   spin: style({
     animationName: keyframes({
@@ -41,8 +27,8 @@ const classes = {
 
 globalStyle(`${classes.loadingIndicator} svg`, {
   filter: 'drop-shadow(0px 0px 4px rgba(0, 0, 0, 0.16))',
-  transition: 'color 1s ease',
-  color: vars.loadingIndicator.svg.color
+  transition: 'color 1s ease'
+  // color: vars.loadingIndicator.svg.color
 });
 
 

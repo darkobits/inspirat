@@ -26,7 +26,6 @@ export const vars = {
 const classes = {
   source: style({
     width: '100%',
-    marginRight: '12px',
     backdropFilter: 'blur(20px)'
   })
 };

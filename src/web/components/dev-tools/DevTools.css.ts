@@ -1,23 +1,27 @@
-import { style, globalStyle } from '@vanilla-extract/css';
+import { style } from '@vanilla-extract/css';
 
+import { BASIS } from 'web/etc/constants';
+
+export const PROGRESS_BAR_HEIGHT = '4px';
 
 const classes = {
-  devTools: style({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: '12px 10px 0px 10px',
-    pointerEvents: 'none',
+  devToolsWrapper: style({
     position: 'fixed',
     right: 0,
-    top: 0,
+    top: PROGRESS_BAR_HEIGHT,
     width: '100%',
-    zIndex: 1
+    display: 'flex',
+    flexDirection: 'column',
+    gap: `calc(${BASIS} * 0.32)`,
+    padding: `calc(${BASIS} * 0.32)`
+  }),
+  devToolsRow: style({
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    gap: `calc(${BASIS} * 0.32)`
   })
 };
-
-globalStyle(`${classes.devTools} *`, {
-  pointerEvents: 'initial'
-});
 
 export default classes;

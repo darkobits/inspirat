@@ -37,7 +37,7 @@ export const Source = ({ photo, children }: SourceProps) => {
           [vars.input.focus.boxShadow]: `0px 0px 1px 1px ${rgba(bgColor, 0.32)}`,
           [vars.input.focus.backgroundColor]: darken(0.2, rgba(bgColor, 0.8)),
           [vars.input.focus.borderColor]: desaturate(0.6, rgba(fgColor, 0.6)),
-          [vars.input.placeholder.color]: rgba(fgColor, 0.64),
+          [vars.input.placeholder.color]: rgba(fgColor, 0.32),
           [vars.input.selection.backgroundColor]: darken(0.05, rgba(bgColor, 0.5))
         })
       }}

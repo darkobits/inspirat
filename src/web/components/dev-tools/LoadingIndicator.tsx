@@ -1,12 +1,11 @@
-import { assignInlineVars } from '@vanilla-extract/dynamic';
-import { InspiratPhotoResource } from 'etc/types';
 import { BsArrowRepeat, BsCheck } from 'react-icons/bs';
 
+import { InspiratPhotoResource } from 'etc/types';
 import { BASIS, BLACK, WHITE } from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
 
 
-import classes, { vars } from './LoadingIndicator.css';
+import classes from './LoadingIndicator.css';
 
 
 export interface LoadingIndicatorProps {
@@ -22,12 +21,12 @@ export const LoadingIndicator = ({ photo, isLoading }: LoadingIndicatorProps) =>
   return (
     <div
       className={classes.loadingIndicator}
-      style={assignInlineVars({
-        [vars.loadingIndicator.height]: BASIS,
-        [vars.loadingIndicator.width]: BASIS,
-        [vars.loadingIndicator.backgroundColor]: rgba(bgColor ?? BLACK),
-        [vars.loadingIndicator.svg.color]: rgba(fgColor ?? WHITE)
-      })}
+      style={{
+        height: BASIS,
+        width: BASIS,
+        backgroundColor: rgba(bgColor ?? BLACK),
+        color: rgba(fgColor ?? WHITE)
+      }}
     >
       {isLoading ? <BsArrowRepeat className={classes.spin} /> : <BsCheck />}
     </div>
