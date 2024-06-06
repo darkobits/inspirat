@@ -1,115 +1,88 @@
-// import { rgba as polishedRgba } from 'polished';
+import { desaturate, lighten } from 'polished';
 import React from 'react';
 
-import { InspiratPhotoResource } from 'etc/types';
-import { useInspirat } from 'web/hooks/use-inspirat';
-// import { compositeTextShadow } from 'web/lib/typography';
+import InspiratContext from 'web/contexts/Inspirat';
+import {
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION
+} from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
-
 
 import classes from './Greeting.css';
 
+// interface GreetingBackgroundProps extends ElementProps<HTMLDivElement> {
+//   palette: InspiratPhotoResource['palette'] | undefined;
+// }
 
-/**
- * Returns a compound text-shadow string based on the swatch color for the
- * current photo.
- */
-// const textShadow = (color: string) => compositeTextShadow([
-//   [0, 0, 6, polishedRgba(0, 0, 0, 0.24)],
-//   [0, 0, 16, polishedRgba(color, 0.18)]
-// ]);
-
-
-// ----- Greeting Wrapper ------------------------------------------------------
-
-interface GreetingWrapperProps extends React.PropsWithChildren {
-  // color: string;
-  opacity: number;
-}
-
-const GreetingWrapper = (props: GreetingWrapperProps) => {
-  return (
-    <div
-      className={classes.greetingWrapper}
-      style={{
-        opacity: props.opacity
-      }}
-    >
-      {props.children}
-    </div>
-  );
-};
-
-
-// ----- Greeting Background ---------------------------------------------------
-
-interface GreetingBackgroundProps extends React.PropsWithChildren {
-  palette: InspiratPhotoResource['palette'] | undefined;
-}
-
-const GreetingBackground = (props: GreetingBackgroundProps) => {
-  return (
-    <div
-      className={classes.greetingBackground}
-      style={{
-        color: rgba(props.palette?.darkMuted ?? 'black')
-      }}
-    >
-      {props.children}
-    </div>
-  );
-};
-
-
-// ----- Greeting Foreground ---------------------------------------------------
-
-interface GreetingForegroundProps extends React.PropsWithChildren {
-  palette: InspiratPhotoResource['palette'] | undefined;
-}
-
-const GreetingForeground = (props: GreetingForegroundProps) => {
-  return (
-    <div
-      className={classes.greetingForeground}
-      style={{
-        color: rgba(props.palette?.lightVibrant ?? 'white', 1),
-        backgroundColor: rgba(props.palette?.darkMuted ?? 'black', 0.12),
-        borderColor: rgba(props.palette?.lightVibrant ?? 'white', 0.24),
-        textShadow: `0px 0px 4px ${rgba(props.palette?.darkMuted ?? 'black', 0.72)}`,
-        opacity: 1
-      }}
-    >
-      {props.children}
-    </div>
-  );
-};
-
+// const GreetingBackground = (props: GreetingBackgroundProps) => {
+//   const { children, className, style, ...restProps } = props;
+//   return (
+//     <div
+//       className={cx(classes.greetingBackground, className)}
+//       style={{
+//         color: 'white',
+//         backgroundColor: desaturate(0.5, rgba(props.palette?.darkMuted ?? 'black', 0.24)),
+//         textShadow: `0px 0px 4px ${rgba(props.palette?.darkMuted ?? 'black', 0.72)}`,
+//         transition: [
+//           `background-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+//           `text-shadow ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+//           `opacity ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`
+//         ].join(', '),
+//         ...style
+//       }}
+//       {...restProps}
+//     >
+//       {children}
+//     </div>
+//   );
+// };
 
 // ----- Greeting --------------------------------------------------------------
 
 /**
- * Renders the greeting copy.
+ * Renders the greeting.
  */
-const Greeting = () => {
-  const { currentPhoto, name, period } = useInspirat();
+export default function Greeting() {
+  const { currentPhoto, name, period } = React.useContext(InspiratContext);
 
-  const greeting = name
-    ? `Good ${period}, ${name}.`
-    : `Good ${period}.`;
+  // const greeting = name
+  //   ? `Good ${period}, ${name}.`
+  //   : `Good ${period}.`;
 
-  // const color = rgba(currentPhoto?.palette?.vibrant ?? {r: 0, g: 0, b: 0});
+  // const greeting = name ? `Good ${period}, ` : `Good ${period}.`;
+
+  const greeting =
+    name ? (
+      <>
+        <span style={{ whiteSpace: 'nowrap' }}>Good {period},&nbsp;</span>
+        <span>{name}.</span>
+      </>
+    ) : (
+      <span>Good {period}.</span>
+    )
+  ;
+
 
   return (
-    <GreetingWrapper opacity={currentPhoto ? 1 : 0}>
-      <GreetingBackground palette={currentPhoto?.palette}>
+    <div className={classes.greetingWrapper}>
+      <div
+        className={classes.greeting}
+        style={{
+          color: lighten(0.2, desaturate(0.32, rgba(currentPhoto?.palette?.lightVibrant ?? 'white', 1))),
+          borderColor: rgba(currentPhoto?.palette?.vibrant ?? 'white', 0.12),
+          textShadow: `0px 0px 4px ${rgba(currentPhoto?.palette?.darkMuted ?? 'black', 0.72)}`,
+          transition: [
+            `color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+            `background-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+            `border-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
+            `opacity ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`
+          ].join(', ')
+
+        }}
+
+      >
         {greeting}
-      </GreetingBackground>
-      <GreetingForeground palette={currentPhoto?.palette}>
-        {greeting}
-      </GreetingForeground>
-    </GreetingWrapper>
+      </div>
+    </div>
   );
-};
-
-
-export default Greeting;
+}

@@ -3,10 +3,8 @@ import ms from 'ms';
 import type { Color } from 'etc/types';
 import type { BackgroundImageOverrides } from 'web/etc/types';
 
-
 const VITE_TITLE = import.meta.env.VITE_TITLE as string | undefined;
 const VITE_BUCKET_URL = import.meta.env.VITE_BUCKET_URL as string | undefined;
-
 
 /**
  * Document title to use.
@@ -14,13 +12,13 @@ const VITE_BUCKET_URL = import.meta.env.VITE_BUCKET_URL as string | undefined;
 export const TITLE = VITE_TITLE;
 if (!TITLE) throw new Error('TITLE is not set.');
 
-
 /**
  * AWS S3 Bucket URL.
  */
 export const BUCKET_URL = VITE_BUCKET_URL as string;
 if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
 
+// ----- Backgrounds -----------------------------------------------------------
 
 /**
  * Duration of the opacity transition when the background image changes. This
@@ -31,8 +29,7 @@ if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
  */
 export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'production'
   ? '5s'
-  : '0.5s';
-
+  : '5s';
 
 /**
  * Transition timing function used when the background image changes. This must
@@ -43,8 +40,21 @@ export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'prod
  */
 export const BACKGROUND_TRANSITION_FUNCTION = import.meta.env.NODE_ENV === 'production'
   ? 'ease-in-out'
-  : 'ease-in';
+  : 'ease-in-out';
 
+/**
+ * Duration for the custom animation applied to a background image when it comes
+ * into view.
+ */
+export const BACKGROUND_ANIMATION_DURATION = ms('60s');
+
+/**
+ * Adjusts the initial scale for the background zoom-out animation. Also passed
+ * to IMGIX to control the size to render full-quality images at.
+ *
+ * Should be a value greater than 1.
+ */
+export const BACKGROUND_ANIMATION_INITIAL_SCALE = 1.4 as const;
 
 /**
  * How long image collection data may persist in the cache before it must be
@@ -52,18 +62,15 @@ export const BACKGROUND_TRANSITION_FUNCTION = import.meta.env.NODE_ENV === 'prod
  */
 export const CACHE_TTL = ms('1 day');
 
-
 /**
  * Storage key used to cache the photo collection.
  */
 export const COLLECTION_CACHE_KEY = 'photoCollections';
 
-
 /**
  * Storage key used for the current photo.
  */
 export const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
-
 
 /**
  * Default font family string to use.
@@ -77,7 +84,6 @@ export const DEFAULT_FONTS = [
   'sans-serif'
 ];
 
-
 /**
  * Image quality to use for full-quality images.
  */
@@ -88,16 +94,20 @@ export const QUALITY_FULL = 100;
  */
 export const QUALITY_LQIP = 50;
 
-
 // ----- Dev Tools -------------------------------------------------------------
 
 /**
  * Basis for computing various attributes of the Source and Swatch components.
  */
-export const BASIS = '32px';
+export const BASIS = '38px';
 export const BLACK: Color  = {r: 0, g: 0, b: 0};
 export const WHITE: Color = {r: 255, g: 255, b: 255};
 
+/**
+ * After the mouse leaves the DevTools container, it will wait this amount of
+ * time and then hide itself.
+ */
+export const DEVTOOLS_MOUSE_LEAVE_TIMEOUT = ms('10 seconds');
 
 // ----- Image Tuning Overrides ------------------------------------------------
 
@@ -148,5 +158,6 @@ export const BACKGROUND_RULE_OVERRIDES: {[key: string]: BackgroundImageOverrides
     transform: 'scale(1.2) translateY(8.3333333%)'
   },
   'aO1jND20GHA': { backgroundPosition: 'center bottom' },
-  'Fkwj-xk6yck': { transform: 'rotate(-1.2deg) scale(1.1)' }
+  'Fkwj-xk6yck': { transform: 'rotate(-1.4deg) scale(1.05)' },
+  'yz_blCQ-OiQ': { transform: 'rotate(-0.95deg)' }
 };

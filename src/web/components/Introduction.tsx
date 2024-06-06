@@ -2,14 +2,13 @@ import React from 'react';
 import { Button } from 'react-bootstrap';
 
 import { AnimatedModal } from 'web/components/AnimatedModal';
-import { useInspirat } from 'web/hooks/use-inspirat';
+import InspiratContext from 'web/contexts/Inspirat';
 import { isChromeExtension } from 'web/lib/utils';
 
 import classes from './Introduction.css';
 
-
-export const Introduction = () => {
-  const { hasSeenIntroduction, setHasSeenIntroduction } = useInspirat();
+export function Introduction() {
+  const { hasSeenIntroduction, setHasSeenIntroduction } = React.useContext(InspiratContext);
 
   /**
    * [Event Handler] When the modal backdrop is clicked or the 'OK' button is
@@ -78,4 +77,4 @@ export const Introduction = () => {
       }
     />
   );
-};
+}

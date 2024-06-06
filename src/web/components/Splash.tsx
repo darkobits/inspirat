@@ -1,40 +1,32 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import ms from 'ms';
 import React from 'react';
 
 import BackgroundImage from 'web/components/BackgroundImage';
 import Greeting from 'web/components/Greeting';
 import SplashLower from 'web/components/SplashLower';
-import {
-  BACKGROUND_RULE_OVERRIDES,
-  BACKGROUND_TRANSITION_DURATION,
-  BACKGROUND_TRANSITION_FUNCTION
-} from 'web/etc/constants';
-import { BackgroundImageOverrides, PhotoUrls } from 'web/etc/types';
-import { useInspirat } from 'web/hooks/use-inspirat';
+import InspiratContext from 'web/contexts/Inspirat';
+import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
 
 import classes from './Splash.css';
 
-
-// ----- Splash ----------------------------------------------------------------
+import type { InspiratPhotoResource } from 'etc/types';
 
 export interface SplashProps {
-  onMouseDown?: React.EventHandler<React.MouseEvent>;
+  onMouseDown?: React.EventHandler<React.MouseEvent | React.TouchEvent>;
 }
-
 
 /**
  * TODO: Deprecate usage of maskColor and maskAmount overrides. Use photo
  * palette with a box-shadow around text instead.
  */
-export const Splash = ({ onMouseDown }: SplashProps) => {
-  const [aPhotoUrls, setAPhotoUrls] = React.useState<PhotoUrls | void>();
-  const [bPhotoUrls, setBPhotoUrls] = React.useState<PhotoUrls | void>();
-  const [aPhotoOverrides, setAPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
-  const [bPhotoOverrides, setBPhotoOverrides] = React.useState<BackgroundImageOverrides>({});
+export function Splash({ onMouseDown }: SplashProps) {
+  const { currentPhoto } = React.useContext(InspiratContext);
+
+  const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
+  const [bPhoto, setBPhoto] = React.useState<InspiratPhotoResource | void>();
   const [transitionDuration, setTransitionDuration] = React.useState(BACKGROUND_TRANSITION_DURATION);
-  const { currentPhoto, currentPhotoUrls } = useInspirat();
   const [turnCount, setTurnCount] = React.useState(0);
+
   const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
 
   React.useEffect(() => {
@@ -47,26 +39,23 @@ export const Splash = ({ onMouseDown }: SplashProps) => {
    */
   React.useEffect(() => {
     if (!currentPhoto) return;
-    if (!currentPhotoUrls) return;
 
     const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
-    const newPhotoOverrides = currentPhoto ? BACKGROUND_RULE_OVERRIDES[currentPhoto.id] : {};
 
     if (activeElement === 'A') {
-      setAPhotoUrls(currentPhotoUrls);
-      setAPhotoOverrides(newPhotoOverrides);
+      setAPhoto(currentPhoto);
     } else {
-      setBPhotoUrls(currentPhotoUrls);
-      setBPhotoOverrides(newPhotoOverrides);
+      setBPhoto(currentPhoto);
     }
 
+    // TODO: Remove?
     // To ensure the first photo always appears immediately, but that subsequent
     // transitions run at the configured transition speed, we set the initial
     // transition duration to '0s' (see above). We then do a check here to see
     // if this is the first image being shown, and if so, run a timer that
     // expires after the _target_ transition time, then updates the component's
     // transition time to the target time.
-    if (!aPhotoUrls && !bPhotoUrls) {
+    if (!aPhoto && !bPhoto) {
       setTimeout(() => {
         setTransitionDuration(BACKGROUND_TRANSITION_DURATION);
       }, ms(BACKGROUND_TRANSITION_DURATION));
@@ -78,11 +67,9 @@ export const Splash = ({ onMouseDown }: SplashProps) => {
     // function to cancel it.
     const timeoutHandle = setTimeout(() => {
       if (activeElement === 'A') {
-        setBPhotoUrls();
-        setBPhotoOverrides({});
+        setBPhoto();
       } else {
-        setAPhotoUrls();
-        setAPhotoOverrides({});
+        setAPhoto();
       }
     }, ms(transitionDuration));
 
@@ -98,31 +85,26 @@ export const Splash = ({ onMouseDown }: SplashProps) => {
       tabIndex={0}
       className={classes.splash}
       onMouseDown={onMouseDown}
+      onTouchStart={onMouseDown}
+      style={{
+        border: '1px solid red'
+      }}
     >
       <BackgroundImage
         id="A"
-        photoUrls={aPhotoUrls}
-        overrides={aPhotoOverrides}
-        style={{
-          opacity: activeElement === 'A' ? 1 : 0,
-          transitionProperty: 'opacity',
-          transitionDuration,
-          transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
-        }}
-      />
+        photo={aPhoto}
+        isActive={activeElement === 'A'}
+      >
+        <SplashLower photo={aPhoto} />
+      </BackgroundImage>
       <BackgroundImage
         id="B"
-        photoUrls={bPhotoUrls}
-        overrides={bPhotoOverrides}
-        style={{
-          opacity: activeElement === 'B' ? 1 : 0,
-          transitionProperty: 'opacity',
-          transitionDuration,
-          transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
-        }}
-      />
+        photo={bPhoto}
+        isActive={activeElement === 'B'}
+      >
+        <SplashLower photo={bPhoto} />
+      </BackgroundImage>
       <Greeting />
-      <SplashLower />
     </div>
   );
-};
+}

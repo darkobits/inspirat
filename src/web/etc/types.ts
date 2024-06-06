@@ -63,11 +63,16 @@ export interface CurrentPhotoStorageItem {
 }
 
 
-/**
- * Object containing promises for low-quality image previews and full-quality
- * URLs that resolve when the resource at that URL has finished loading.
- */
-export interface PhotoUrls {
-  lqip: Promise<string>;
-  full: Promise<string>;
+export interface TouchEvent {
+  detail: {
+    x: number;
+    y: number;
+    directions: {
+      touch: boolean;
+      top: boolean;
+      left: boolean;
+      bottom: boolean;
+      right: boolean;
+    };
+  };
 }

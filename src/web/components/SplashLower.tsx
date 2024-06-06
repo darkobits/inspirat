@@ -1,31 +1,30 @@
-import React from 'react';
-
 import { ImageMeta } from 'web/components/ImageMeta';
-import { useInspirat } from 'web/hooks/use-inspirat';
 import useQuery from 'web/hooks/use-query';
 import { capitalizeWords } from 'web/lib/utils';
 
 import classes from './SplashLower.css';
 
+import type { InspiratPhotoResource } from 'etc/types';
 
-// ----- Splash (Lower) --------------------------------------------------------
+export interface SplashLowerProps {
+  photo: InspiratPhotoResource | void;
+}
 
-const SplashLower: React.FunctionComponent = () => {
-  const { currentPhoto } = useInspirat();
+export default function SplashLower({ photo }: SplashLowerProps) {
   const query = useQuery();
-
   // If we have a `meta=false` query param, hide image metadata.
-  if (query?.meta === 'false') {
-    return null;
-  }
+  if (query?.meta === 'false') return null;
+
+  if (!photo) return null;
 
   // Location.
-  const location = currentPhoto?.location?.name;
+  const location = capitalizeWords(photo?.location?.name ?? '');
 
   // Attribution.
-  const author = capitalizeWords(currentPhoto?.user?.name ?? '');
-  const authorHref = currentPhoto?.user?.links?.html;
-  const photoHref = currentPhoto?.links?.html;
+  const author = capitalizeWords(photo?.user?.name ?? '');
+  const authorHref = photo?.user?.links?.html;
+  const photoHref = photo?.links?.html;
+
   const attribution = author && (
     <span>
       <a href={photoHref} target="_blank" rel="noopener noreferrer">Photo</a> by{' '}
@@ -33,13 +32,8 @@ const SplashLower: React.FunctionComponent = () => {
     </span>
   );
 
-  return (<>
-    <div
-      className={classes.splashLower}
-      style={{
-        opacity: currentPhoto ? 1 : 0
-      }}
-    >
+  return (
+    <div className={classes.splashLower}>
       <ImageMeta className={classes.imageLocation}>
         {location}
       </ImageMeta>
@@ -47,14 +41,5 @@ const SplashLower: React.FunctionComponent = () => {
         {attribution}
       </ImageMeta>
     </div>
-    {/*
-      This adds a subtle gradient at the bottom of the screen that provides some
-      additional contrast behind the image metadata elements to improve
-      readability.
-    */}
-    <div className={classes.bottomGradient} />
-  </>);
-};
-
-
-export default SplashLower;
+  );
+}

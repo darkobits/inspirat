@@ -1,12 +1,19 @@
 /* eslint-disable react/jsx-props-no-spreading */
-// import { assignInlineVars } from '@vanilla-extract/dynamic';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
-import classes from './BackgroundImage.css';
+import InspiratContext from 'web/contexts/Inspirat';
+import {
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION,
+  BACKGROUND_RULE_OVERRIDES
+} from 'web/etc/constants';
+import { preloadImage } from 'web/lib/utils';
 
-import type { BackgroundImageOverrides, ElementProps, PhotoUrls } from 'web/etc/types';
+import classes, { keyframes } from './BackgroundImage.css';
 
+import type { InspiratPhotoResource } from 'etc/types';
+import type { BackgroundImageOverrides, ElementProps } from 'web/etc/types';
 
 /**
  * Set to a truthy value to debug the blur backdrop element.
@@ -18,80 +25,109 @@ import type { BackgroundImageOverrides, ElementProps, PhotoUrls } from 'web/etc/
  */
 const DEBUG_BLUR = 0;
 
-
-// ----- Background Image Wrapper ----------------------------------------------
+export interface BackgroundImageProps extends ElementProps<HTMLDivElement> {
+  photo: InspiratPhotoResource | void;
+  isActive: boolean;
+}
 
 /**
- * Props for the BackgroundImage component.
+ * TODO:
+ * - Re-implement lqipURl using multiple backgroundImage url()s.
+ * - Deprecate photoUrls computation in hook/context.
+ * - Deprecate background-position override (won't work with <img>).
  */
-interface BackgroundImageWrapperProps extends ElementProps<HTMLDivElement> {
-  backgroundImage?: string | void | undefined;
-  overrides: BackgroundImageOverrides;
-}
+export default function BackgroundImage(props: BackgroundImageProps) {
+  const { children, style, isActive, photo, ...restProps } = props;
+  const { buildPhotoUrls } = React.useContext(InspiratContext);
 
+  const [styleOverrides, setStyleOverrides] = React.useState<BackgroundImageOverrides>({});
+  const [animationName, setAnimationName] = React.useState('none');
+  const [lowQualityUrl, setLowQualityUrl] = React.useState<string | void>();
+  const [fullQualityUrl, setFullQualityUrl] = React.useState<string | void>();
+  const [anyImageReady, setAnyImageReady] = React.useState(false);
 
-const BackgroundImageWrapper = (props: BackgroundImageWrapperProps) => {
-  const { backgroundImage, overrides = {}, style, ...restProps } = props;
-
-  return (
-    <div
-      className={classes.backgroundImageWrapper}
-      style={{
-        backdropFilter: DEBUG_BLUR ? 'none' : `blur(${overrides.backdrop?.blurRadius ?? '0px'})`,
-        backgroundColor: DEBUG_BLUR ? 'rgba(255, 0, 0, 0.5)' : `rgba(0, 0, 0, ${overrides.backdrop?.backgroundOpacity ?? 0.2})`,
-        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
-        backgroundPosition: overrides.backgroundPosition ?? 'center center',
-        opacity: backgroundImage ? overrides.opacity ?? 1 : 0,
-        transitionDuration: overrides.transitionDuration ?? 'initial',
-        transitionTimingFunction: overrides.transitionTimingFunction ?? 'initial',
-        transform: overrides.transform ?? 'initial',
-        ...style
-      }}
-      // eslint-disable-next-line react/jsx-props-no-spreading
-      {...restProps}
-    />
-  );
-};
-
-
-// ----- Background Image ------------------------------------------------------
-
-
-export interface BackgroundImageProps extends ElementProps<HTMLDivElement> {
-  photoUrls: PhotoUrls | void;
-  overrides: BackgroundImageOverrides;
-}
-
-
-const BackgroundImage = ({ photoUrls, overrides, ...restProps }: BackgroundImageProps) => {
-  const [lqipUrl, setLqipUrl] = React.useState<string | void>();
-  const [fullUrl, setFullUrl] = React.useState<string | void>();
-
+  /**
+   * [Effect] When the photo changes, computes new low quality and full-quality
+   * URLs, preloads those resources, and set our `anyImagesReady` flag to true
+   * when the first image finishes loading.
+   */
   useAsyncEffect(isMounted => {
-    if (!photoUrls) {
-      setLqipUrl();
-      setFullUrl();
+    if (!photo) {
+      setLowQualityUrl();
+      setFullQualityUrl();
+      setAnimationName('none');
+      setStyleOverrides({});
+      setAnyImageReady(false);
       return;
     }
 
-    const { lqip, full } = photoUrls;
+    const photoUrls = buildPhotoUrls(photo);
 
-    void lqip.then(url => {
+    void Promise.race([
+      preloadImage(photoUrls.lowQuality),
+      preloadImage(photoUrls.highQuality)
+    ]).then(() => {
       if (!isMounted()) return;
-      setLqipUrl(url);
+      setAnyImageReady(true);
+      setAnimationName(keyframes.zoomOut);
+      setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
     });
 
-    void full.then(url => {
-      if (!isMounted()) return;
-      setFullUrl(url);
-    });
-  }, [photoUrls]);
+    setLowQualityUrl(photoUrls.lowQuality);
+    setFullQualityUrl(photoUrls.highQuality);
+  }, () => {
+    // DO NOT CLEAR THIS, IT RESETS PHOTO ZOOM AT THE START OF A TRANSITION.
+    // setAnimationName('none');
+  }, [photo?.id, isActive]);
 
-  return (<>
-    <BackgroundImageWrapper backgroundImage={lqipUrl} overrides={overrides} {...restProps} />
-    <BackgroundImageWrapper backgroundImage={fullUrl} overrides={overrides} {...restProps} />
-  </>);
-};
+  const srcSet = lowQualityUrl && fullQualityUrl
+    ? [
+      lowQualityUrl && `${lowQualityUrl} ${window.screen.width / 2}w`,
+      fullQualityUrl
+    ].filter(Boolean).join(', ')
+    : undefined;
 
-
-export default BackgroundImage;
+  return (
+    <div
+      data-testid="BACKGROUND_IMAGE"
+      className={classes.backgroundImageWrapper}
+      style={{
+        // Apply "backdrop" style overrides.
+        backgroundColor: DEBUG_BLUR ? 'rgba(255, 0, 0, 0.5)' : `rgba(0, 0, 0, ${styleOverrides.backdrop?.backgroundOpacity ?? 0.2})`,
+        backdropFilter: DEBUG_BLUR ? 'none' : `blur(${styleOverrides.backdrop?.blurRadius ?? '0px'})`,
+        // Apply opacity transition.
+        transitionProperty: 'opacity',
+        transitionDuration: BACKGROUND_TRANSITION_DURATION,
+        transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+        opacity: isActive && anyImageReady ? 1 : 0,
+        pointerEvents: isActive ? 'inherit' : 'none',
+        ...style
+      }}
+      {...restProps}
+    >
+      <div
+        data-testid="transform-wrapper"
+        style={{
+          width: '100%',
+          height: '100%',
+          transform: styleOverrides.transform
+        }}
+      >
+        <img
+          alt="background"
+          srcSet={srcSet}
+          src={lowQualityUrl ?? undefined}
+          className={classes.backgroundImage}
+          style={{
+            animationName
+            // transitionProperty: 'opacity',
+            // transitionDuration: styleOverrides.transitionDuration ?? BACKGROUND_TRANSITION_DURATION,
+            // transitionTimingFunction: styleOverrides.transitionTimingFunction ?? BACKGROUND_TRANSITION_FUNCTION,
+            // opacity: anyImageReady ? styleOverrides.opacity ?? 1 : 0
+          }}
+        />
+      </div>
+      {children}
+    </div>
+  );
+}

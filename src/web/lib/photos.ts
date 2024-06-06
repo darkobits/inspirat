@@ -138,7 +138,7 @@ export async function getPhotoCollections() {
  *
  * If a day argument is provided, will return the photo for the provided day.
  */
-export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<InspiratPhotoResource> {
+export async function getCurrentPhotoFromCollection({ offset = 0 } = {}): Promise<InspiratPhotoResource> {
   const day = daysSinceEpoch() + offset;
   const photos = await getPhotoCollections();
 
@@ -157,7 +157,7 @@ export async function getCurrentPhotoFromCollection({offset = 0} = {}): Promise<
  * is updated in the background between calls to this function, the value it
  * returns will not change.
  */
-export async function getCurrentPhotoFromCache(): Promise<InspiratPhotoResource> {
+export async function getCurrentPhotoFromStorage(): Promise<InspiratPhotoResource> {
   const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
 
   if (currentPhoto) {
@@ -165,9 +165,9 @@ export async function getCurrentPhotoFromCache(): Promise<InspiratPhotoResource>
       return currentPhoto.photo;
     }
 
-    ifDebug(() => console.debug('[getCurrentPhotoFromCache] Cached photo was expired.'));
+    ifDebug(() => console.debug('[getCurrentPhotoFromStorage] Cached photo was expired.'));
   } else {
-    ifDebug(() => console.debug('[getCurrentPhotoFromCache] Cache did not contain a photo.'));
+    ifDebug(() => console.debug('[getCurrentPhotoFromStorage] Cache did not contain a photo.'));
   }
 
   // Cache did not exist or was expired.

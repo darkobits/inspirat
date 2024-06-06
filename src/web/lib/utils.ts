@@ -5,11 +5,17 @@ import queryString from 'query-string';
 import * as R from 'ramda';
 import urlParseLax from 'url-parse-lax';
 
-import { Color, InspiratPhotoResource } from 'etc/types';
 import { QUALITY_LQIP, QUALITY_FULL } from 'web/etc/constants';
 
+import type { Color, InspiratPhotoResource } from 'etc/types';
+import type { TouchEvent, GenericFunction, LooseObject } from 'web/etc/types';
 
-import type { GenericFunction, LooseObject } from 'web/etc/types';
+/**
+ * Determines if the provided value is a TouchEvent.
+ */
+export function isTouchEvent(e: any): e is TouchEvent {
+  return e?.detail?.directions;
+}
 
 
 /**
@@ -131,21 +137,24 @@ export function isChromeExtension() {
  * when invoked, will wait `interval` milliseconds and then invoke `callback` if
  * no 'mouseup' event was received in the interim.
  */
-export function onClickAndHold(interval: number, cb: GenericFunction) {
-  const handler: React.EventHandler<React.MouseEvent> = e => {
+export function onClickAndHold(interval: number, cb: (e: React.MouseEvent | React.TouchEvent) => void) {
+  // const isTouchEvent = (e: any): e is React.TouchEvent => Reflect.has(e, 'touches');
+  const isMouseEvent = (e: any): e is React.MouseEvent => Reflect.has(e, 'button');
+
+  const handler: React.EventHandler<React.MouseEvent | React.TouchEvent> = e => {
     const target = e.currentTarget;
 
     // This was not a primary click, or target is falsy; bail.
-    if (e.button !== 0 || e.ctrlKey || !target) {
+    if (!target || (isMouseEvent(e) && e.button !== 0 || e.ctrlKey || e.altKey || e.shiftKey)) {
       return;
     }
 
     // Set a timer that will invoke `cb` when it expires.
-    const timeoutHandle = setTimeout(() => cb(target), interval);
+    const timeoutHandle = setTimeout(() => cb(e), interval);
 
     // Clear the above timeout if the mouse button is released or the mouse
     // moves.
-    ['mouseup', 'mousemove'].forEach(event => {
+    ['mouseup', 'mousemove', 'touchend'].forEach(event => {
       const cancelHandler = () => {
         clearTimeout(timeoutHandle);
         target.removeEventListener(event, cancelHandler);
@@ -159,6 +168,71 @@ export function onClickAndHold(interval: number, cb: GenericFunction) {
 }
 
 
+const preloadImageCache = new Map<string, 'LOADING' | 'SUCCESS' | 'ERROR'>();
+
+
+/**
+ * Asynchronously pre-loads the image at the provided URL and returns a promise
+ * that resolves when the image has finished loading.
+ */
+export async function preloadImage(imgUrl: string) {
+  if (!preloadImageCache.has(imgUrl)) {
+    preloadImageCache.set(imgUrl, 'LOADING');
+  }
+
+  return new Promise<string | ErrorEvent>((resolve, reject) => {
+    const img = new Image();
+
+    img.addEventListener('load', () => {
+      preloadImageCache.set(imgUrl, 'SUCCESS');
+      resolve(imgUrl);
+    });
+
+    img.addEventListener('error', event => {
+      preloadImageCache.set(imgUrl, 'ERROR');
+      const message = event.error?.message ?? 'Unknown Error';
+      reject(new Error(`[preloadImage] Failed to load image: ${message}`, { cause: event.error }));
+    });
+
+    // N.B. Setting this property will cause the browser to fetch the image.
+    img.src = imgUrl;
+  });
+}
+
+/**
+ * Predicate which returns `true` immediately if there are any images that are
+ * currently preloading.
+ */
+preloadImage.isLoadingImages = () => {
+  const states = new Set(preloadImageCache.values());
+  return !states.has('LOADING');
+};
+
+/**
+ * Used by DevTools to transform a URL pasted into the URL input into a sparse
+ * InspiratPhotoResource.
+ */
+export function mockPhotoResourceFromUrl(url: string) {
+  const imgId = url.startsWith('https://unsplash.com/photos/')
+    ? url.replace('https://unsplash.com/photos/', '')
+    : undefined;
+
+  if (!imgId) return;
+
+  const width = window.innerWidth * window.devicePixelRatio;
+  const height = window.innerHeight * window.devicePixelRatio;
+
+  const newUrl = new URL(`https://source.unsplash.com/${imgId}/${width}x${height}`);
+
+  return {
+    id: imgId,
+    urls: {
+      full: newUrl.href
+    }
+  } as InspiratPhotoResource;
+}
+
+
 /**
  * @private
  *
@@ -168,8 +242,6 @@ export function onClickAndHold(interval: number, cb: GenericFunction) {
  * See: https://docs.imgix.com/apis/url
  */
 function buildImgixOptions(base?: Record<string, any>, overrides?: LooseObject): string {
-  const w = window.screen.width;
-  const h = window.screen.height;
   const dpr = window.devicePixelRatio;
 
   const params = {
@@ -183,9 +255,9 @@ function buildImgixOptions(base?: Record<string, any>, overrides?: LooseObject):
     // Do not crop images.
     crop: undefined,
     // Desired maximum image width.
-    w,
+    w: '1.0',
     // Desired maximum image height.
-    h,
+    h: '1.0',
     // Set device pixel ratio.
     dpr,
     // Image quality.
@@ -214,65 +286,23 @@ export function updateImgixQueryParams(baseUrl: string, options?: LooseObject) {
 
 
 /**
- * Asynchronously pre-loads the image at the provided URL and returns a promise
- * that resolves when the image has finished loading.
- */
-export async function preloadImage(imgUrl: string) {
-  return new Promise<void | ErrorEvent>((resolve, reject) => {
-    const img = new Image();
-
-    img.addEventListener('load', () => {
-      resolve();
-    });
-
-    img.addEventListener('error', event => {
-      reject(event);
-    });
-
-    // N.B. Setting this property will cause the browser to fetch the image.
-    img.src = imgUrl;
-  });
-}
-
-
-/**
- * Used by DevTools to transform a URL pasted into the URL input into a sparse
- * InspiratPhotoResource.
- */
-export function mockPhotoResourceFromUrl(url: string) {
-  const imgId = url.startsWith('https://unsplash.com/photos/')
-    ? url.replace('https://unsplash.com/photos/', '')
-    : undefined;
-
-  if (!imgId) return;
-
-  const width = window.innerWidth * window.devicePixelRatio;
-  const height = window.innerHeight * window.devicePixelRatio;
-
-  const newUrl = new URL(`https://source.unsplash.com/${imgId}/${width}x${height}`);
-
-  return {
-    id: imgId,
-    urls: {
-      full: newUrl.href
-    }
-  } as InspiratPhotoResource;
-}
-
-
-/**
  * Provided a single photo URL, returns an object containing a URL for a
  * low-quality image preview and the full-quality URL.
  */
-export function buildPhotoUrlSrcSet(url: string) {
+export function buildPhotoUrlSrcSet(url: string, lqOptions ={}, fullOptions = {}) {
   return {
-    lqip: updateImgixQueryParams(url, {
+    lowQuality: updateImgixQueryParams(url, {
       q: QUALITY_LQIP,
       w: window.screen.width / 2,
-      h: window.screen.width / 2
+      h: window.screen.height / 2,
+      // Adds a color overlay. Can be useful for debugging.
+      // blend: 'FA653D',
+      // blendMode: 'overlay',
+      ...lqOptions
     }),
-    full: updateImgixQueryParams(url, {
-      q: QUALITY_FULL
+    highQuality: updateImgixQueryParams(url, {
+      q: QUALITY_FULL,
+      ...fullOptions
     })
   };
 }
@@ -296,4 +326,18 @@ export function filterFalsy<T extends Array<any>>(arr: T) {
   return arr.filter(value => {
     return ![null, false, undefined, Number.NaN].includes(value);
   }) as WithoutFalsy<T>;
+}
+
+
+/**
+ * [Hack] Programmatically clears any text/elements the user has selected by
+ * adding and removing an invisible input
+ */
+export function clearSelections() {
+  const selectionSmasher = document.createElement('input');
+  selectionSmasher.setAttribute('type', 'text');
+  document.querySelector('body')?.append(selectionSmasher);
+  selectionSmasher.focus();
+  selectionSmasher.blur();
+  selectionSmasher.remove();
 }

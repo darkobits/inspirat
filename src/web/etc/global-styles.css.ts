@@ -1,8 +1,35 @@
-import { globalStyle } from '@vanilla-extract/css';
+import { style, globalStyle } from '@vanilla-extract/css';
 
-const FONT_FAMILY_PLAIN = '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif';
-const FONT_FAMILY_FANCY = `"Josefin Sans", ${FONT_FAMILY_PLAIN} !important`;
-const FONT_FAMILY_SANS_SERIF = `"Raleway", ${FONT_FAMILY_PLAIN} !important`;
+export const FONT_FAMILY_PLAIN = '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif';
+export const FONT_FAMILY_FANCY = `"Josefin Sans", ${FONT_FAMILY_PLAIN}`;
+export const FONT_FAMILY_SANS_SERIF = `"Raleway", ${FONT_FAMILY_PLAIN}`;
+
+// ----- Shared Global Classes -------------------------------------------------
+
+/**
+ * Applies enough padding for an element to ensure its content is rendered in
+ * the safe area.
+ */
+export const safePadding = style({
+  paddingTop: 'env(safe-area-inset-top, 0px)',
+  paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+  paddingLeft: 'env(safe-area-inset-left, 0px)',
+  paddingRight: 'env(safe-area-inset-right, 0px)'
+});
+
+
+/**
+ * Applies enough margin to an element to ensure it is rendered in the safe
+ * area.
+ */
+export const safeMargins = style({
+  marginTop: 'env(safe-area-inset-top, 0px)',
+  marginBottom: 'env(safe-area-inset-bottom, 0px)',
+  marginLeft: 'env(safe-area-inset-left, 0px)',
+  marginRight: 'env(safe-area-inset-right, 0px)'
+});
+
+// ----- Global Style ----------------------------------------------------------
 
 globalStyle('*, *:before, *:after', {
   boxSizing: 'border-box',
@@ -17,14 +44,17 @@ globalStyle('*, *:before, *:after', {
 });
 
 globalStyle('html, body', {
-  backgroundColor: 'rgb(42, 42, 42)',
+  // backgroundColor: 'rgb(42, 42, 42)',
+  backgroundColor: 'rgb(12, 12, 12)',
   fontFamily: FONT_FAMILY_SANS_SERIF,
-  height: '100%',
+  // height: '100vh',
   letterSpacing: '0.04em',
   lineHeight: '1.8em',
   margin: 0,
   padding: 0,
-  width: '100%'
+  height: '100%',
+  // width: '100vw',
+  userSelect: 'none'
 });
 
 globalStyle('a, a:hover', {
@@ -56,6 +86,10 @@ globalStyle('.text-fancy', {
 });
 
 globalStyle('#root', {
-  backgroundColor: 'rgb(42, 42, 42)',
+  // backgroundColor: 'rgb(42, 42, 42)',
   height: '100%'
+});
+
+globalStyle('vite-plugin-checker-error-overlay', {
+  display: 'none'
 });

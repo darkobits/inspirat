@@ -8,6 +8,7 @@ module.exports = {
     project: path.resolve(__dirname, '..', '..', 'tsconfig.json')
   },
   rules: {
-    'unicorn/no-null': 'off'
+    'unicorn/no-null': 'off',
+    'unicorn/no-useless-undefined': 'off'
   }
 };

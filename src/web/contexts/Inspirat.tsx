@@ -1,17 +1,15 @@
 import ms from 'ms';
 import prettyMs from 'pretty-ms';
-import * as R from 'ramda';
 import React from 'react';
-import { singletonHook } from 'react-singleton-hook';
 import useAsyncEffect from 'use-async-effect';
 
-import { InspiratPhotoResource } from 'etc/types';
+import { BACKGROUND_ANIMATION_INITIAL_SCALE } from 'web/etc/constants';
 import useQuery from 'web/hooks/use-query';
 import withNamespace from 'web/hooks/use-storage-item';
 import {
   getPhotoCollections,
   getCurrentPhotoFromCollection,
-  getCurrentPhotoFromCache
+  getCurrentPhotoFromStorage
 } from 'web/lib/photos';
 import {
   getPeriodDescriptor,
@@ -24,13 +22,18 @@ import {
   preloadImage
 } from 'web/lib/utils';
 
-import type { PhotoUrls } from 'web/etc/types';
+import type { InspiratPhotoResource } from 'etc/types';
 
 
 /**
  * Shape of the object provided by this hook.
  */
-export interface InspiratHook {
+export interface InspiratContextValue {
+  /**
+   * Current name that the user has set, persisted in local storage.
+   */
+  name: string | undefined;
+
   /**
    * Whether the user has seen the introduction modal.
    */
@@ -52,11 +55,6 @@ export interface InspiratHook {
   currentPhoto: InspiratPhotoResource | undefined;
 
   /**
-   * Array containing the source set of URLs for the current photo.
-   */
-  currentPhotoUrls: PhotoUrls | undefined;
-
-  /**
    * The total number of photos in the collection.
    */
   numPhotos: number;
@@ -70,11 +68,6 @@ export interface InspiratHook {
    * Whether we are pre-loading photos in the background.
    */
   isLoadingPhotos: boolean;
-
-  /**
-   * Current name that the user has set, persisted in local storage.
-   */
-  name: string | undefined;
 
   /**
    * Sets the user's name.
@@ -103,39 +96,56 @@ export interface InspiratHook {
    * current day offset.
    */
   resetPhoto: () => void;
+
+  /**
+   * Provided a photo, builds a custom URL using configured IMGIX settings and
+   * returns URLs for a low-quality version of the image and a high-quality
+   * version of the image.
+   */
+  buildPhotoUrls: (photo: InspiratPhotoResource) => ReturnType<typeof buildPhotoUrlSrcSet>;
 }
-
-
-/**
- * @private
- *
- * Tracks URLs of previously pre-loaded photos.
- */
-const preloadedPhotos = new Set<string>();
-
 
 const useStorageItem = withNamespace('inspirat');
 
+const InspiratContext = React.createContext<InspiratContextValue>({
+  name: '',
+  setName: () => {/* Empty function. */},
 
-const initialValue = {
-  dayOffset: 0
-} as InspiratHook;
+  currentPhoto: undefined,
+  setCurrentPhoto: () => {/* Empty function. */},
 
+  dayOffset: 0,
+  setDayOffset: () => {/* Empty function. */},
 
-export const useInspirat = singletonHook(initialValue, () => {
+  hasSeenIntroduction: undefined,
+  setHasSeenIntroduction: () => {/* Empty function. */},
+
+  showDevTools: false,
+  period: '',
+  numPhotos: 0,
+  isLoadingPhotos: false,
+  resetPhoto: () => {/* Empty function. */},
+  buildPhotoUrls: () => ({
+    lowQuality: '',
+    highQuality: ''
+  })
+});
+
+export function InspiratProvider(props: React.PropsWithChildren) {
+  const [name, setName] = useStorageItem<string>('name');
   const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean | undefined>('hasSeenIntroduction', false);
-  const [currentPhotoFromState, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
-  const [currentPhotoUrls, setCurrentPhotoUrls] = React.useState<PhotoUrls>();
+
+  const [currentPhoto, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
   const [showDevTools, setShowDevTools] = React.useState(false);
-  const [isLoadingPhotos, setIsLoadingPhotos] = React.useState(false);
-  const [name, setName] = useStorageItem<string>('name');
   const [period, setPeriod] = React.useState(getPeriodDescriptor());
+  const [isLoadingPhotos, setIsLoadingPhotos] = React.useState(false);
   const query = useQuery();
 
-
   // ----- [Reducer] Increment/Decrement/Set Photo Index -----------------------
+
+  const [dayOffsetFromStorage, setDayOffsetInStorage] = useStorageItem<number>('dayOffset', 0);
 
   /**
    * Day offset is 0 by default and is used exclusively by DevTools to move
@@ -144,97 +154,70 @@ export const useInspirat = singletonHook(initialValue, () => {
    */
   const [dayOffset, setDayOffset] = React.useReducer((state: number, action: 'increment' | 'decrement' | number) => {
     if (typeof action === 'number') {
+      setDayOffsetInStorage(action);
       return action;
     }
 
     switch (action) {
       case 'increment':
+        setDayOffsetInStorage(state + 1);
         return state + 1;
       case 'decrement':
+        setDayOffsetInStorage(state - 1);
         return state - 1;
       default:
         throw new Error(`Unknown action: ${action}`);
     }
   }, 0);
 
+  /**
+   * [Effect] Synchronizes in-memory state from storage state, if it exists.
+   */
+  React.useEffect(() => {
+    if (!dayOffsetFromStorage) return;
+    if (dayOffset !== dayOffsetFromStorage) setDayOffset(dayOffsetFromStorage);
+  }, [dayOffset, dayOffsetFromStorage]);
 
   // ----- [Callbacks] ---------------------------------------------------------
 
+  const buildPhotoUrls = React.useCallback((photo: InspiratPhotoResource) => {
+    if (!photo?.urls) {
+      console.error('BAD PHOTO', photo);
+      throw new Error('[buildPhotoUrls] Got invalid input.', { cause: photo });
+    }
 
-  /**
-   * [Callback] Provided a photo resource, computes the URL source set to use,
-   * pre-loads those resources, and resolves when the first URL in the set has
-   * finished loading.
-   */
-  const preloadPhotoUrls = React.useCallback(async (photoResource: InspiratPhotoResource) => {
-    const urls = buildPhotoUrlSrcSet(photoResource.urls.full);
-
-    const photoUrls: PhotoUrls = R.mapObjIndexed(async (url, key) => {
-      if (!preloadedPhotos.has(url)) {
-        if (key === 'full') {
-          await new Promise<void>(resolve => {
-            setTimeout(() => {
-              resolve();
-            }, 0);
-          });
-        }
-
-        await preloadImage(url);
-        preloadedPhotos.add(url);
-      }
-
-      return url;
-    }, urls);
-
-    // Wait for the first image in the source set to finish pre-loading, then
-    // update URLs.
-    await Promise.race(Object.values(photoUrls));
-
-    return photoUrls;
+    // This is where IMGIX configuration for low and high quality versions of
+    // photos is defined.
+    return buildPhotoUrlSrcSet(photo.urls.full, {
+      // blend: 'FA653D80',
+      // blendMode: 'overlay'
+    }, {
+      w: window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE,
+      h: window.screen.height * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE
+    });
   }, []);
-
 
   /**
    * [Callback] Updates photos according to the current day offset if dev tools
    * are being used, or the current cached photo otherwise.
    */
   const updatePhotos = React.useCallback(async () => {
-    setIsLoadingPhotos(true);
-
     // If dev tools are open, the current photo should be pulled from the photo
     // collection using the current offset. If not, use the 'currentPhoto' cache
     // item to ensure the photo does not change throughout the day if the photo
     // collection is updated.
-    const currentPhoto = showDevTools
-      ? await getCurrentPhotoFromCollection({offset: dayOffset})
-      : await getCurrentPhotoFromCache();
+    const nextPhoto = showDevTools
+      ? await getCurrentPhotoFromCollection({ offset: dayOffset })
+      : await getCurrentPhotoFromStorage();
 
     ifDebug(() => {
       if (!window.debug) window.debug = {};
-      window.debug.currentPhoto = currentPhoto;
+      window.debug.currentPhoto = nextPhoto;
     });
 
-    const currentPhotoPromise = preloadPhotoUrls(currentPhoto).then(urls => {
-      setCurrentPhoto(currentPhoto);
-      setCurrentPhotoUrls(urls);
-    });
-
-    const prevPhotoPromise = showDevTools
-      ? getCurrentPhotoFromCollection({offset: dayOffset - 1 }).then(preloadPhotoUrls)
-      : false;
-
-    const nextPhotoPromise = showDevTools
-      ? getCurrentPhotoFromCollection({offset: dayOffset + 1 }).then(preloadPhotoUrls)
-      : false;
-
-    await Promise.all([
-      currentPhotoPromise,
-      prevPhotoPromise,
-      nextPhotoPromise
-    ] as Array<Promise<any>>);
-
-    setIsLoadingPhotos(false);
-  }, [showDevTools, dayOffset, preloadPhotoUrls]);
+    // TODO: May need to check for isMounted here.
+    setCurrentPhoto(nextPhoto);
+  }, [showDevTools, dayOffset]);
 
 
   /**
@@ -265,7 +248,6 @@ export const useInspirat = singletonHook(initialValue, () => {
     updatePhotos
   ]);
 
-
   // ----- Effects -------------------------------------------------------------
 
   /**
@@ -273,23 +255,26 @@ export const useInspirat = singletonHook(initialValue, () => {
    */
   React.useEffect(() => {
     const timeoutHandle = updatePhotosWithTimer();
-
-    return () => {
-      clearTimeout(timeoutHandle);
-    };
+    return () => clearTimeout(timeoutHandle);
   }, [dayOffset, shouldResetPhoto, showDevTools, updatePhotosWithTimer]);
 
+  /**
+   * [Effect] Periodically checks if we are waiting for any photos to load.
+   */
+  React.useEffect(() => {
+    const intervalHandle = setInterval(() => {
+      setIsLoadingPhotos(preloadImage.isLoadingImages());
+    }, 100);
+    return () => clearInterval(intervalHandle);
+  }, []);
 
   /**
    * [Effect] Updates photo URLs when the current photo is changed.
    */
   React.useEffect(() => {
-    if (!currentPhotoFromState) return;
-    void preloadPhotoUrls(currentPhotoFromState).then(urls => {
-      setCurrentPhotoUrls(urls);
-    });
-  }, [currentPhotoFromState, preloadPhotoUrls]);
-
+    if (!currentPhoto) return;
+    setCurrentPhoto(currentPhoto);
+  }, [currentPhoto]);
 
   /**
    * [Effect] When the `devtools` query param is present, enables dev tools.
@@ -300,7 +285,6 @@ export const useInspirat = singletonHook(initialValue, () => {
       setShowDevTools(true);
     }
   }, [query]);
-
 
   /**
    * [Effect] Initializes debug data.
@@ -319,7 +303,6 @@ export const useInspirat = singletonHook(initialValue, () => {
     });
   }, []);
 
-
   /**
    * [Effect] Update period.
    */
@@ -331,28 +314,36 @@ export const useInspirat = singletonHook(initialValue, () => {
     return () => clearInterval(interval);
   }, []);
 
+  return (
+    <InspiratContext.Provider
+      value={{
+        name,
+        setName,
 
-  // ----- Hook API ------------------------------------------------------------
+        currentPhoto: currentPhoto,
+        setCurrentPhoto,
 
-  return {
-    hasSeenIntroduction,
-    setHasSeenIntroduction,
-    dayOffset,
-    // TODO: This breaks if we don't use a one-off wrapper here. Figure out why.
-    setDayOffset: (offset: 'increment' | 'decrement' | number) => {
-      setDayOffset(offset);
-    },
-    showDevTools,
-    isLoadingPhotos,
-    name,
-    setName,
-    period,
-    currentPhoto: currentPhotoFromState,
-    currentPhotoUrls,
-    setCurrentPhoto,
-    resetPhoto: () => {
-      resetPhoto(shouldResetPhoto + 1);
-    },
-    numPhotos
-  };
-});
+        dayOffset,
+        setDayOffset,
+
+        hasSeenIntroduction,
+        setHasSeenIntroduction,
+
+        // TODO: This breaks if we don't use a one-off wrapper here. Figure out
+        // why.
+        showDevTools,
+        period,
+        numPhotos,
+        isLoadingPhotos,
+        resetPhoto: () => {
+          resetPhoto(shouldResetPhoto + 1);
+        },
+        buildPhotoUrls
+      }}
+    >
+      {props.children}
+    </InspiratContext.Provider>
+  );
+}
+
+export default InspiratContext;

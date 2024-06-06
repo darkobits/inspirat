@@ -174,7 +174,7 @@ const handlerImpl: AWSLambdaMiddleware = async ({ response }) => {
       return collectionPhotoIds.includes(curPhoto.id);
     }) ?? [];
 
-    const numDeletedPhotos = inspiratCollection ? inspiratCollection.photos.length - collectionPhotoIds.length : 0;
+    const numDeletedPhotos = inspiratCollection ? Math.abs(inspiratCollection.photos.length - collectionPhotoIds.length) : 0;
     const photos = R.sortBy(R.prop('id'), R.concat(photosToAdd, photosToKeep));
 
     log.info([

@@ -1,76 +1,44 @@
-import { style, globalStyle } from '@vanilla-extract/css';
+import { style } from '@vanilla-extract/css';
 
-const borderRadius = '24px';
-const paddingTop = '32px';
-const paddingLeft = '32px';
-const paddingBottom = '12px';
-const paddingRight = '32px';
+import { FONT_FAMILY_FANCY } from 'web/etc/global-styles.css';
 
 const classes = {
   greetingWrapper: style({
     display: 'flex',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     color: 'white',
-    // opacity: vars.greetingWrapper.opacity,
-    fontFamily: '"Josefin Sans", -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif',
-    fontSize: 'clamp(1.8rem, 0.8308rem + 4.3077vw, 6rem)',
-    lineHeight: '1.2em',
-    textAlign: 'center',
-    height: '100%',
-    // marginBottom: '128px',
-    marginBottom: '64px',
-    pointerEvents: 'none',
-    position: 'relative',
     userSelect: 'none',
-    width: '100%',
-    transitionProperty: 'opacity',
-    transitionDuration: '1.2s',
-    transitionTimingFunction: 'ease-in-out',
-    transitionDelay: '0s'
+    // Needed in Mobile Safari or greeting will not be visible.
+    position: 'relative', zIndex: 1,
+    // border: '1px solid red',
+    padding: '10px 18px'
   }),
-  greetingBackground: style({
-    position: 'absolute',
+  greeting: style({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+    flexWrap: 'wrap',
     height: 'min-content',
-    width: 'max-content',
-    zIndex: 0,
-    mixBlendMode: 'plus-lighter',
-    backdropFilter: 'blur(12px)',
-    boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.12)',
-    borderRadius,
-    paddingTop,
-    paddingLeft,
-    paddingRight,
-    paddingBottom
-  }),
-  greetingForeground: style({
-    position: 'absolute',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    textAlign: 'center',
+    paddingTop: '38px',
+    paddingLeft: '42px',
+    paddingRight: '42px',
+    paddingBottom: '24px',
+    marginBottom: '42px',
+    fontFamily: FONT_FAMILY_FANCY,
+    fontSize: 'clamp(1.5rem, 0.8308rem + 4.3077vw, 6rem)',
+    lineHeight: '1.2em',
     borderWidth: '1px',
     borderStyle: 'solid',
-    height: 'min-content',
-    width: 'max-content',
-    zIndex: 1,
-    borderRadius,
-    paddingTop,
-    paddingLeft,
-    paddingRight,
-    paddingBottom
+    borderRadius: '24px',
+    backgroundColor: 'rgba(80, 80, 80, 0.12)',
+    backdropFilter: 'blur(12px)',
+    boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.12)',
+    // Needed in Mobile Safari.
+    WebkitBackdropFilter: 'blur(12px)'
   })
 };
-
-globalStyle(`${classes.greetingWrapper} *`, {
-  fontFamily: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 500,
-  letterSpacing: 'inherit',
-  lineHeight: 'inherit',
-  pointerEvents: 'inherit'
-});
 
 export default classes;

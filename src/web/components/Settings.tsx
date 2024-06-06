@@ -8,22 +8,18 @@ import {
 } from 'react-bootstrap';
 
 import { AnimatedModal } from 'web/components/AnimatedModal';
-import { useInspirat } from 'web/hooks/use-inspirat';
+import InspiratContext from 'web/contexts/Inspirat';
 
 import type { GenericFunction } from 'web/etc/types';
-
-
-// ----- Props -----------------------------------------------------------------
 
 export interface SettingsProps {
   show: boolean | undefined;
   onClose?: GenericFunction | undefined;
 }
 
-export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose }) => {
-  const { name, setName } = useInspirat();
+export function Settings({ show, onClose }: SettingsProps) {
+  const { name, setName } = React.useContext(InspiratContext);
   const [tempName, setTempName] = React.useState<string | undefined>();
-
 
   /**
    * [Effect] Replicates global state to local state.
@@ -31,7 +27,6 @@ export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose
   React.useEffect(() => {
     if (typeof name === 'string') setTempName(name);
   }, [name, setTempName, show]);
-
 
   /**
    * [Callback] When the form is submitted, replicates internal data to global
@@ -98,4 +93,4 @@ export const Settings: React.FunctionComponent<SettingsProps> = ({ show, onClose
       }
     />
   );
-};
+}
