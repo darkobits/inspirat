@@ -46,7 +46,7 @@ export const BACKGROUND_TRANSITION_FUNCTION = import.meta.env.NODE_ENV === 'prod
  * Duration for the custom animation applied to a background image when it comes
  * into view.
  */
-export const BACKGROUND_ANIMATION_DURATION = ms('60s');
+export const BACKGROUND_ANIMATION_DURATION = ms('100s');
 
 /**
  * Adjusts the initial scale for the background zoom-out animation. Also passed
@@ -58,7 +58,7 @@ export const BACKGROUND_ANIMATION_INITIAL_SCALE = 1.4 as const;
 
 /**
  * How long image collection data may persist in the cache before it must be
- * updated. (1 day)
+ * updated.
  */
 export const CACHE_TTL = ms('1 day');
 

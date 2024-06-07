@@ -35,7 +35,7 @@ export default {
     objectFit: 'cover',
     userSelect: 'none',
     transitionProperty: 'opacity',
-    animationTimingFunction: 'ease-in-out',
+    animationTimingFunction: 'linear',
     animationDuration: `${BACKGROUND_ANIMATION_DURATION / 1000}s`
   })
 };

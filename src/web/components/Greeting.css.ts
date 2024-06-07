@@ -8,30 +8,37 @@ export default {
     alignItems: 'center',
     justifyContent: 'center',
     flexWrap: 'wrap',
+    flexShrink: 1,
+
     height: 'min-content',
     minWidth: 'min-content',
-    flexShrink: 1,
-    textAlign: 'center',
+
     paddingTop: '0.56em',
     paddingLeft: '0.72em',
     paddingRight: '0.72em',
     paddingBottom: '0.4em',
+
     fontFamily: FONT_FAMILY_FANCY,
     fontSize: 'clamp(1.5rem, 0.8308rem + 4.3077vw, 6rem)',
     lineHeight: '1.24em',
+    textAlign: 'center',
+
     borderWidth: '1px',
     borderStyle: 'solid',
     borderRadius: '0.42em',
-    backgroundColor: 'rgba(80, 80, 80, 0.12)',
+
+    // Adds additional contrast to text.
+    backgroundColor: 'rgba(72, 72, 72, 0.06)',
+
     backdropFilter: 'blur(12px)',
     boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.12)',
     userSelect: 'none',
+
+    // Shifts the greeting upwards a bit, but we don't want to do this in mobile
+    // landscape, where vertical space is limited.
     marginBottom: '42px',
-    '@media': {
-      '(pointer: coarse) and (orientation: landscape)': {
-        marginBottom: 0
-      }
-    },
+    '@media': { '(pointer: coarse) and (orientation: landscape)': { marginBottom: 0 } },
+
     // Needed in Mobile Safari or the greeting will not be visible.
     position: 'relative', zIndex: 1
   })

@@ -108,7 +108,7 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       >
         <SplashLower photo={bPhoto} />
       </BackgroundImage>
-      <Greeting style={{ transitionDuration }} />
+      <Greeting /* style={{ transitionDuration }} */ />
     </div>
   );
 }
