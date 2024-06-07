@@ -1,6 +1,6 @@
-import S3 from 'aws-sdk/clients/s3';
+import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 
-const s3Client = new S3();
+const s3Client = new S3Client();
 
 export interface GetJSONOptions {
   bucket: string;
@@ -8,18 +8,18 @@ export interface GetJSONOptions {
 }
 
 export async function getJSON<T = any>({ bucket, key }: GetJSONOptions): Promise<T | undefined> {
-  const response = await s3Client.getObject({
+  const response = await s3Client.send(new GetObjectCommand({
     Bucket: bucket,
     Key: key,
     ResponseContentType: 'application/json'
-  }).promise();
+  }));
 
   if (!response.Body) {
     return;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-base-to-string
-  return JSON.parse(response.Body.toString('utf8'));
+  return JSON.parse(await response.Body.transformToString());
 }
 
 export interface PutJSONOptions {
@@ -29,11 +29,11 @@ export interface PutJSONOptions {
 }
 
 export async function putJSON({ bucket, key, body }: PutJSONOptions) {
-  await s3Client.putObject({
+  await s3Client.send(new PutObjectCommand({
     ACL: 'public-read',
     Bucket: bucket,
     Key: key,
     ContentType: 'application/json',
     Body: JSON.stringify(body)
-  }).promise();
+  }));
 }
