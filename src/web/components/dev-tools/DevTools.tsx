@@ -39,6 +39,7 @@ export const DevTools = () => {
     showDevTools,
     isLoadingPhotos,
     currentPhoto,
+    currentPhotoPreloaded,
     setCurrentPhoto,
     setDayOffset,
     resetPhoto,
@@ -54,16 +55,19 @@ export const DevTools = () => {
     if (!showDevTools) return;
 
     mousetrap.bind('left', throttle(ms(BACKGROUND_TRANSITION_DURATION) * 1.5, () => {
+      if (!currentPhotoPreloaded) return;
       setDayOffset('decrement');
     }, { noLeading: false }));
 
     mousetrap.bind('right', throttle(ms(BACKGROUND_TRANSITION_DURATION) * 1.5, () => {
+      if (!currentPhotoPreloaded) return;
       setDayOffset('increment');
     }, { noLeading: false }));
 
     const swipeListener = SwipeListener(document);
 
     document.addEventListener('swipe', event => {
+      if (!currentPhotoPreloaded) return;
       if (isTouchEvent(event)) {
         if (event.detail.directions.left) {
           setDayOffset('increment');
@@ -83,7 +87,7 @@ export const DevTools = () => {
       mousetrap.unbind('right');
       swipeListener.off();
     };
-  }, [showDevTools]);
+  }, [showDevTools, currentPhotoPreloaded]);
 
   /**
    * [Effect] If DevTools are active, when `dayOffset` changes, pre-load images

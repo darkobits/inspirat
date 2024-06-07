@@ -62,6 +62,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
 
     const photoUrls = buildPhotoUrls(photo);
 
+    // TODO: This may be handled by the context now.
     void Promise.race([
       preloadImage(photoUrls.lowQuality),
       preloadImage(photoUrls.highQuality)

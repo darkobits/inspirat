@@ -57,6 +57,11 @@ export interface InspiratContextValue {
   currentPhoto: InspiratPhotoResource | undefined;
 
   /**
+   * Whether the current photo has been pre-loaded (cached).
+   */
+  currentPhotoPreloaded: boolean;
+
+  /**
    * The total number of photos in the collection.
    */
   numPhotos: number;
@@ -115,6 +120,7 @@ const InspiratContext = React.createContext<InspiratContextValue>({
 
   currentPhoto: undefined,
   setCurrentPhoto: () => {/* Empty function. */},
+  currentPhotoPreloaded: false,
 
   dayOffset: 0,
   setDayOffset: () => {/* Empty function. */},
@@ -222,6 +228,24 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     setCurrentPhoto(nextPhoto);
   }, [showDevTools, dayOffset]);
 
+  const [currentPhotoPreloaded, setCurrentPhotoPreloaded] = React.useState(false);
+
+  useAsyncEffect(async isMounted => {
+    if (!currentPhoto) return;
+
+    setCurrentPhotoPreloaded(false);
+    const photoUrls = buildPhotoUrls(currentPhoto);
+
+    await Promise.all([
+      preloadImage(photoUrls.lowQuality),
+      preloadImage(photoUrls.highQuality)
+    ]);
+
+    if (!isMounted()) return;
+
+    setCurrentPhotoPreloaded(true);
+  }, [currentPhoto, buildPhotoUrls]);
+
 
   /**
    * [Callback] Updates photos, then sets a timeout that will trigger another
@@ -317,6 +341,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
         currentPhoto: currentPhoto,
         setCurrentPhoto,
+        currentPhotoPreloaded,
 
         dayOffset,
         setDayOffset,

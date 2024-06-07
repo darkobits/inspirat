@@ -2,7 +2,7 @@ import { desaturate, lighten } from 'polished';
 import React from 'react';
 
 import InspiratContext from 'web/contexts/Inspirat';
-import { BACKGROUND_TRANSITION_DURATION, BACKGROUND_TRANSITION_FUNCTION } from 'web/etc/constants';
+import { BACKGROUND_TRANSITION_FUNCTION } from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
 
 import classes from './Greeting.css';
@@ -15,7 +15,7 @@ import type { ElementProps } from 'web/etc/types';
 export default function Greeting(props: ElementProps<HTMLDivElement>) {
   const { currentPhoto, name, period } = React.useContext(InspiratContext);
   const { style } = props;
-  const transitionDuration = style?.transitionDuration ?? BACKGROUND_TRANSITION_DURATION;
+  // const transitionDuration = style?.transitionDuration ?? BACKGROUND_TRANSITION_DURATION;
   const transitionTimingFunction = style?.transitionTimingFunction ?? BACKGROUND_TRANSITION_FUNCTION;
 
   const greeting = React.useMemo(() => {
