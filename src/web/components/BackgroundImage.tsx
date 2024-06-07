@@ -9,8 +9,6 @@ import {
   BACKGROUND_TRANSITION_FUNCTION,
   BACKGROUND_RULE_OVERRIDES
 } from 'web/etc/constants';
-import log from 'web/lib/log';
-// import { preloadImage } from 'web/lib/utils';
 
 import classes, { keyframes } from './BackgroundImage.css';
 
@@ -73,7 +71,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
     //   setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
     // });
 
-    // TODO: Testing out not waiting to preload images.
+    // NOTE: Testing not waiting to preload images.
     setAnyImageReady(true);
     setAnimationName(keyframes.zoomOut);
     setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});

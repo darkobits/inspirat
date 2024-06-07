@@ -12,7 +12,7 @@ export default {
     minWidth: 'min-content',
     flexShrink: 1,
     textAlign: 'center',
-    paddingTop: '0.5em',
+    paddingTop: '0.56em',
     paddingLeft: '0.72em',
     paddingRight: '0.72em',
     paddingBottom: '0.4em',
@@ -26,6 +26,12 @@ export default {
     backdropFilter: 'blur(12px)',
     boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.12)',
     userSelect: 'none',
+    marginBottom: '42px',
+    '@media': {
+      '(pointer: coarse) and (orientation: landscape)': {
+        marginBottom: 0
+      }
+    },
     // Needed in Mobile Safari or the greeting will not be visible.
     position: 'relative', zIndex: 1
   })

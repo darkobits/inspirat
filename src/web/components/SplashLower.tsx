@@ -1,3 +1,5 @@
+import cx from 'classnames';
+
 import { ImageMeta } from 'web/components/ImageMeta';
 import useQuery from 'web/hooks/use-query';
 import { capitalizeWords } from 'web/lib/utils';
@@ -15,8 +17,6 @@ export default function SplashLower({ photo }: SplashLowerProps) {
   // If we have a `meta=false` query param, hide image metadata.
   if (query?.meta === 'false') return null;
 
-  if (!photo) return null;
-
   // Location.
   const location = capitalizeWords(photo?.location?.name ?? '');
 
@@ -33,7 +33,10 @@ export default function SplashLower({ photo }: SplashLowerProps) {
   );
 
   return (
-    <div className={classes.splashLower}>
+    <div
+      className={cx(classes.splashLower, 'safe-padding')}
+      style={{ opacity: photo ? 1 : 0 }}
+    >
       <ImageMeta className={classes.imageLocation}>
         {location}
       </ImageMeta>

@@ -1,14 +1,22 @@
 import { style } from '@vanilla-extract/css';
 
+import {
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION
+} from 'web/etc/constants';
+
 export default {
   splashLower: style({
-    position: 'fixed',
+    position: 'absolute',
     inset: 0,
     display: 'flex',
     justifyContent: 'space-between',
-    transition: 'opacity 1.2s ease-in',
+    transitionProperty: 'opacity',
+    transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+    transitionDuration: BACKGROUND_TRANSITION_DURATION,
+    // NOTE: It is important that width here be 'vw` while height be `svh`.
     width: '100%',
-    padding: '10px 18px',
+    height: '100%',
     zIndex: 1,
     /**
       * This adds a subtle gradient at the bottom of the screen that provides
@@ -28,14 +36,24 @@ export default {
     }
   }),
   imageLocation: style({
+    padding: '8px 14px',
     display: 'none',
     '@media': {
+      '(pointer: coarse) and (orientation: landscape)': {
+        padding: 0
+      },
       '(min-width: 900px)': {
         display: 'block'
       }
     }
   }),
   imageAttribution: style({
-    marginLeft: 'auto'
+    padding: '8px 14px',
+    marginLeft: 'auto',
+    '@media': {
+      '(pointer: coarse) and (orientation: landscape)': {
+        padding: 0
+      }
+    }
   })
 };

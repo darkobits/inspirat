@@ -48,7 +48,7 @@ export const DevTools = () => {
   const [show, setShow] = React.useState(true);
 
   /*
-   * [Effect] Dev Tools initialization.
+   * [Effect] Initialize DevTools mouse/key/gesture bindings.
    */
   React.useEffect(() => {
     if (!showDevTools) return;
@@ -63,10 +63,13 @@ export const DevTools = () => {
 
     const swipeListener = SwipeListener(document);
 
-    // TODO: Finish implementing touch events.
     document.addEventListener('swipe', event => {
       if (isTouchEvent(event)) {
-        console.log('TOUCH EVENT', event);
+        if (event.detail.directions.left) {
+          setDayOffset('increment');
+        } else if (event.detail.directions.right) {
+          setDayOffset('decrement');
+        }
       }
     });
 
@@ -164,20 +167,9 @@ export const DevTools = () => {
 
   return (
     <div
-      className={cx(classes.devToolsWrapper, 'safe-padding')}
-      style={{
-        transition: 'opacity 2s ease',
-        opacity: show ? 1 : 0
-      }}
-      onMouseEnter={() => {
-        clearTimeout(mouseLeaveTimeout);
-        setShow(true);
-      }}
-      onMouseLeave={() => {
-        mouseLeaveTimeout = setTimeout(() => {
-          setShow(false);
-        }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
-      }}
+      data-testid="DevTools"
+      className={cx(classes.devToolsContainer, 'safe-padding')}
+      style={{ opacity: show ? 1 : 0 }}
     >
       {/* Progress Bar (Fixed Position) */}
       <ProgressBar
@@ -186,48 +178,62 @@ export const DevTools = () => {
         style={{ height: PROGRESS_BAR_HEIGHT }}
       />
 
-      {/* Address Bar & Loading Indicator */}
-      <div className={classes.devToolsRow}>
-        <Source photo={currentPhoto}>
-          <input
-            type="text"
-            onChange={onImgIdChange}
-            onFocus={handleImgIdFocus}
-            placeholder="https://unsplash.com/photos/:id"
-            spellCheck={false}
-            autoCorrect="false"
-            autoComplete="false"
+      {/* DevTools */}
+      <div
+        className={classes.devToolsWrapper}
+        onMouseEnter={() => {
+          clearTimeout(mouseLeaveTimeout);
+          setShow(true);
+        }}
+        onMouseLeave={() => {
+          mouseLeaveTimeout = setTimeout(() => {
+            setShow(false);
+          }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
+        }}
+      >
+        {/* Address Bar & Loading Indicator */}
+        <div className={classes.devToolsRow}>
+          <Source photo={currentPhoto}>
+            <input
+              type="text"
+              onChange={onImgIdChange}
+              onFocus={handleImgIdFocus}
+              placeholder="https://unsplash.com/photos/:id"
+              spellCheck={false}
+              autoCorrect="false"
+              autoComplete="false"
+              style={{
+                height: '100%',
+                transitionProperty: 'color, background-color, border-color',
+                transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+                transitionDuration: BACKGROUND_TRANSITION_DURATION
+              }}
+            />
+          </Source>
+          <LoadingIndicator
+            photo={currentPhoto}
+            isLoading={isLoadingPhotos}
             style={{
-              height: '100%',
               transitionProperty: 'color, background-color, border-color',
               transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
               transitionDuration: BACKGROUND_TRANSITION_DURATION
             }}
           />
-        </Source>
-        <LoadingIndicator
-          photo={currentPhoto}
-          isLoading={isLoadingPhotos}
-          style={{
-            transitionProperty: 'color, background-color, border-color',
-            transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
-            transitionDuration: BACKGROUND_TRANSITION_DURATION
-          }}
-        />
-      </div>
+        </div>
 
-      {/* Palette */}
-      <div className={classes.devToolsRow}>
-        <Palette
-          photo={currentPhoto}
-          swatchProps={{
-            style: {
-              transitionProperty: 'color, background-color, border-color',
-              transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
-              transitionDuration: BACKGROUND_TRANSITION_DURATION
-            }
-          }}
-        />
+        {/* Palette */}
+        <div className={classes.devToolsRow}>
+          <Palette
+            photo={currentPhoto}
+            swatchProps={{
+              style: {
+                transitionProperty: 'color, background-color, border-color',
+                transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+                transitionDuration: BACKGROUND_TRANSITION_DURATION
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   );

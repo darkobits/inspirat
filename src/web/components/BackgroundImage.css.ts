@@ -33,10 +33,9 @@ export default {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
+    userSelect: 'none',
     transitionProperty: 'opacity',
     animationTimingFunction: 'ease-in-out',
-    animationDuration: `${BACKGROUND_ANIMATION_DURATION / 1000}s`,
-    userSelect: 'none'
-    // animationDuration: '24s'
+    animationDuration: `${BACKGROUND_ANIMATION_DURATION / 1000}s`
   })
 };

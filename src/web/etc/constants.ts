@@ -99,7 +99,7 @@ export const QUALITY_LQIP = 50;
 /**
  * Basis for computing various attributes of the Source and Swatch components.
  */
-export const BASIS = '38px';
+export const BASIS = '34px';
 export const BLACK: Color  = {r: 0, g: 0, b: 0};
 export const WHITE: Color = {r: 255, g: 255, b: 255};
 

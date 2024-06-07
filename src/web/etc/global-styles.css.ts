@@ -43,20 +43,12 @@ globalStyle('*, *:before, *:after', {
 });
 
 globalStyle('html, body', {
-  display: 'flex',
-  flexDirection: 'column',
-  // backgroundColor: 'rgb(42, 42, 42)',
   backgroundColor: 'rgb(12, 12, 12)',
   fontFamily: FONT_FAMILY_SANS_SERIF,
-  // height: '100vh',
   letterSpacing: '0.04em',
   lineHeight: '1.8em',
   margin: 0,
-  padding: 0,
-  height: '100vh',
-  width: '100vw',
-  userSelect: 'none',
-  position: 'relative'
+  padding: 0
 });
 
 globalStyle('a, a:hover', {
@@ -88,9 +80,11 @@ globalStyle('.text-fancy', {
 });
 
 globalStyle('#root', {
-  // backgroundColor: 'rgb(42, 42, 42)',
-  border: '1px solid red',
-  flexGrow: 1
+  position: 'fixed',
+  height: '100%',
+  width: '100%',
+  display: 'flex',
+  flexDirection: 'column'
 });
 
 globalStyle('vite-plugin-checker-error-overlay', {
