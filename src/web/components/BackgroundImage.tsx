@@ -9,6 +9,7 @@ import {
   BACKGROUND_TRANSITION_FUNCTION,
   BACKGROUND_RULE_OVERRIDES
 } from 'web/etc/constants';
+import { preloadImage } from 'web/lib/utils';
 
 import classes, { keyframes } from './BackgroundImage.css';
 
@@ -49,7 +50,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
    * URLs, preloads those resources, and set our `anyImagesReady` flag to true
    * when the first image finishes loading.
    */
-  useAsyncEffect(() => {
+  useAsyncEffect(isMounted => {
     if (!photo) {
       setLowQualityUrl();
       setFullQualityUrl();
@@ -61,20 +62,20 @@ export default function BackgroundImage(props: BackgroundImageProps) {
 
     const photoUrls = buildPhotoUrls(photo);
 
-    // void Promise.race([
-    //   preloadImage(photoUrls.lowQuality),
-    //   preloadImage(photoUrls.highQuality)
-    // ]).then(() => {
-    //   if (!isMounted()) return;
-    //   setAnyImageReady(true);
-    //   setAnimationName(keyframes.zoomOut);
-    //   setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
-    // });
+    void Promise.race([
+      preloadImage(photoUrls.lowQuality),
+      preloadImage(photoUrls.highQuality)
+    ]).then(() => {
+      if (!isMounted()) return;
+      setAnyImageReady(true);
+      setAnimationName(keyframes.zoomOut);
+      setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
+    });
 
     // NOTE: Testing not waiting to preload images.
-    setAnyImageReady(true);
-    setAnimationName(keyframes.zoomOut);
-    setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
+    // setAnyImageReady(true);
+    // setAnimationName(keyframes.zoomOut);
+    // setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
 
     setLowQualityUrl(photoUrls.lowQuality);
     setFullQualityUrl(photoUrls.highQuality);
