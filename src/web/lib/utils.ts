@@ -208,6 +208,11 @@ preloadImage.isLoadingImages = () => {
   return !states.has('LOADING');
 };
 
+// @ts-expect-error
+window.preloadImageCache = preloadImageCache;
+// @ts-expect-error
+window.isLoadingImages = preloadImage.isLoadingImages;
+
 /**
  * Used by DevTools to transform a URL pasted into the URL input into a sparse
  * InspiratPhotoResource.
