@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import App from 'web/components/App';
 import 'web/etc/global-styles.css';
 import 'web/etc/service-worker';
+import log from 'web/lib/log';
 
 render('#root', <App />);
-console.debug(`Version ${import.meta.env.GIT_DESC}.`);
+log.debug('🔖 •', import.meta.env.GIT_DESC);

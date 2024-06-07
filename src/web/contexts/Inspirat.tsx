@@ -6,6 +6,7 @@ import useAsyncEffect from 'use-async-effect';
 import { BACKGROUND_ANIMATION_INITIAL_SCALE } from 'web/etc/constants';
 import useQuery from 'web/hooks/use-query';
 import withNamespace from 'web/hooks/use-storage-item';
+import { Logger } from 'web/lib/log';
 import {
   getPhotoCollections,
   getCurrentPhotoFromCollection,
@@ -24,6 +25,7 @@ import {
 
 import type { InspiratPhotoResource } from 'etc/types';
 
+const log = new Logger({ prefix: '🌅 •' });
 
 /**
  * Shape of the object provided by this hook.
@@ -181,10 +183,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   // ----- [Callbacks] ---------------------------------------------------------
 
   const buildPhotoUrls = React.useCallback((photo: InspiratPhotoResource) => {
-    if (!photo?.urls) {
-      console.error('BAD PHOTO', photo);
-      throw new Error('[buildPhotoUrls] Got invalid input.', { cause: photo });
-    }
+    if (!photo?.urls) throw new Error('[buildPhotoUrls] Got invalid input.', { cause: photo });
 
     // This is where IMGIX configuration for low and high quality versions of
     // photos is defined.
@@ -230,7 +229,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     const timeToUpdate = midnight() - now();
 
     ifDebug(() => {
-      console.debug(`[setPhotoUpdateTimer] Current photo will update in ${prettyMs(timeToUpdate)}.`);
+      log.debug(`Current photo will update in ${prettyMs(timeToUpdate)}.`);
 
       if (!window.debug) window.debug = {};
       Reflect.defineProperty(window.debug, 'expiresIn', {
@@ -239,7 +238,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     }, { once: true });
 
     const timeoutHandle = setTimeout(() => {
-      ifDebug(() => console.debug('[setPhotoUpdateTimer] Updating photo.'));
+      ifDebug(() => log.debug('Updating photo.'));
       updatePhotosWithTimer();
     }, timeToUpdate);
 

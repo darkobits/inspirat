@@ -10,6 +10,7 @@ import {
   COLLECTION_CACHE_KEY,
   CURRENT_PHOTO_CACHE_KEY
 } from 'web/etc/constants';
+import { Logger } from 'web/lib/log';
 import PendingPromiseCache from 'web/lib/pending-promise-cache';
 // import randomSeason from 'lib/seasons';
 import storage from 'web/lib/storage';
@@ -19,6 +20,7 @@ import { ifDebug, modIndex } from 'web/lib/utils';
 import type { InspiratPhotoCollection, InspiratPhotoResource } from 'etc/types';
 import type { CurrentPhotoStorageItem, PhotoCollectionStorageItem } from 'web/etc/types';
 
+const log = new Logger({ prefix: '🌅 •' });
 
 /**
  * @private
@@ -46,13 +48,13 @@ async function fetchAndUpdateCollections(): Promise<PhotoCollectionStorageItem |
     const photos = R.sortBy(R.prop('id'), R.chain(R.prop('photos'), photoCollections));
 
     ifDebug(() => {
-      console.debug(`[fetchAndUpdateCollections] Fetched ${photos.length} photos.`);
+      log.debug(`Fetched ${photos.length} photos.`);
 
       const uniqPhotos = R.uniqBy(R.prop('id'), photos);
       const dupePhotos = photos.length - uniqPhotos.length;
 
       if (dupePhotos) {
-        console.warn(`[fetchAndUpdateCollections] Found ${dupePhotos} photos in multiple collections.`);
+        log.warn(`Found ${dupePhotos} photos in multiple collections.`);
       }
     });
 
@@ -63,7 +65,7 @@ async function fetchAndUpdateCollections(): Promise<PhotoCollectionStorageItem |
 
     return cacheData;
   } catch (err: any) {
-    console.error('[fetchAndUpdateCollections] Error fetching photo collection:', err.message);
+    log.error('Error fetching photo collection:', err.message);
     return null;
   }
 }
@@ -81,18 +83,18 @@ export async function getPhotoCollections() {
 
     // If the cache is empty, fetch photos from Unsplash and cache them.
     if (!photoCache) {
-      ifDebug(() => console.debug('[getPhotoCollections] Cache is empty. Fetching collection.'));
+      ifDebug(() => log.debug('Cache is empty. Fetching collection.'));
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollections();
     } else if (now() - photoCache.updatedAt >= CACHE_TTL) {
       // If the cached collection is stale, re-fetch it.
-      ifDebug(() => console.debug(`[getPhotoCollections] Cache is stale, re-fetching. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`));
+      ifDebug(() => log.debug(`Cache is stale, re-fetching. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`));
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollections();
     } else {
       ifDebug(() => {
         const expiresIn = CACHE_TTL - (now() - (photoCache?.updatedAt ?? 0));
-        console.debug(`[getPhotoCollections] Photo collection will be updated in ${prettyMs(expiresIn)}.`);
+        log.debug(`Photo collection will be updated in ${prettyMs(expiresIn)}.`);
       }, { once: true });
     }
 
@@ -112,10 +114,10 @@ export async function getPhotoCollections() {
     const sortedCollection = chance.shuffle(R.sortBy(R.prop('id'), photoCache.photos));
 
     ifDebug(() => {
-      const collectionHash = objectHash(photoCache?.photos ?? {});
-      console.debug(`[getPhotoCollections] Collection hash, unsorted, using seed "${name}":`, collectionHash);
+      // const collectionHash = objectHash(photoCache?.photos ?? {});
+      // log.debug(`Collection hash, unsorted, using seed "${name}":`, collectionHash);
       const sortedCollectionHash = objectHash(sortedCollection);
-      console.debug(`[getPhotoCollections] Collection hash, sorted, using seed "${name}":`, sortedCollectionHash);
+      log.debug(`Collection hash, sorted, using seed "${name}":`, sortedCollectionHash);
     }, { once: true });
 
     return sortedCollection;
@@ -165,9 +167,9 @@ export async function getCurrentPhotoFromStorage(): Promise<InspiratPhotoResourc
       return currentPhoto.photo;
     }
 
-    ifDebug(() => console.debug('[getCurrentPhotoFromStorage] Cached photo was expired.'));
+    ifDebug(() => log.debug('Cached photo was expired.'));
   } else {
-    ifDebug(() => console.debug('[getCurrentPhotoFromStorage] Cache did not contain a photo.'));
+    ifDebug(() => log.debug('Cache did not contain a photo.'));
   }
 
   // Cache did not exist or was expired.
