@@ -35,9 +35,7 @@ const classes = {
     borderRadius: '24px',
     backgroundColor: 'rgba(80, 80, 80, 0.12)',
     backdropFilter: 'blur(12px)',
-    boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.12)',
-    // Needed in Mobile Safari.
-    WebkitBackdropFilter: 'blur(12px)'
+    boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.12)'
   })
 };
 
