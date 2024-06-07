@@ -32,8 +32,6 @@ export interface BackgroundImageProps extends ElementProps<HTMLDivElement> {
 
 /**
  * TODO:
- * - Re-implement lqipURl using multiple backgroundImage url()s.
- * - Deprecate photoUrls computation in hook/context.
  * - Deprecate background-position override (won't work with <img>).
  */
 export default function BackgroundImage(props: BackgroundImageProps) {
@@ -118,13 +116,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
           srcSet={srcSet}
           src={lowQualityUrl ?? undefined}
           className={classes.backgroundImage}
-          style={{
-            animationName
-            // transitionProperty: 'opacity',
-            // transitionDuration: styleOverrides.transitionDuration ?? BACKGROUND_TRANSITION_DURATION,
-            // transitionTimingFunction: styleOverrides.transitionTimingFunction ?? BACKGROUND_TRANSITION_FUNCTION,
-            // opacity: anyImageReady ? styleOverrides.opacity ?? 1 : 0
-          }}
+          style={{ animationName }}
         />
       </div>
       {children}

@@ -293,8 +293,8 @@ export function buildPhotoUrlSrcSet(url: string, lqOptions ={}, fullOptions = {}
   return {
     lowQuality: updateImgixQueryParams(url, {
       q: QUALITY_LQIP,
-      w: window.screen.width / 2,
-      h: window.screen.height / 2,
+      w: Math.round(window.screen.width / 2),
+      h: Math.round(window.screen.height / 2),
       // Adds a color overlay. Can be useful for debugging.
       // blend: 'FA653D',
       // blendMode: 'overlay',

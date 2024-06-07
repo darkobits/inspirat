@@ -191,8 +191,8 @@ export function InspiratProvider(props: React.PropsWithChildren) {
       // blend: 'FA653D80',
       // blendMode: 'overlay'
     }, {
-      w: window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE,
-      h: window.screen.height * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE
+      w: Math.round(window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE),
+      h: Math.round(window.screen.height * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE)
     });
   }, []);
 
@@ -266,14 +266,6 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     }, 100);
     return () => clearInterval(intervalHandle);
   }, []);
-
-  /**
-   * [Effect] Updates photo URLs when the current photo is changed.
-   */
-  React.useEffect(() => {
-    if (!currentPhoto) return;
-    setCurrentPhoto(currentPhoto);
-  }, [currentPhoto]);
 
   /**
    * [Effect] When the `devtools` query param is present, enables dev tools.

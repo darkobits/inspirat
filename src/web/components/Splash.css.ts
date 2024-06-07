@@ -8,7 +8,6 @@ export default {
     flexDirection: 'column',
     height: '100%',
     width: '100%',
-    cursor: 'initial',
-    border: '1px solid blue'
+    cursor: 'initial'
   })
 };

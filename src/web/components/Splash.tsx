@@ -24,15 +24,17 @@ export function Splash({ onMouseDown }: SplashProps) {
 
   const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
   const [bPhoto, setBPhoto] = React.useState<InspiratPhotoResource | void>();
-  const [transitionDuration, setTransitionDuration] = React.useState(BACKGROUND_TRANSITION_DURATION);
+  const [transitionDuration, setTransitionDuration] = React.useState('1s');
   const [turnCount, setTurnCount] = React.useState(0);
 
   const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
 
+  /**
+   * [Effect] Increments turnCount every time the photo changes.
+   */
   React.useEffect(() => {
     setTurnCount(prev => prev + 1);
   }, [currentPhoto?.id]);
-
 
   /**
    * [Effect] Handles changes to photo URLs.
@@ -48,7 +50,6 @@ export function Splash({ onMouseDown }: SplashProps) {
       setBPhoto(currentPhoto);
     }
 
-    // TODO: Remove?
     // To ensure the first photo always appears immediately, but that subsequent
     // transitions run at the configured transition speed, we set the initial
     // transition duration to '0s' (see above). We then do a check here to see
@@ -78,7 +79,10 @@ export function Splash({ onMouseDown }: SplashProps) {
     };
   }, [activeElement]);
 
-
+  // NOTE: SplashLower is nested inside BackgroundImage so that image metadata
+  // can be displayed for both images simultaneously and fade in/out with the
+  // associated image.
+  // TODO: Make <SplashLower> a part of <BackgroundImage>?
   return (
     <div
       role="button"
@@ -86,14 +90,12 @@ export function Splash({ onMouseDown }: SplashProps) {
       className={classes.splash}
       onMouseDown={onMouseDown}
       onTouchStart={onMouseDown}
-      style={{
-        border: '1px solid red'
-      }}
     >
       <BackgroundImage
         id="A"
         photo={aPhoto}
         isActive={activeElement === 'A'}
+        style={{ transitionDuration }}
       >
         <SplashLower photo={aPhoto} />
       </BackgroundImage>
@@ -101,10 +103,11 @@ export function Splash({ onMouseDown }: SplashProps) {
         id="B"
         photo={bPhoto}
         isActive={activeElement === 'B'}
+        style={{ transitionDuration }}
       >
         <SplashLower photo={bPhoto} />
       </BackgroundImage>
-      <Greeting />
+      <Greeting style={{ transitionDuration }} />
     </div>
   );
 }

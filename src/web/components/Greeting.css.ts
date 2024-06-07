@@ -10,10 +10,9 @@ const classes = {
     justifyContent: 'center',
     color: 'white',
     userSelect: 'none',
-    // Needed in Mobile Safari or greeting will not be visible.
-    position: 'relative', zIndex: 1,
-    // border: '1px solid red',
-    padding: '10px 18px'
+    padding: '10px 18px',
+    // Needed in Mobile Safari or the greeting will not be visible.
+    position: 'relative', zIndex: 1
   }),
   greeting: style({
     display: 'flex',
