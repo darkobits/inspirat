@@ -107,7 +107,7 @@ export const WHITE: Color = {r: 255, g: 255, b: 255};
  * After the mouse leaves the DevTools container, it will wait this amount of
  * time and then hide itself.
  */
-export const DEVTOOLS_MOUSE_LEAVE_TIMEOUT = ms('10 seconds');
+export const DEVTOOLS_MOUSE_LEAVE_TIMEOUT = ms('32 seconds');
 
 // ----- Image Tuning Overrides ------------------------------------------------
 
