@@ -39,7 +39,8 @@ globalStyle('*, *:before, *:after', {
   lineHeight: 'inherit',
   textRendering: 'optimizeLegibility',
   WebkitFontSmoothing: 'antialiased',
-  MozOsxFontSmoothing: 'grayscale'
+  MozOsxFontSmoothing: 'grayscale',
+  overscrollBehavior: 'none'
 });
 
 globalStyle('html, body', {
