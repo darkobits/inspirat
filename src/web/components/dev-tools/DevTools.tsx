@@ -16,7 +16,6 @@ import {
   BACKGROUND_TRANSITION_DURATION,
   BACKGROUND_TRANSITION_FUNCTION
 } from 'web/etc/constants';
-import { safePadding } from 'web/etc/global-styles.css';
 import { getCurrentPhotoFromCollection } from 'web/lib/photos';
 import { modIndex, mockPhotoResourceFromUrl, preloadImage, isTouchEvent } from 'web/lib/utils';
 
@@ -165,7 +164,7 @@ export const DevTools = () => {
 
   return (
     <div
-      className={cx(classes.devToolsWrapper, safePadding)}
+      className={cx(classes.devToolsWrapper, 'safe-padding')}
       style={{
         transition: 'opacity 2s ease',
         opacity: show ? 1 : 0

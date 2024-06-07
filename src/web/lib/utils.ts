@@ -1,3 +1,4 @@
+/* eslint-disable unicorn/consistent-destructuring */
 import type React from 'react';
 
 import { rgba as polishedRgba, parseToRgb } from 'polished';
@@ -137,30 +138,29 @@ export function isChromeExtension() {
  * when invoked, will wait `interval` milliseconds and then invoke `callback` if
  * no 'mouseup' event was received in the interim.
  */
-export function onClickAndHold(interval: number, cb: (e: React.MouseEvent | React.TouchEvent) => void) {
-  // const isTouchEvent = (e: any): e is React.TouchEvent => Reflect.has(e, 'touches');
-  const isMouseEvent = (e: any): e is React.MouseEvent => Reflect.has(e, 'button');
+export function onClickAndHold<E extends React.SyntheticEvent>(interval: number, cb: (e: E) => void) {
+  const isMouseEvent = (event: any): event is React.MouseEvent => Reflect.has(event, 'button');
 
-  const handler: React.EventHandler<React.MouseEvent | React.TouchEvent> = e => {
-    const target = e.currentTarget;
+  const handler: React.EventHandler<E> = event => {
+    const { currentTarget } = event;
 
-    // This was not a primary click, or target is falsy; bail.
-    if (!target || (isMouseEvent(e) && e.button !== 0 || e.ctrlKey || e.altKey || e.shiftKey)) {
-      return;
-    }
+    // Target is falsy; bail.
+    if (!currentTarget) return;
+
+    // This was not a primary click; bail.
+    if (isMouseEvent(event) && (event.button !== 0 || event.ctrlKey || event.altKey || event.shiftKey)) return;
 
     // Set a timer that will invoke `cb` when it expires.
-    const timeoutHandle = setTimeout(() => cb(e), interval);
+    const timeoutHandle = setTimeout(() => cb(event), interval);
 
-    // Clear the above timeout if the mouse button is released or the mouse
-    // moves.
-    ['mouseup', 'mousemove', 'touchend'].forEach(event => {
+    // Clear the above timeout if a move/drag/scroll event is detected.
+    ['mouseup', 'mousemove', 'touchend', 'touchcancel', 'touchmove', 'scroll'].forEach(event => {
       const cancelHandler = () => {
         clearTimeout(timeoutHandle);
-        target.removeEventListener(event, cancelHandler);
+        currentTarget.removeEventListener(event, cancelHandler);
       };
 
-      target.addEventListener(event, cancelHandler);
+      currentTarget.addEventListener(event, cancelHandler, { passive: true });
     });
   };
 

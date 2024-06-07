@@ -1,4 +1,4 @@
-import { style, globalStyle } from '@vanilla-extract/css';
+import { globalStyle } from '@vanilla-extract/css';
 
 export const FONT_FAMILY_PLAIN = '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif';
 export const FONT_FAMILY_FANCY = `"Josefin Sans", ${FONT_FAMILY_PLAIN}`;
@@ -10,19 +10,18 @@ export const FONT_FAMILY_SANS_SERIF = `"Raleway", ${FONT_FAMILY_PLAIN}`;
  * Applies enough padding for an element to ensure its content is rendered in
  * the safe area.
  */
-export const safePadding = style({
+globalStyle('.safe-padding', {
   paddingTop: 'env(safe-area-inset-top, 0px)',
   paddingBottom: 'env(safe-area-inset-bottom, 0px)',
   paddingLeft: 'env(safe-area-inset-left, 0px)',
   paddingRight: 'env(safe-area-inset-right, 0px)'
 });
 
-
 /**
  * Applies enough margin to an element to ensure it is rendered in the safe
  * area.
  */
-export const safeMargins = style({
+globalStyle('.safe-margins', {
   marginTop: 'env(safe-area-inset-top, 0px)',
   marginBottom: 'env(safe-area-inset-bottom, 0px)',
   marginLeft: 'env(safe-area-inset-left, 0px)',
@@ -44,6 +43,8 @@ globalStyle('*, *:before, *:after', {
 });
 
 globalStyle('html, body', {
+  display: 'flex',
+  flexDirection: 'column',
   // backgroundColor: 'rgb(42, 42, 42)',
   backgroundColor: 'rgb(12, 12, 12)',
   fontFamily: FONT_FAMILY_SANS_SERIF,
@@ -52,9 +53,10 @@ globalStyle('html, body', {
   lineHeight: '1.8em',
   margin: 0,
   padding: 0,
-  height: '100%',
-  // width: '100vw',
-  userSelect: 'none'
+  height: '100vh',
+  width: '100vw',
+  userSelect: 'none',
+  position: 'relative'
 });
 
 globalStyle('a, a:hover', {
@@ -87,7 +89,8 @@ globalStyle('.text-fancy', {
 
 globalStyle('#root', {
   // backgroundColor: 'rgb(42, 42, 42)',
-  height: '100%'
+  border: '1px solid red',
+  flexGrow: 1
 });
 
 globalStyle('vite-plugin-checker-error-overlay', {

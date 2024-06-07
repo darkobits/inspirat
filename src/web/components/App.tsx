@@ -1,3 +1,4 @@
+import ms from 'ms';
 import React from 'react';
 import { Helmet } from 'react-helmet';
 
@@ -12,6 +13,11 @@ import { onClickAndHold, clearSelections } from 'web/lib/utils';
 export default function App() {
   const [showSettings, setShowSettings] = React.useState(false);
 
+  const handleClickOrTap = React.useCallback(onClickAndHold(ms('1s'), () => {
+    clearSelections();
+    setShowSettings(true);
+  }), []);
+
   return (
     <React.StrictMode>
       <InspiratProvider>
@@ -23,10 +29,8 @@ export default function App() {
           onClose={() => setShowSettings(false)}
         />
         <Splash
-          onMouseDown={onClickAndHold(250, () => {
-            clearSelections();
-            setShowSettings(true);
-          })}
+          onMouseDown={handleClickOrTap}
+          onTouchStart={handleClickOrTap}
         />
         <DevTools />
         <Introduction />

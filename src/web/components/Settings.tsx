@@ -41,6 +41,7 @@ export function Settings({ show, onClose }: SettingsProps) {
 
   return (
     <AnimatedModal
+      data-testid="Settings"
       show={show}
       onClose={onClose}
       body={<>

@@ -1,3 +1,5 @@
+/* eslint-disable react/jsx-props-no-spreading */
+import cx from 'classnames';
 import ms from 'ms';
 import React from 'react';
 
@@ -10,16 +12,14 @@ import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
 import classes from './Splash.css';
 
 import type { InspiratPhotoResource } from 'etc/types';
-
-export interface SplashProps {
-  onMouseDown?: React.EventHandler<React.MouseEvent | React.TouchEvent>;
-}
+import type { ElementProps } from 'web/etc/types';
 
 /**
  * TODO: Deprecate usage of maskColor and maskAmount overrides. Use photo
  * palette with a box-shadow around text instead.
  */
-export function Splash({ onMouseDown }: SplashProps) {
+export function Splash(props: ElementProps<HTMLDivElement>) {
+  const { className, style, ...restProps } = props;
   const { currentPhoto } = React.useContext(InspiratContext);
 
   const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
@@ -85,11 +85,12 @@ export function Splash({ onMouseDown }: SplashProps) {
   // TODO: Make <SplashLower> a part of <BackgroundImage>?
   return (
     <div
+      data-testid="Splash"
       role="button"
       tabIndex={0}
-      className={classes.splash}
-      onMouseDown={onMouseDown}
-      onTouchStart={onMouseDown}
+      className={cx(classes.splash, className)}
+      style={style}
+      {...restProps}
     >
       <BackgroundImage
         id="A"

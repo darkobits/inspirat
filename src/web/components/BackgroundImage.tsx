@@ -51,7 +51,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
    * URLs, preloads those resources, and set our `anyImagesReady` flag to true
    * when the first image finishes loading.
    */
-  useAsyncEffect(isMounted => {
+  useAsyncEffect(() => {
     if (!photo) {
       setLowQualityUrl();
       setFullQualityUrl();
@@ -85,16 +85,23 @@ export default function BackgroundImage(props: BackgroundImageProps) {
     // setAnimationName('none');
   }, [photo?.id]);
 
-  const srcSet = lowQualityUrl && fullQualityUrl ? [
-    `${lowQualityUrl} ${Math.round(window.screen.width / 2)}w`,
-    `${fullQualityUrl} ${Math.round(window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE)}w`
-  ].join(', ') : undefined;
+  /**
+   * [Memo] Compute the `srcset` attribute to apply to our image when URLs
+   * change.
+   */
+  const srcSet = React.useMemo(() => {
+    if (lowQualityUrl && fullQualityUrl) return [
+      `${lowQualityUrl} ${Math.round(window.screen.width / 2)}w`,
+      `${fullQualityUrl} ${Math.round(window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE)}w`
+    ].join(', ');
+  }, [lowQualityUrl, fullQualityUrl]);
 
-  // if (srcSet) log.debug('srcSet', srcSet);
-
+  // NOTE: An intermediate wrapper is required for custom transform overrides
+  // because we can't apply transforms to the root element (this would affect
+  // children) and the animation applied to images uses `transform`.
   return (
     <div
-      data-testid="BACKGROUND_IMAGE"
+      data-testid="BackgroundImage"
       className={classes.backgroundImageWrapper}
       style={{
         // Apply "backdrop" style overrides.
