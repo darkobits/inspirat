@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.16.0](https://github.com/darkobits/inspirat/compare/v0.15.3...v0.16.0) (2024-06-07)
+
+
+### ✨ Features
+
+* Add `autoprefixer`. ([0b78341](https://github.com/darkobits/inspirat/commit/0b78341557ec163b044639b846653cf98a456f17))
+* Add logger. ([e90d0df](https://github.com/darkobits/inspirat/commit/e90d0df7d44bf3e6eef2cd7c06b7ab290a732ce6))
+
+
+### 🐞 Bug Fixes
+
+* **devtools:** Fix styling transitions, loading indicator. ([650aaf2](https://github.com/darkobits/inspirat/commit/650aaf29bfaf0372b0e7583a618cebc87a9f1e6c))
+
+
+### 🏗 Chores
+
+* Add debugging for preload image cache. ([edb9353](https://github.com/darkobits/inspirat/commit/edb93538fd5bb0d0a2f5cc0770dba14b9d2570e4))
+* **deps:** Migrate to `[@aws-sdk](https://github.com/aws-sdk)`. ([c46465c](https://github.com/darkobits/inspirat/commit/c46465c7099a16bbfd94eb55bba1a3ed31cfd941))
+* Misc. cleanup. ([550ece5](https://github.com/darkobits/inspirat/commit/550ece5c02be84a6816f3853e48ea166d3e0e7c8))
+* Misc. cleanup. ([a355c57](https://github.com/darkobits/inspirat/commit/a355c579ac06c7b84df3aaea41c4cb1088b89dd5))
+
+
+### 🛠 Refactoring
+
+* Drop `singleton-hook` in favor of Context, add zoom effect, other improvements. ([92511b0](https://github.com/darkobits/inspirat/commit/92511b06fdc36e8fee0b135475ae707307ad4cff))
+* Improve Dev Tools. ([9676f76](https://github.com/darkobits/inspirat/commit/9676f76e2a702895b7ebb80d27a00aad3486aa3b))
+* Improve layout on mobile devices. ([b85fa0a](https://github.com/darkobits/inspirat/commit/b85fa0aa04d67e8235f1d65390ead86276cb97b3))
+* Storage `createInstance` uses default options. ([e30a30c](https://github.com/darkobits/inspirat/commit/e30a30cb696e341ce885eedbee519a3bbced7381))
+* Tune glass effect. ([d0ecf93](https://github.com/darkobits/inspirat/commit/d0ecf934690aca8e70480072c86daf2a9653fae1))
+* Tune image preloading behavior. ([8788b59](https://github.com/darkobits/inspirat/commit/8788b59d749a7e02e0d7c32de38a89288a09624b))
+
 ## [0.15.3](https://github.com/darkobits/inspirat/compare/v0.15.2...v0.15.3) (2024-06-02)
 
 
