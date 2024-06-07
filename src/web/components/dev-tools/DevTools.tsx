@@ -205,11 +205,22 @@ export const DevTools = () => {
             autoCorrect="false"
             autoComplete="false"
             style={{
-              height: '100%'
+              height: '100%',
+              transitionProperty: 'color, background-color, border-color',
+              transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+              transitionDuration: BACKGROUND_TRANSITION_DURATION
             }}
           />
         </Source>
-        <LoadingIndicator photo={currentPhoto} isLoading={isLoadingPhotos} />
+        <LoadingIndicator
+          photo={currentPhoto}
+          isLoading={isLoadingPhotos}
+          style={{
+            transitionProperty: 'color, background-color, border-color',
+            transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+            transitionDuration: BACKGROUND_TRANSITION_DURATION
+          }}
+        />
       </div>
 
       {/* Palette */}
@@ -218,11 +229,9 @@ export const DevTools = () => {
           photo={currentPhoto}
           swatchProps={{
             style: {
-              transition: [
-                `background-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
-                `border-color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`,
-                `color ${BACKGROUND_TRANSITION_DURATION} ${BACKGROUND_TRANSITION_FUNCTION}`
-              ].join(', ')
+              transitionProperty: 'color, background-color, border-color',
+              transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+              transitionDuration: BACKGROUND_TRANSITION_DURATION
             }
           }}
         />

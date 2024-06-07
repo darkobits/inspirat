@@ -1,24 +1,22 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import { darken, desaturate, lighten } from 'polished';
-import React from 'react';
 
-import { InspiratPhotoResource } from 'etc/types';
 import { BASIS, WHITE, BLACK } from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
 
 import classes, { vars } from './Source.css';
 
+import type { InspiratPhotoResource } from 'etc/types';
+import type { ElementProps } from 'web/etc/types';
 
-// ----- Image Source ----------------------------------------------------------
-
-interface SourceProps extends React.PropsWithChildren<any> {
+interface SourceProps extends ElementProps<HTMLDivElement> {
   photo: InspiratPhotoResource | undefined;
 }
 
 /**
  * Image override component.
  */
-export const Source = ({ photo, children }: SourceProps) => {
+export function Source({ photo, children, style }: SourceProps) {
   const fgColor = photo?.palette?.lightVibrant ?? WHITE;
   const bgColor = photo?.palette?.darkVibrant ?? BLACK;
 
@@ -39,10 +37,11 @@ export const Source = ({ photo, children }: SourceProps) => {
           [vars.input.focus.borderColor]: desaturate(0.6, rgba(fgColor, 0.6)),
           [vars.input.placeholder.color]: rgba(fgColor, 0.32),
           [vars.input.selection.backgroundColor]: darken(0.05, rgba(bgColor, 0.5))
-        })
+        }),
+        ...style
       }}
     >
       {children}
     </div>
   );
-};
+}

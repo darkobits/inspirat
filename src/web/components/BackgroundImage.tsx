@@ -78,12 +78,10 @@ export default function BackgroundImage(props: BackgroundImageProps) {
     // setAnimationName('none');
   }, [photo?.id, isActive]);
 
-  const srcSet = lowQualityUrl && fullQualityUrl
-    ? [
-      lowQualityUrl && `${lowQualityUrl} ${window.screen.width / 2}w`,
-      fullQualityUrl
-    ].filter(Boolean).join(', ')
-    : undefined;
+  const srcSet = lowQualityUrl && fullQualityUrl ? [
+    `${lowQualityUrl} ${Math.round(window.screen.width / 2)}w`,
+    fullQualityUrl
+  ].join(', ') : undefined;
 
   return (
     <div
@@ -114,7 +112,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
         <img
           alt="background"
           srcSet={srcSet}
-          src={lowQualityUrl ?? undefined}
+          src={lowQualityUrl ?? fullQualityUrl ?? undefined}
           className={classes.backgroundImage}
           style={{ animationName }}
         />
