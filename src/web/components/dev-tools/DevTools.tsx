@@ -94,18 +94,12 @@ export const DevTools = () => {
       getCurrentPhotoFromCollection({ offset: dayOffset + 1 }).then(photo => {
         if (!photo) return;
         const { lowQuality, highQuality } = buildPhotoUrls(photo);
-        return Promise.all([
-          preloadImage(lowQuality),
-          preloadImage(highQuality)
-        ]);
+        return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
       }),
       getCurrentPhotoFromCollection({ offset: dayOffset - 1 }).then(photo => {
         if (!photo) return;
         const { lowQuality, highQuality } = buildPhotoUrls(photo);
-        return Promise.all([
-          preloadImage(lowQuality),
-          preloadImage(highQuality)
-        ]);
+        return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
       })
     ]);
   }, [showDevTools, dayOffset]);

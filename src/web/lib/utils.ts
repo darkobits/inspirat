@@ -167,8 +167,12 @@ export function onClickAndHold(interval: number, cb: (e: React.MouseEvent | Reac
   return handler;
 }
 
+type PreloadImageCacheValue = {
+  promise: Promise<string | ErrorEvent>;
+  state: 'LOADING' | 'SUCCESS' | 'ERROR';
+};
 
-const preloadImageCache = new Map<string, 'LOADING' | 'SUCCESS' | 'ERROR'>();
+const preloadImageCache = new Map<string, PreloadImageCacheValue>();
 
 
 /**
@@ -177,26 +181,28 @@ const preloadImageCache = new Map<string, 'LOADING' | 'SUCCESS' | 'ERROR'>();
  */
 export async function preloadImage(imgUrl: string) {
   if (!preloadImageCache.has(imgUrl)) {
-    preloadImageCache.set(imgUrl, 'LOADING');
+    const imagePromise = new Promise<string | ErrorEvent>((resolve, reject) => {
+      const img = new Image();
+
+      img.addEventListener('load', () => {
+        preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'SUCCESS' });
+        resolve(imgUrl);
+      });
+
+      img.addEventListener('error', event => {
+        preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'ERROR' });
+        const message = event.error?.message ?? 'Unknown Error';
+        reject(new Error(`[preloadImage] Failed to load image: ${message}`, { cause: event.error }));
+      });
+
+      // N.B. Setting this property will cause the browser to fetch the image.
+      img.src = imgUrl;
+    });
+
+    preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'LOADING' });
   }
 
-  return new Promise<string | ErrorEvent>((resolve, reject) => {
-    const img = new Image();
-
-    img.addEventListener('load', () => {
-      preloadImageCache.set(imgUrl, 'SUCCESS');
-      resolve(imgUrl);
-    });
-
-    img.addEventListener('error', event => {
-      preloadImageCache.set(imgUrl, 'ERROR');
-      const message = event.error?.message ?? 'Unknown Error';
-      reject(new Error(`[preloadImage] Failed to load image: ${message}`, { cause: event.error }));
-    });
-
-    // N.B. Setting this property will cause the browser to fetch the image.
-    img.src = imgUrl;
-  });
+  return preloadImageCache.get(imgUrl)?.promise;
 }
 
 /**
@@ -204,8 +210,8 @@ export async function preloadImage(imgUrl: string) {
  * currently preloading.
  */
 preloadImage.isLoadingImages = () => {
-  const states = new Set(preloadImageCache.values());
-  return states.has('LOADING');
+  const states = [...preloadImageCache.values()].map(cacheValue => cacheValue.state);
+  return states.includes('LOADING');
 };
 
 /**
@@ -293,11 +299,6 @@ export function buildPhotoUrlSrcSet(url: string, lqOptions ={}, fullOptions = {}
   return {
     lowQuality: updateImgixQueryParams(url, {
       q: QUALITY_LQIP,
-      w: Math.round(window.screen.width / 2),
-      h: Math.round(window.screen.height / 2),
-      // Adds a color overlay. Can be useful for debugging.
-      // blend: 'FA653D',
-      // blendMode: 'overlay',
       ...lqOptions
     }),
     highQuality: updateImgixQueryParams(url, {

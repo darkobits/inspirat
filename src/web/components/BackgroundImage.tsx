@@ -4,11 +4,13 @@ import useAsyncEffect from 'use-async-effect';
 
 import InspiratContext from 'web/contexts/Inspirat';
 import {
+  BACKGROUND_ANIMATION_INITIAL_SCALE,
   BACKGROUND_TRANSITION_DURATION,
   BACKGROUND_TRANSITION_FUNCTION,
   BACKGROUND_RULE_OVERRIDES
 } from 'web/etc/constants';
-import { preloadImage } from 'web/lib/utils';
+import log from 'web/lib/log';
+// import { preloadImage } from 'web/lib/utils';
 
 import classes, { keyframes } from './BackgroundImage.css';
 
@@ -61,27 +63,34 @@ export default function BackgroundImage(props: BackgroundImageProps) {
 
     const photoUrls = buildPhotoUrls(photo);
 
-    void Promise.race([
-      preloadImage(photoUrls.lowQuality),
-      preloadImage(photoUrls.highQuality)
-    ]).then(() => {
-      if (!isMounted()) return;
-      setAnyImageReady(true);
-      setAnimationName(keyframes.zoomOut);
-      setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
-    });
+    // void Promise.race([
+    //   preloadImage(photoUrls.lowQuality),
+    //   preloadImage(photoUrls.highQuality)
+    // ]).then(() => {
+    //   if (!isMounted()) return;
+    //   setAnyImageReady(true);
+    //   setAnimationName(keyframes.zoomOut);
+    //   setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
+    // });
+
+    // TODO: Testing out not waiting to preload images.
+    setAnyImageReady(true);
+    setAnimationName(keyframes.zoomOut);
+    setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
 
     setLowQualityUrl(photoUrls.lowQuality);
     setFullQualityUrl(photoUrls.highQuality);
   }, () => {
     // DO NOT CLEAR THIS, IT RESETS PHOTO ZOOM AT THE START OF A TRANSITION.
     // setAnimationName('none');
-  }, [photo?.id, isActive]);
+  }, [photo?.id]);
 
   const srcSet = lowQualityUrl && fullQualityUrl ? [
     `${lowQualityUrl} ${Math.round(window.screen.width / 2)}w`,
-    fullQualityUrl
+    `${fullQualityUrl} ${Math.round(window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE)}w`
   ].join(', ') : undefined;
+
+  // if (srcSet) log.debug('srcSet', srcSet);
 
   return (
     <div
@@ -111,8 +120,9 @@ export default function BackgroundImage(props: BackgroundImageProps) {
       >
         <img
           alt="background"
+          src={lowQualityUrl ?? undefined}
           srcSet={srcSet}
-          src={lowQualityUrl ?? fullQualityUrl ?? undefined}
+          sizes="100vw"
           className={classes.backgroundImage}
           style={{ animationName }}
         />

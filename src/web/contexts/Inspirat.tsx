@@ -188,7 +188,11 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     // This is where IMGIX configuration for low and high quality versions of
     // photos is defined.
     return buildPhotoUrlSrcSet(photo.urls.full, {
-      // blend: 'FA653D80',
+      q: 100,
+      w: Math.round(window.screen.width / 2),
+      h: Math.round(window.screen.height / 2)
+      // Adds a color overlay. Can be useful for debugging.
+      // blend: 'FA653D',
       // blendMode: 'overlay'
     }, {
       w: Math.round(window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE),
