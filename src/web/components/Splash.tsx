@@ -8,6 +8,7 @@ import Greeting from 'web/components/Greeting';
 import SplashLower from 'web/components/SplashLower';
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
+import log from 'web/lib/log';
 
 import classes from './Splash.css';
 
@@ -59,6 +60,10 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       clearTimeout(transitionDurationTimeoutHandle);
     };
   }, [currentPhoto?.id, transitionDuration]);
+
+  React.useEffect(() => {
+    log.info('[Splash] Active:', activeElement);
+  }, [activeElement]);
 
   // NOTE: SplashLower is nested inside BackgroundImage so that image metadata
   // can be displayed for both images simultaneously and fade in/out with the

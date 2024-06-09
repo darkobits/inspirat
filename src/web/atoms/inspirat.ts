@@ -9,5 +9,6 @@ export const atoms = {
   dayOffset: atomFromQueryParam<number>('offset', 0),
   name: atomWithStorage('jotai:name', ''),
   hasSeenIntroduction: atomWithStorage('jotai:hasSeenIntroduction', false),
+  // eslint-disable-next-line unicorn/no-useless-undefined
   currentPhoto: atomWithStorage<CurrentPhotoStorageItem | undefined>('jotai:currentPhoto', undefined)
 };

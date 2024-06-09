@@ -54,13 +54,14 @@ export const DevTools = () => {
    */
   React.useEffect(() => {
     if (!showDevTools) return;
+    if (!numPhotos) return;
 
     mousetrap.bind('left', throttle(THROTTLE_TIME, () => {
-      setDayOffset(prev => Number(prev) - 1);
+      setDayOffset(prev => modIndex(Number(prev) - 1, numPhotos));
     }, { noLeading: false }));
 
     mousetrap.bind('right', throttle(THROTTLE_TIME, () => {
-      setDayOffset(prev => Number(prev) + 1);
+      setDayOffset(prev => modIndex(Number(prev) + 1, numPhotos));
     }, { noLeading: false }));
 
     const swipeListener = SwipeListener(document);
@@ -85,7 +86,7 @@ export const DevTools = () => {
       mousetrap.unbind('right');
       swipeListener.off();
     };
-  }, [showDevTools]);
+  }, [showDevTools, numPhotos]);
 
   /**
    * [Effect] If DevTools are active, when `dayOffset` changes, pre-load images

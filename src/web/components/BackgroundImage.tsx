@@ -1,4 +1,5 @@
 /* eslint-disable react/jsx-props-no-spreading */
+import sleep from '@darkobits/sleep';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
@@ -9,6 +10,7 @@ import {
   BACKGROUND_TRANSITION_FUNCTION,
   BACKGROUND_RULE_OVERRIDES
 } from 'web/etc/constants';
+import log from 'web/lib/log';
 import { preloadImage } from 'web/lib/utils';
 
 import classes, { keyframes } from './BackgroundImage.css';
@@ -50,7 +52,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
    * URLs, preloads those resources, and set our `anyImagesReady` flag to true
    * when the first image finishes loading.
    */
-  useAsyncEffect(isMounted => {
+  useAsyncEffect(async isMounted => {
     if (!photo) {
       setAnyImageReady(false);
       setLowQualityUrl();
@@ -63,15 +65,25 @@ export default function BackgroundImage(props: BackgroundImageProps) {
     const photoUrls = buildPhotoUrls(photo);
     setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
 
-    // TODO: This may be handled by the context now.
-    void Promise.race([
-      preloadImage(photoUrls.lowQuality).then(() => setLowQualityUrl(photoUrls.lowQuality)),
-      preloadImage(photoUrls.highQuality).then(() => setFullQualityUrl(photoUrls.highQuality))
-    ]).then(() => {
-      if (!isMounted()) return;
-      setAnyImageReady(true);
-      setAnimationName(keyframes.zoomOut);
-    });
+    // Preload images for each of our URLs and set the URL on internal state
+    // when each becomes ready.
+    await Promise.race([
+      preloadImage(photoUrls.lowQuality).then(() => sleep(0)).then(() => {
+        if (!isMounted()) return;
+        log.debug(`${id}: Low quality image ready for ${photo.id}.`);
+        setLowQualityUrl(photoUrls.lowQuality);
+
+      }),
+      preloadImage(photoUrls.highQuality).then(() => sleep(100)).then(() => {
+        if (!isMounted()) return;
+        log.debug(`${id}: High quality image ready for ${photo.id}.`);
+        setFullQualityUrl(photoUrls.highQuality);
+      })
+    ]);
+
+    if (!isMounted()) return;
+    setAnyImageReady(true);
+    setAnimationName(keyframes.zoomOut);
   }, () => {
     // DO NOT CLEAR THIS, IT RESETS PHOTO ZOOM AT THE START OF A TRANSITION.
     // setAnimationName('none');
@@ -121,7 +133,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
         <img
           alt="background"
           srcSet={srcSet}
-          src={lowQualityUrl ?? undefined}
+          src={lowQualityUrl ?? fullQualityUrl ?? undefined}
           // sizes="100vw"
           className={classes.backgroundImage}
           style={{ animationName }}

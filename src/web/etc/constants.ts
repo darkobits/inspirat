@@ -54,7 +54,7 @@ export const BACKGROUND_ANIMATION_DURATION = ms('100s');
  *
  * Should be a value greater than 1.
  */
-export const BACKGROUND_ANIMATION_INITIAL_SCALE = 1.4 as const;
+export const BACKGROUND_ANIMATION_INITIAL_SCALE = 1.5 as const;
 
 /**
  * How long image collection data may persist in the cache before it must be
