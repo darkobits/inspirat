@@ -36,7 +36,7 @@ export interface BackgroundImageProps extends ElementProps<HTMLDivElement> {
  * - Deprecate background-position override (won't work with <img>).
  */
 export default function BackgroundImage(props: BackgroundImageProps) {
-  const { children, style, isActive, photo, ...restProps } = props;
+  const { id, children, style, isActive, photo, ...restProps } = props;
   const { buildPhotoUrls } = React.useContext(InspiratContext);
 
   const [styleOverrides, setStyleOverrides] = React.useState<BackgroundImageOverrides>({});
@@ -52,34 +52,26 @@ export default function BackgroundImage(props: BackgroundImageProps) {
    */
   useAsyncEffect(isMounted => {
     if (!photo) {
+      setAnyImageReady(false);
       setLowQualityUrl();
       setFullQualityUrl();
       setAnimationName('none');
       setStyleOverrides({});
-      setAnyImageReady(false);
       return;
     }
 
     const photoUrls = buildPhotoUrls(photo);
+    setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
 
     // TODO: This may be handled by the context now.
     void Promise.race([
-      preloadImage(photoUrls.lowQuality),
-      preloadImage(photoUrls.highQuality)
+      preloadImage(photoUrls.lowQuality).then(() => setLowQualityUrl(photoUrls.lowQuality)),
+      preloadImage(photoUrls.highQuality).then(() => setFullQualityUrl(photoUrls.highQuality))
     ]).then(() => {
       if (!isMounted()) return;
       setAnyImageReady(true);
       setAnimationName(keyframes.zoomOut);
-      setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
     });
-
-    // NOTE: Testing not waiting to preload images.
-    // setAnyImageReady(true);
-    // setAnimationName(keyframes.zoomOut);
-    // setStyleOverrides(BACKGROUND_RULE_OVERRIDES[photo.id] ?? {});
-
-    setLowQualityUrl(photoUrls.lowQuality);
-    setFullQualityUrl(photoUrls.highQuality);
   }, () => {
     // DO NOT CLEAR THIS, IT RESETS PHOTO ZOOM AT THE START OF A TRANSITION.
     // setAnimationName('none');
@@ -101,6 +93,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
   // children) and the animation applied to images uses `transform`.
   return (
     <div
+      id={id}
       data-testid="BackgroundImage"
       className={classes.backgroundImageWrapper}
       style={{
@@ -127,9 +120,9 @@ export default function BackgroundImage(props: BackgroundImageProps) {
       >
         <img
           alt="background"
-          src={lowQualityUrl ?? undefined}
           srcSet={srcSet}
-          sizes="100vw"
+          src={lowQualityUrl ?? undefined}
+          // sizes="100vw"
           className={classes.backgroundImage}
           style={{ animationName }}
         />

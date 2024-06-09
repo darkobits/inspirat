@@ -14,70 +14,51 @@ import classes from './Splash.css';
 import type { InspiratPhotoResource } from 'etc/types';
 import type { ElementProps } from 'web/etc/types';
 
+
+const INITIAL_LOAD_TRANSITION_DURATION = '0.5s';
+
 /**
  * TODO: Deprecate usage of maskColor and maskAmount overrides. Use photo
  * palette with a box-shadow around text instead.
  */
 export function Splash(props: ElementProps<HTMLDivElement>) {
   const { className, style, ...restProps } = props;
-  const { currentPhoto } = React.useContext(InspiratContext);
-
+  const { currentPhoto, dayOffset } = React.useContext(InspiratContext);
   const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
   const [bPhoto, setBPhoto] = React.useState<InspiratPhotoResource | void>();
-  const [transitionDuration, setTransitionDuration] = React.useState('1s');
-  const [turnCount, setTurnCount] = React.useState(0);
-
-  const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
+  const [transitionDuration, setTransitionDuration] = React.useState(INITIAL_LOAD_TRANSITION_DURATION);
+  const activeElement = dayOffset % 2 === 0 ? 'A' : 'B';
 
   /**
-   * [Effect] Increments turnCount every time the photo changes.
-   */
-  React.useEffect(() => {
-    setTurnCount(prev => prev + 1);
-  }, [currentPhoto?.id]);
-
-  /**
-   * [Effect] Handles changes to photo URLs.
+   * [Effect] Handles changes to photo URLs. Sets the transition duration to its
+   * configured setting after the initial photo has loaded.
    */
   React.useEffect(() => {
     if (!currentPhoto) return;
 
-    const activeElement = turnCount % 2 === 0 ? 'A' : 'B';
+    let clearPhotoTimeoutHandle: NodeJS.Timeout;
 
     if (activeElement === 'A') {
       setAPhoto(currentPhoto);
-    } else {
+      clearPhotoTimeoutHandle = setTimeout(() => setBPhoto(), ms(transitionDuration));
+    } else if (activeElement === 'B') {
       setBPhoto(currentPhoto);
+      clearPhotoTimeoutHandle = setTimeout(() => setAPhoto(), ms(transitionDuration));
     }
 
-    // To ensure the first photo always appears immediately, but that subsequent
-    // transitions run at the configured transition speed, we set the initial
-    // transition duration to '0s' (see above). We then do a check here to see
-    // if this is the first image being shown, and if so, run a timer that
-    // expires after the _target_ transition time, then updates the component's
-    // transition time to the target time.
-    if (!aPhoto && !bPhoto) {
-      setTimeout(() => {
+    let transitionDurationTimeoutHandle: NodeJS.Timeout;
+
+    if (transitionDuration !== BACKGROUND_TRANSITION_DURATION) {
+      transitionDurationTimeoutHandle = setTimeout(() => {
         setTransitionDuration(BACKGROUND_TRANSITION_DURATION);
-      }, ms(BACKGROUND_TRANSITION_DURATION));
+      }, ms(transitionDuration));
     }
-
-    // This timer clears the photo on the inactive backdrop once the transition
-    // animation has completed. We always want it to run using the current
-    // transition duration, and it is acceptable to allow the effect's cleanup
-    // function to cancel it.
-    const timeoutHandle = setTimeout(() => {
-      if (activeElement === 'A') {
-        setBPhoto();
-      } else {
-        setAPhoto();
-      }
-    }, ms(transitionDuration));
 
     return () => {
-      clearTimeout(timeoutHandle);
+      clearTimeout(clearPhotoTimeoutHandle);
+      clearTimeout(transitionDurationTimeoutHandle);
     };
-  }, [activeElement]);
+  }, [currentPhoto?.id, transitionDuration]);
 
   // NOTE: SplashLower is nested inside BackgroundImage so that image metadata
   // can be displayed for both images simultaneously and fade in/out with the
@@ -108,7 +89,7 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       >
         <SplashLower photo={bPhoto} />
       </BackgroundImage>
-      <Greeting /* style={{ transitionDuration }} */ />
+      <Greeting style={{ transitionDuration }} />
     </div>
   );
 }

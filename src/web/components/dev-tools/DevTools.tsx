@@ -29,6 +29,8 @@ import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
  */
 let mouseLeaveTimeout: NodeJS.Timeout;
 
+const THROTTLE_TIME = ms(BACKGROUND_TRANSITION_DURATION) * 1.2;
+
 /**
  * TODO: Showing the dev tools currently changes the photo shown. Should use the
  * photo that would be shown if dev tools were hidden.
@@ -39,7 +41,6 @@ export const DevTools = () => {
     showDevTools,
     isLoadingPhotos,
     currentPhoto,
-    currentPhotoPreloaded,
     setCurrentPhoto,
     setDayOffset,
     resetPhoto,
@@ -54,28 +55,25 @@ export const DevTools = () => {
   React.useEffect(() => {
     if (!showDevTools) return;
 
-    mousetrap.bind('left', throttle(ms(BACKGROUND_TRANSITION_DURATION) * 1.5, () => {
-      if (!currentPhotoPreloaded) return;
-      setDayOffset('decrement');
+    mousetrap.bind('left', throttle(THROTTLE_TIME, () => {
+      setDayOffset(prev => Number(prev) - 1);
     }, { noLeading: false }));
 
-    mousetrap.bind('right', throttle(ms(BACKGROUND_TRANSITION_DURATION) * 1.5, () => {
-      if (!currentPhotoPreloaded) return;
-      setDayOffset('increment');
+    mousetrap.bind('right', throttle(THROTTLE_TIME, () => {
+      setDayOffset(prev => Number(prev) + 1);
     }, { noLeading: false }));
 
     const swipeListener = SwipeListener(document);
 
-    document.addEventListener('swipe', event => {
-      if (!currentPhotoPreloaded) return;
-      if (isTouchEvent(event)) {
-        if (event.detail.directions.left) {
-          setDayOffset('increment');
-        } else if (event.detail.directions.right) {
-          setDayOffset('decrement');
-        }
+    document.addEventListener('swipe', throttle(THROTTLE_TIME, event => {
+      if (!isTouchEvent(event)) return;
+
+      if (event.detail.directions.right) {
+        setDayOffset(prev => Number(prev) + 1);
+      } else if (event.detail.directions.left) {
+        setDayOffset(prev => Number(prev) - 1);
       }
-    });
+    }));
 
     mouseLeaveTimeout = setTimeout(() => {
       setShow(false);
@@ -87,11 +85,11 @@ export const DevTools = () => {
       mousetrap.unbind('right');
       swipeListener.off();
     };
-  }, [showDevTools, currentPhotoPreloaded]);
+  }, [showDevTools]);
 
   /**
    * [Effect] If DevTools are active, when `dayOffset` changes, pre-load images
-   * for the previous and next photo based on day offset.
+   * for the previous and next photos.
    */
   React.useEffect(() => {
     if (!showDevTools) return;

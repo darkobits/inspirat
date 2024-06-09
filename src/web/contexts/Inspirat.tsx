@@ -1,22 +1,19 @@
+/* eslint-disable no-confusing-arrow */
+import Cron from '@darkobits/cron';
+import * as Jotai from 'jotai';
 import ms from 'ms';
-import prettyMs from 'pretty-ms';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
+import { atoms } from 'web/atoms/inspirat';
 import { BACKGROUND_ANIMATION_INITIAL_SCALE } from 'web/etc/constants';
-import useQuery from 'web/hooks/use-query';
-import withNamespace from 'web/hooks/use-storage-item';
 import { Logger } from 'web/lib/log';
 import {
   getPhotoCollections,
   getCurrentPhotoFromCollection,
   getCurrentPhotoFromStorage
 } from 'web/lib/photos';
-import {
-  getPeriodDescriptor,
-  midnight,
-  now
-} from 'web/lib/time';
+import { getPeriodDescriptor } from 'web/lib/time';
 import {
   buildPhotoUrlSrcSet,
   ifDebug,
@@ -57,11 +54,6 @@ export interface InspiratContextValue {
   currentPhoto: InspiratPhotoResource | undefined;
 
   /**
-   * Whether the current photo has been pre-loaded (cached).
-   */
-  currentPhotoPreloaded: boolean;
-
-  /**
    * The total number of photos in the collection.
    */
   numPhotos: number;
@@ -90,7 +82,7 @@ export interface InspiratContextValue {
    * Allows other components to set the day offset to a value by using the
    * 'increment' or 'decrement' actions.
    */
-  setDayOffset: (action: 'increment' | 'decrement' | number) => void;
+  setDayOffset: (offset: number | ((prev: number) => number)) => void;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
@@ -112,15 +104,12 @@ export interface InspiratContextValue {
   buildPhotoUrls: (photo: InspiratPhotoResource) => ReturnType<typeof buildPhotoUrlSrcSet>;
 }
 
-const useStorageItem = withNamespace('inspirat');
-
 const InspiratContext = React.createContext<InspiratContextValue>({
   name: '',
   setName: () => {/* Empty function. */},
 
   currentPhoto: undefined,
   setCurrentPhoto: () => {/* Empty function. */},
-  currentPhotoPreloaded: false,
 
   dayOffset: 0,
   setDayOffset: () => {/* Empty function. */},
@@ -129,6 +118,7 @@ const InspiratContext = React.createContext<InspiratContextValue>({
   setHasSeenIntroduction: () => {/* Empty function. */},
 
   showDevTools: false,
+
   period: '',
   numPhotos: 0,
   isLoadingPhotos: false,
@@ -140,53 +130,18 @@ const InspiratContext = React.createContext<InspiratContextValue>({
 });
 
 export function InspiratProvider(props: React.PropsWithChildren) {
-  const [name, setName] = useStorageItem<string>('name');
-  const [hasSeenIntroduction, setHasSeenIntroduction] = useStorageItem<boolean | undefined>('hasSeenIntroduction', false);
+  const [name, setName] = Jotai.useAtom(atoms.name);
+  const [showDevTools] = Jotai.useAtom(atoms.showDevTools);
+  const [dayOffset, setDayOffset] = Jotai.useAtom(atoms.dayOffset);
+  const [hasSeenIntroduction, setHasSeenIntroduction] = Jotai.useAtom(atoms.hasSeenIntroduction);
 
   const [currentPhoto, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
   const [numPhotos, setNumPhotos] = React.useState(0);
-  const [showDevTools, setShowDevTools] = React.useState(false);
   const [period, setPeriod] = React.useState(getPeriodDescriptor());
   const [isLoadingPhotos, setIsLoadingPhotos] = React.useState(false);
-  const query = useQuery();
 
-  // ----- [Reducer] Increment/Decrement/Set Photo Index -----------------------
-
-  const [dayOffsetFromStorage, setDayOffsetInStorage] = useStorageItem<number>('dayOffset', 0);
-
-  /**
-   * Day offset is 0 by default and is used exclusively by DevTools to move
-   * forward/backward through the photo collection. An explicit offset is also
-   * set when clicking on the progress bar.
-   */
-  const [dayOffset, setDayOffset] = React.useReducer((state: number, action: 'increment' | 'decrement' | number) => {
-    if (typeof action === 'number') {
-      setDayOffsetInStorage(action);
-      return action;
-    }
-
-    switch (action) {
-      case 'increment':
-        setDayOffsetInStorage(state + 1);
-        return state + 1;
-      case 'decrement':
-        setDayOffsetInStorage(state - 1);
-        return state - 1;
-      default:
-        throw new Error(`Unknown action: ${action}`);
-    }
-  }, 0);
-
-  /**
-   * [Effect] Synchronizes in-memory state from storage state, if it exists.
-   */
-  React.useEffect(() => {
-    if (!dayOffsetFromStorage) return;
-    if (dayOffset !== dayOffsetFromStorage) setDayOffset(dayOffsetFromStorage);
-  }, [dayOffset, dayOffsetFromStorage]);
-
-  // ----- [Callbacks] ---------------------------------------------------------
+  // ----- Callbacks -----------------------------------------------------------
 
   const buildPhotoUrls = React.useCallback((photo: InspiratPhotoResource) => {
     if (!photo?.urls) throw new Error('[buildPhotoUrls] Got invalid input.', { cause: photo });
@@ -206,11 +161,13 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     });
   }, []);
 
+  // ----- Effects -------------------------------------------------------------
+
   /**
-   * [Callback] Updates photos according to the current day offset if dev tools
-   * are being used, or the current cached photo otherwise.
+   * [Effect] Selects the next photo to use based on whether we are in DevTools
+   * and allowing browsing, or not.
    */
-  const updatePhotos = React.useCallback(async () => {
+  useAsyncEffect(async isMounted => {
     // If dev tools are open, the current photo should be pulled from the photo
     // collection using the current offset. If not, use the 'currentPhoto' cache
     // item to ensure the photo does not change throughout the day if the photo
@@ -219,71 +176,31 @@ export function InspiratProvider(props: React.PropsWithChildren) {
       ? await getCurrentPhotoFromCollection({ offset: dayOffset })
       : await getCurrentPhotoFromStorage();
 
+    if (!isMounted()) return;
+
     ifDebug(() => {
       if (!window.debug) window.debug = {};
       window.debug.currentPhoto = nextPhoto;
     });
 
-    // TODO: May need to check for isMounted here.
     setCurrentPhoto(nextPhoto);
-  }, [showDevTools, dayOffset]);
-
-  const [currentPhotoPreloaded, setCurrentPhotoPreloaded] = React.useState(false);
-
-  useAsyncEffect(async isMounted => {
-    if (!currentPhoto) return;
-
-    setCurrentPhotoPreloaded(false);
-    const photoUrls = buildPhotoUrls(currentPhoto);
-
-    await Promise.all([
-      preloadImage(photoUrls.lowQuality),
-      preloadImage(photoUrls.highQuality)
-    ]);
-
-    if (!isMounted()) return;
-
-    setCurrentPhotoPreloaded(true);
-  }, [currentPhoto, buildPhotoUrls]);
-
+  }, [dayOffset, showDevTools]);
 
   /**
-   * [Callback] Updates photos, then sets a timeout that will trigger another
-   * update at midnight.
-   */
-  const updatePhotosWithTimer = React.useCallback(() => {
-    void updatePhotos();
-
-    const timeToUpdate = midnight() - now();
-
-    ifDebug(() => {
-      log.debug(`Current photo will update in ${prettyMs(timeToUpdate)}.`);
-
-      if (!window.debug) window.debug = {};
-      Reflect.defineProperty(window.debug, 'expiresIn', {
-        get: () => prettyMs(midnight() - now())
-      });
-    }, { once: true });
-
-    const timeoutHandle = setTimeout(() => {
-      ifDebug(() => log.debug('Updating photo.'));
-      updatePhotosWithTimer();
-    }, timeToUpdate);
-
-    return timeoutHandle;
-  }, [
-    updatePhotos
-  ]);
-
-  // ----- Effects -------------------------------------------------------------
-
-  /**
-   * [Effect] Initiates the photo update routine.
+   * [Effect] Responsible for ensuring the photo changes at midnight.
    */
   React.useEffect(() => {
-    const timeoutHandle = updatePhotosWithTimer();
-    return () => clearTimeout(timeoutHandle);
-  }, [dayOffset, shouldResetPhoto, showDevTools, updatePhotosWithTimer]);
+    const photoUpdateCron = Cron('0 0 * * *', () => {
+      log.info('Updating photos on cron.');
+      setDayOffset(prev => prev + 1);
+    });
+
+    void photoUpdateCron.start();
+
+    return () => {
+      void photoUpdateCron.suspend();
+    };
+  }, [setDayOffset, dayOffset]);
 
   /**
    * [Effect] Periodically checks if we are waiting for any photos to load.
@@ -291,19 +208,9 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   React.useEffect(() => {
     const intervalHandle = setInterval(() => {
       setIsLoadingPhotos(preloadImage.isLoadingImages());
-    }, 100);
+    }, 1000);
     return () => clearInterval(intervalHandle);
   }, []);
-
-  /**
-   * [Effect] When the `devtools` query param is present, enables dev tools.
-   */
-  React.useEffect(() => {
-    if (Object.keys(query).includes('devtools')) {
-      window.debug = window.debug || {};
-      setShowDevTools(true);
-    }
-  }, [query]);
 
   /**
    * [Effect] Initializes debug data.
@@ -333,6 +240,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     return () => clearInterval(interval);
   }, []);
 
+
   return (
     <InspiratContext.Provider
       value={{
@@ -341,7 +249,6 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
         currentPhoto: currentPhoto,
         setCurrentPhoto,
-        currentPhotoPreloaded,
 
         dayOffset,
         setDayOffset,
@@ -349,9 +256,8 @@ export function InspiratProvider(props: React.PropsWithChildren) {
         hasSeenIntroduction,
         setHasSeenIntroduction,
 
-        // TODO: This breaks if we don't use a one-off wrapper here. Figure out
-        // why.
         showDevTools,
+
         period,
         numPhotos,
         isLoadingPhotos,
