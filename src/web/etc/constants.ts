@@ -29,7 +29,7 @@ if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
  */
 export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'production'
   ? '5s'
-  : '5s';
+  : '1s';
 
 /**
  * Transition timing function used when the background image changes. This must
@@ -87,12 +87,18 @@ export const DEFAULT_FONTS = [
 /**
  * Image quality to use for full-quality images.
  */
-export const QUALITY_FULL = 100;
+export const QUALITY_FULL = 100 as const;
 
 /**
  * Image quality to use for low-quality image previews.
  */
-export const QUALITY_LQIP = 50;
+export const QUALITY_LQIP = 50 as const;
+
+/**
+ * When using weighted categories, this is the weight that will be assigned to
+ * photos not belonging to any weighted categories.
+ */
+export const PHOTO_DEFAULT_WEIGHT = 0.2 as const;
 
 // ----- Dev Tools -------------------------------------------------------------
 

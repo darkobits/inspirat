@@ -31,7 +31,7 @@ const chance = new Chance();
  *
  * Descriptors for each season and their midpoints.
  */
-const seasons: Array<Season> = [
+const DEFAULT_SEASONS: Array<Season> = [
   {
     name: 'Spring',
     midpoint: 'April 10'
@@ -63,17 +63,15 @@ const seasons: Array<Season> = [
  * At values below 1, adjacent seasons will begin to have increasingly higher
  * weights, and no season will have an "exclusivity period".
  */
-const DISTANCE_MODIFIER = 1.5;
+const DISTANCE_MODIFIER = 1.2;
 
 
 /**
- * @private
- *
- * Accepts a Date object and a list of Season objects and returns a list of
- * WeightedSeason objects. Each season is assigned a weight from 0 to 1 based on
- * the provided Date's distance to the nearest midpoint of that season.
+ * Accepts a Date object and an optional list of Season objects and returns a
+ * list of WeightedSeason objects. Each season is assigned a weight from 0 to 1
+ * based on the provided Date's distance to the nearest midpoint of that season.
  */
-function computeSeasonWeights(now: Date, seasons: Array<Season>) {
+export function computeSeasonWeights(now: Date, seasons: Array<Season> = DEFAULT_SEASONS) {
   const curYear = getYear(now);
   const numDaysInYear = getDaysInYear(now);
 
@@ -106,16 +104,18 @@ function computeSeasonWeights(now: Date, seasons: Array<Season>) {
 
 
 /**
- * Provided a list of WeightedSeason objects, selects one at random and
- * returns its name.
+ * @deprecated
+ *
+ * Using a pre-defined list of season descriptors, returns a season selected
+ * according to
  */
-export default function getRandomWeightedSeason() {
-  const weightedSeasons = computeSeasonWeights(new Date(), seasons);
+export function getRandomWeightedSeason() {
+  const weightedSeasons = computeSeasonWeights(new Date(), DEFAULT_SEASONS);
   const names: Array<WeightedSeason['name']> = [];
   const weights: Array<WeightedSeason['weight']> = [];
 
   for (const season of weightedSeasons) {
-    names.push(season.name);
+    names.push(season.name.toLowerCase());
     weights.push(season.weight);
   }
 

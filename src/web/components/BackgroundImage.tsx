@@ -10,13 +10,15 @@ import {
   BACKGROUND_TRANSITION_FUNCTION,
   BACKGROUND_RULE_OVERRIDES
 } from 'web/etc/constants';
-import log from 'web/lib/log';
+import { Logger } from 'web/lib/log';
 import { preloadImage } from 'web/lib/utils';
 
 import classes, { keyframes } from './BackgroundImage.css';
 
 import type { InspiratPhotoResource } from 'etc/types';
 import type { BackgroundImageOverrides, ElementProps } from 'web/etc/types';
+
+const log = new Logger({ prefix: '🌅 •' });
 
 /**
  * Set to a truthy value to debug the blur backdrop element.
@@ -74,7 +76,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
         setLowQualityUrl(photoUrls.lowQuality);
 
       }),
-      preloadImage(photoUrls.highQuality).then(() => sleep(100)).then(() => {
+      preloadImage(photoUrls.highQuality).then(() => sleep(10)).then(() => {
         if (!isMounted()) return;
         log.debug(`${id}: High quality image ready for ${photo.id}.`);
         setFullQualityUrl(photoUrls.highQuality);

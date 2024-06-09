@@ -8,13 +8,14 @@ import Greeting from 'web/components/Greeting';
 import SplashLower from 'web/components/SplashLower';
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
-import log from 'web/lib/log';
+import { Logger } from 'web/lib/log';
 
 import classes from './Splash.css';
 
 import type { InspiratPhotoResource } from 'etc/types';
 import type { ElementProps } from 'web/etc/types';
 
+const log = new Logger({ prefix: '🌅 •' });
 
 const INITIAL_LOAD_TRANSITION_DURATION = '0.5s';
 
@@ -39,10 +40,15 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
 
     let clearPhotoTimeoutHandle: NodeJS.Timeout;
 
+    // @ts-expect-error - Fix type defs.
+    const { id, weight } = currentPhoto;
+
     if (activeElement === 'A') {
+      log.debug('[Splash] A:', id, weight?.name, Number(weight?.value).toFixed(2));
       setAPhoto(currentPhoto);
       clearPhotoTimeoutHandle = setTimeout(() => setBPhoto(), ms(transitionDuration));
     } else if (activeElement === 'B') {
+      log.debug('[Splash] B:', id, weight?.name, Number(weight?.value).toFixed(2));
       setBPhoto(currentPhoto);
       clearPhotoTimeoutHandle = setTimeout(() => setAPhoto(), ms(transitionDuration));
     }
@@ -60,10 +66,6 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       clearTimeout(transitionDurationTimeoutHandle);
     };
   }, [currentPhoto?.id, transitionDuration]);
-
-  React.useEffect(() => {
-    log.info('[Splash] Active:', activeElement);
-  }, [activeElement]);
 
   // NOTE: SplashLower is nested inside BackgroundImage so that image metadata
   // can be displayed for both images simultaneously and fade in/out with the

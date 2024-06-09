@@ -105,7 +105,7 @@ export interface InspiratContextValue {
 }
 
 const InspiratContext = React.createContext<InspiratContextValue>({
-  name: '',
+  name: localStorage.getItem('inspirat/name') ?? '',
   setName: () => {/* Empty function. */},
 
   currentPhoto: undefined,
@@ -168,13 +168,15 @@ export function InspiratProvider(props: React.PropsWithChildren) {
    * and allowing browsing, or not.
    */
   useAsyncEffect(async isMounted => {
+    // log.debug('[Context] Random season:', getRandomWeightedSeason());
+
     // If dev tools are open, the current photo should be pulled from the photo
     // collection using the current offset. If not, use the 'currentPhoto' cache
     // item to ensure the photo does not change throughout the day if the photo
     // collection is updated.
     const nextPhoto = showDevTools
       ? await getCurrentPhotoFromCollection({ offset: dayOffset })
-      : await getCurrentPhotoFromStorage();
+      : await getCurrentPhotoFromStorage({ name });
 
     if (!isMounted()) return;
 
@@ -184,7 +186,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     });
 
     setCurrentPhoto(nextPhoto);
-  }, [dayOffset, showDevTools]);
+  }, [dayOffset, name, showDevTools]);
 
   /**
    * [Effect] Responsible for ensuring the photo changes at midnight.
@@ -220,12 +222,13 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
     if (!isMounted()) return;
 
-    setNumPhotos(photos.length);
+    const numPhotos = photos.collections.reduce((total, collection) => total + collection.photos.length, 0);
+    setNumPhotos(numPhotos);
 
     ifDebug(() => {
       if (!window.debug) window.debug = {};
       window.debug.photos = photos;
-      window.debug.numPhotos = photos.length;
+      window.debug.numPhotos = numPhotos;
     });
   }, []);
 

@@ -1,10 +1,20 @@
 import { atom } from 'jotai';
 
+export interface AtomFromQueryParamsOptions<T> {
+  initialValue: T;
+  parseValue?: (value: any) => T;
+}
+
 /**
  * Creates a Jotai atom whose value is backed by a URL query parameter.
  */
-export function atomFromQueryParam<T>(queryParam: string, initialValue: T) {
+export function atomFromQueryParam<T>(queryParam: string, options?: AtomFromQueryParamsOptions<T>) {
   type Setter = (prev: T) => T;
+
+  const {
+    initialValue,
+    parseValue
+  } = options ?? {} as AtomFromQueryParamsOptions<T>;
 
   let finalInitialValue;
 
@@ -13,7 +23,7 @@ export function atomFromQueryParam<T>(queryParam: string, initialValue: T) {
 
   if (rawValue) {
     try {
-      finalInitialValue = JSON.parse(rawValue);
+      finalInitialValue = parseValue ? parseValue(rawValue as T) : JSON.parse(rawValue);
     } catch {
       finalInitialValue = rawValue;
     }

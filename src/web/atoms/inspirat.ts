@@ -2,13 +2,32 @@ import { atomWithStorage } from 'jotai/utils';
 
 import { atomFromQueryParam } from 'web/atoms/lib';
 
-import type { CurrentPhotoStorageItem } from 'web/etc/types';
-
 export const atoms = {
-  showDevTools: atomFromQueryParam('devtools', false),
-  dayOffset: atomFromQueryParam<number>('offset', 0),
-  name: atomWithStorage('jotai:name', ''),
-  hasSeenIntroduction: atomWithStorage('jotai:hasSeenIntroduction', false),
-  // eslint-disable-next-line unicorn/no-useless-undefined
-  currentPhoto: atomWithStorage<CurrentPhotoStorageItem | undefined>('jotai:currentPhoto', undefined)
+  /**
+   * [URL] Whether to enable DevTools.
+   */
+  showDevTools: atomFromQueryParam<boolean>('devtools', {
+    initialValue: false,
+    parseValue: value => (value === 'false' ? false : Boolean(value))
+  }),
+
+  /**
+   * [URL] Custom offset to use when browsing photo collections using DevTools.
+   */
+  dayOffset: atomFromQueryParam<number>('offset', {
+    initialValue: 0,
+    parseValue: Number
+  }),
+
+  /**
+   * [LocalStorage] Name of the current user to display in the greeting.
+   */
+  name: atomWithStorage('inspirat/name', ''),
+
+
+  /**
+   * [LocalStorage] Whether the user has seen and dismissed the introduction
+   * modal.
+   */
+  hasSeenIntroduction: atomWithStorage('inspirat/hasSeenIntroduction', false)
 };

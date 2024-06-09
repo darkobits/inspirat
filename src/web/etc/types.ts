@@ -1,6 +1,6 @@
 import type React from 'react';
 
-import { InspiratPhotoResource } from 'etc/types';
+import { InspiratPhotoResource, InspiratPhotoCollection } from 'etc/types';
 
 
 export interface LooseObject {
@@ -45,11 +45,19 @@ export interface BackgroundImageOverrides {
 
 // ----- Photo & Storage Resources ---------------------------------------------
 
+export interface AnnotatedPhotoCollection extends InspiratPhotoCollection {
+  weight: {
+    name: string;
+    value?: number;
+  };
+}
+
 /**
  * Shape of the object used to cache the photo collection.
  */
 export interface PhotoCollectionStorageItem {
-  photos: Array<InspiratPhotoResource>;
+  // photos: Array<InspiratPhotoResource>;
+  collections: Array<AnnotatedPhotoCollection>;
   updatedAt: number;
 }
 

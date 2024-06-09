@@ -16,8 +16,8 @@ import {
   BACKGROUND_TRANSITION_DURATION,
   BACKGROUND_TRANSITION_FUNCTION
 } from 'web/etc/constants';
-import { getCurrentPhotoFromCollection } from 'web/lib/photos';
-import { modIndex, mockPhotoResourceFromUrl, preloadImage, isTouchEvent } from 'web/lib/utils';
+// import { getCurrentPhotoFromCollection } from 'web/lib/photos';
+import { modIndex, mockPhotoResourceFromUrl, isTouchEvent } from 'web/lib/utils';
 
 import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
 
@@ -37,6 +37,7 @@ const THROTTLE_TIME = ms(BACKGROUND_TRANSITION_DURATION) * 1.2;
  */
 export const DevTools = () => {
   const {
+    // name,
     dayOffset,
     showDevTools,
     isLoadingPhotos,
@@ -44,8 +45,8 @@ export const DevTools = () => {
     setCurrentPhoto,
     setDayOffset,
     resetPhoto,
-    numPhotos,
-    buildPhotoUrls
+    numPhotos
+    // buildPhotoUrls
   } = React.useContext(InspiratContext);
   const [show, setShow] = React.useState(true);
 
@@ -92,22 +93,22 @@ export const DevTools = () => {
    * [Effect] If DevTools are active, when `dayOffset` changes, pre-load images
    * for the previous and next photos.
    */
-  React.useEffect(() => {
-    if (!showDevTools) return;
+  // React.useEffect(() => {
+  //   if (!showDevTools) return;
 
-    void Promise.all([
-      getCurrentPhotoFromCollection({ offset: dayOffset + 1 }).then(photo => {
-        if (!photo) return;
-        const { lowQuality, highQuality } = buildPhotoUrls(photo);
-        return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
-      }),
-      getCurrentPhotoFromCollection({ offset: dayOffset - 1 }).then(photo => {
-        if (!photo) return;
-        const { lowQuality, highQuality } = buildPhotoUrls(photo);
-        return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
-      })
-    ]);
-  }, [showDevTools, dayOffset]);
+  //   void Promise.all([
+  //     getCurrentPhotoFromCollection({ name, offset: dayOffset + 1 }).then(photo => {
+  //       if (!photo) return;
+  //       const { lowQuality, highQuality } = buildPhotoUrls(photo);
+  //       return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
+  //     }),
+  //     getCurrentPhotoFromCollection({ name, offset: dayOffset - 1 }).then(photo => {
+  //       if (!photo) return;
+  //       const { lowQuality, highQuality } = buildPhotoUrls(photo);
+  //       return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
+  //     })
+  //   ]);
+  // }, [showDevTools, name, dayOffset]);
 
 
   /**
