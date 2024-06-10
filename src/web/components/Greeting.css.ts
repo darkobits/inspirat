@@ -28,10 +28,10 @@ export default {
     borderRadius: '0.42em',
 
     // Adds additional contrast to text.
-    backgroundColor: 'rgba(72, 72, 72, 0.06)',
+    backgroundColor: 'rgba(0, 0, 0, 0.12)',
 
     backdropFilter: 'blur(12px)',
-    boxShadow: '0px 0px 24px rgba(0, 0, 0, 0.12)',
+    boxShadow: '0px 0px 12px rgba(0, 0, 0, 0.12)',
     userSelect: 'none',
 
     // Shifts the greeting upwards a bit, but we don't want to do this in mobile
