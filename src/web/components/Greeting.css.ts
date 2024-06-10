@@ -13,9 +13,9 @@ export default {
     height: 'min-content',
     minWidth: 'min-content',
 
-    paddingTop: '0.56em',
-    paddingLeft: '0.72em',
-    paddingRight: '0.72em',
+    paddingTop: '0.6em',
+    paddingLeft: '0.7em',
+    paddingRight: '0.7em',
     paddingBottom: '0.4em',
 
     fontFamily: FONT_FAMILY_FANCY,
@@ -30,7 +30,7 @@ export default {
     // Adds additional contrast to text.
     backgroundColor: 'rgba(0, 0, 0, 0.12)',
 
-    backdropFilter: 'blur(12px)',
+    backdropFilter: 'blur(8px)',
     boxShadow: '0px 0px 12px rgba(0, 0, 0, 0.12)',
     userSelect: 'none',
 
