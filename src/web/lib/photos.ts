@@ -160,7 +160,7 @@ export async function getCurrentPhotoFromCollection({ name = '', offset = 0 } = 
     chanceInstances[seed] = chance;
   }
 
-  const mappedCollections = photos.collections.map(photoCollection => {
+  const mappedCollections = photos.collections?.map(photoCollection => {
     if (photoCollection.weight) {
       const weightDescriptor = seasonWeights.find(weightDescriptor => weightDescriptor.name.toLowerCase() === photoCollection.weight.name.toLowerCase());
 
@@ -168,7 +168,7 @@ export async function getCurrentPhotoFromCollection({ name = '', offset = 0 } = 
         ? weightDescriptor.weight
         : PHOTO_DEFAULT_WEIGHT;
 
-      photoCollection.photos = photoCollection.photos.map(photo => {
+      photoCollection.photos = photoCollection.photos?.map(photo => {
         // @ts-expect-error Type this correctly.
         photo.weight = photoCollection.weight;
         return photo as InspiratPhotoResource & { weight: { name: string; value: number } };

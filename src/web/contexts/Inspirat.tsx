@@ -16,7 +16,6 @@ import {
 import { getPeriodDescriptor } from 'web/lib/time';
 import {
   buildPhotoUrlSrcSet,
-  ifDebug,
   preloadImage
 } from 'web/lib/utils';
 
@@ -180,10 +179,10 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
     if (!isMounted()) return;
 
-    ifDebug(() => {
-      if (!window.debug) window.debug = {};
-      window.debug.currentPhoto = nextPhoto;
-    });
+    // ifDebug(() => {
+    //   if (!window.debug) window.debug = {};
+    //   window.debug.currentPhoto = nextPhoto;
+    // });
 
     setCurrentPhoto(nextPhoto);
   }, [dayOffset, name, showDevTools]);
@@ -225,11 +224,11 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     const numPhotos = photos.collections.reduce((total, collection) => total + collection.photos.length, 0);
     setNumPhotos(numPhotos);
 
-    ifDebug(() => {
-      if (!window.debug) window.debug = {};
-      window.debug.photos = photos;
-      window.debug.numPhotos = numPhotos;
-    });
+    // ifDebug(() => {
+    //   if (!window.debug) window.debug = {};
+    //   window.debug.photos = photos;
+    //   window.debug.numPhotos = numPhotos;
+    // });
   }, []);
 
   /**
