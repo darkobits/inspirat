@@ -16,9 +16,11 @@ export default {
     top: 0,
     width: '100%',
     height: '100%',
+    transition: 'transform 0.24s ease',
+    transformOrigin: 'center top',
     ':hover': {
       cursor: 'pointer',
-      height: '6px !important'
+      transform: 'scaleY(1.5)'
     },
     '::-webkit-progress-bar': {
       backgroundColor: vars.progressBarBackgroundColor,

@@ -1,12 +1,15 @@
 import cx from 'classnames';
+import { format, addDays } from 'date-fns';
 import mousetrap from 'mousetrap';
 import ms from 'ms';
+import { desaturate, lighten, darken } from 'polished';
 import React from 'react';
+import { Helmet } from 'react-helmet';
+import { BsArrowRepeat, BsCircle } from 'react-icons/bs';
 // @ts-expect-error - This package has no type definitions.
 import SwipeListener from 'swipe-listener';
 import { throttle } from 'throttle-debounce';
 
-import { LoadingIndicator } from 'web/components/dev-tools/LoadingIndicator';
 import { Palette } from 'web/components/dev-tools/Palette';
 import { ProgressBar } from 'web/components/dev-tools/Progress';
 import { Source } from 'web/components/dev-tools/Source';
@@ -14,10 +17,11 @@ import InspiratContext from 'web/contexts/Inspirat';
 import {
   DEVTOOLS_MOUSE_LEAVE_TIMEOUT,
   BACKGROUND_TRANSITION_DURATION,
-  BACKGROUND_TRANSITION_FUNCTION
+  BACKGROUND_TRANSITION_FUNCTION,
+  TITLE
 } from 'web/etc/constants';
-// import { getCurrentPhotoFromCollection } from 'web/lib/photos';
-import { modIndex, mockPhotoResourceFromUrl, isTouchEvent } from 'web/lib/utils';
+import { animations } from 'web/etc/global-styles.css';
+import { modIndex, mockPhotoResourceFromUrl, isTouchEvent, rgba } from 'web/lib/utils';
 
 import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
 
@@ -29,24 +33,21 @@ import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
  */
 let mouseLeaveTimeout: NodeJS.Timeout;
 
-const THROTTLE_TIME = ms(BACKGROUND_TRANSITION_DURATION) * 1.2;
-
 /**
- * TODO: Showing the dev tools currently changes the photo shown. Should use the
- * photo that would be shown if dev tools were hidden.
+ * How long to throttle (ignore) keyboard or swipe events that change the day
+ * offset. Set to the transition time plus a small buffer.
  */
-export const DevTools = () => {
+const THROTTLE_TIME = ms(BACKGROUND_TRANSITION_DURATION) + ms('250ms');
+
+export function DevTools() {
   const {
-    // name,
-    dayOffset,
     showDevTools,
-    isLoadingPhotos,
+    dayOffset,
+    setDayOffset,
     currentPhoto,
     setCurrentPhoto,
-    setDayOffset,
     resetPhoto,
-    numPhotos
-    // buildPhotoUrls
+    isLoadingPhotos
   } = React.useContext(InspiratContext);
   const [show, setShow] = React.useState(true);
 
@@ -55,31 +56,30 @@ export const DevTools = () => {
    */
   React.useEffect(() => {
     if (!showDevTools) return;
-    if (!numPhotos) return;
+
+    const swipeListener = SwipeListener(document);
 
     mousetrap.bind('left', throttle(THROTTLE_TIME, () => {
-      setDayOffset(prev => modIndex(Number(prev) - 1, numPhotos));
+      setDayOffset(prev => modIndex(Number(prev) - 1, 365));
     }, { noLeading: false }));
 
     mousetrap.bind('right', throttle(THROTTLE_TIME, () => {
-      setDayOffset(prev => modIndex(Number(prev) + 1, numPhotos));
+      setDayOffset(prev => modIndex(Number(prev) + 1, 365));
     }, { noLeading: false }));
-
-    const swipeListener = SwipeListener(document);
 
     document.addEventListener('swipe', throttle(THROTTLE_TIME, event => {
       if (!isTouchEvent(event)) return;
 
       if (event.detail.directions.right) {
-        setDayOffset(prev => Number(prev) + 1);
+        setDayOffset(prev => modIndex(Number(prev) + 1, 365));
       } else if (event.detail.directions.left) {
-        setDayOffset(prev => Number(prev) - 1);
+        setDayOffset(prev => modIndex(Number(prev) - 1, 365));
       }
     }));
 
-    mouseLeaveTimeout = setTimeout(() => {
-      setShow(false);
-    }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
+    // mouseLeaveTimeout = setTimeout(() => {
+    //   setShow(false);
+    // }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
 
     return () => {
       clearTimeout(mouseLeaveTimeout);
@@ -87,29 +87,7 @@ export const DevTools = () => {
       mousetrap.unbind('right');
       swipeListener.off();
     };
-  }, [showDevTools, numPhotos]);
-
-  /**
-   * [Effect] If DevTools are active, when `dayOffset` changes, pre-load images
-   * for the previous and next photos.
-   */
-  // React.useEffect(() => {
-  //   if (!showDevTools) return;
-
-  //   void Promise.all([
-  //     getCurrentPhotoFromCollection({ name, offset: dayOffset + 1 }).then(photo => {
-  //       if (!photo) return;
-  //       const { lowQuality, highQuality } = buildPhotoUrls(photo);
-  //       return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
-  //     }),
-  //     getCurrentPhotoFromCollection({ name, offset: dayOffset - 1 }).then(photo => {
-  //       if (!photo) return;
-  //       const { lowQuality, highQuality } = buildPhotoUrls(photo);
-  //       return Promise.all([preloadImage(lowQuality), preloadImage(highQuality)]);
-  //     })
-  //   ]);
-  // }, [showDevTools, name, dayOffset]);
-
+  }, [showDevTools]);
 
   /**
    * [Callback] Immediately select the contents of the image source field when
@@ -134,18 +112,10 @@ export const DevTools = () => {
   const onImgIdChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(e => {
     try {
       const value = e.currentTarget.value;
-
-      if (!value) {
-        resetPhoto();
-        return;
-      }
+      if (!value) return resetPhoto();
 
       const mockPhotoResource = mockPhotoResourceFromUrl(value);
-
-      if (!mockPhotoResource) {
-        resetPhoto();
-        return;
-      }
+      if (!mockPhotoResource) return resetPhoto();
 
       setCurrentPhoto(mockPhotoResource);
     } catch {
@@ -162,83 +132,108 @@ export const DevTools = () => {
    * from the progress bar.
    */
   const handleProgressChange = React.useCallback((newProgress: number) => {
-    setDayOffset(Math.floor(numPhotos * newProgress));
-  }, [numPhotos, setDayOffset]);
+    setDayOffset(Math.floor(365 * newProgress));
+  }, [setDayOffset]);
 
   if (!showDevTools) return null;
 
-  const progress = modIndex(dayOffset, numPhotos) / numPhotos;
+  const progress = dayOffset / 365;
 
   return (
-    <div
-      data-testid="DevTools"
-      className={cx(classes.devToolsContainer, 'safe-padding')}
-      style={{ opacity: show ? 1 : 0 }}
-    >
-      {/* Progress Bar (Fixed Position) */}
-      <ProgressBar
-        progress={progress}
-        onProgressChange={handleProgressChange}
-        style={{ height: PROGRESS_BAR_HEIGHT }}
-      />
-
-      {/* DevTools */}
+    <>
+      <Helmet>
+        <title>{TITLE} {import.meta.env.GIT_DESC}</title>
+      </Helmet>
       <div
-        className={classes.devToolsWrapper}
-        onMouseEnter={() => {
-          clearTimeout(mouseLeaveTimeout);
-          setShow(true);
-        }}
-        onMouseLeave={() => {
-          mouseLeaveTimeout = setTimeout(() => {
-            setShow(false);
-          }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
-        }}
+        data-testid="DevTools"
+        className={cx(classes.devToolsContainer, 'safe-padding')}
+        style={{ opacity: show ? 1 : 0 }}
       >
-        {/* Address Bar & Loading Indicator */}
-        <div className={classes.devToolsRow}>
-          <Source photo={currentPhoto}>
-            <input
-              type="text"
-              onChange={onImgIdChange}
-              onFocus={handleImgIdFocus}
-              placeholder="https://unsplash.com/photos/:id"
-              spellCheck={false}
-              autoCorrect="false"
-              autoComplete="false"
-              style={{
-                height: '100%',
-                transitionProperty: 'color, background-color, border-color',
-                transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
-                transitionDuration: BACKGROUND_TRANSITION_DURATION
+        {/* Progress Bar (Fixed Position) */}
+        <ProgressBar
+          progress={progress}
+          onProgressChange={handleProgressChange}
+          style={{
+            height: PROGRESS_BAR_HEIGHT,
+            boxShadow: '0px 2px 1px rgba(0, 0, 0, 0.16)'
+          }}
+        />
+
+        {/* DevTools */}
+        <div
+          className={classes.devToolsWrapper}
+          onMouseEnter={() => {
+            clearTimeout(mouseLeaveTimeout);
+            setShow(true);
+          }}
+          onMouseLeave={() => {
+            mouseLeaveTimeout = setTimeout(() => {
+              setShow(false);
+            }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
+          }}
+        >
+          {/* Address Bar & Loading Indicator */}
+          <div className={classes.devToolsRow}>
+            <Source photo={currentPhoto}>
+              <input
+                type="text"
+                onChange={onImgIdChange}
+                onFocus={handleImgIdFocus}
+                placeholder="https://unsplash.com/photos/:id"
+                spellCheck={false}
+                autoCorrect="false"
+                autoComplete="false"
+                style={{
+                  height: '100%',
+                  transitionProperty: 'color, background-color, border-color',
+                  transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+                  transitionDuration: BACKGROUND_TRANSITION_DURATION
+                }}
+              />
+            </Source>
+            <Palette
+              photo={currentPhoto}
+              swatchProps={{
+                style: {
+                  transitionProperty: 'color, background-color, border-color',
+                  transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+                  transitionDuration: BACKGROUND_TRANSITION_DURATION
+                }
               }}
             />
-          </Source>
-          <LoadingIndicator
-            photo={currentPhoto}
-            isLoading={isLoadingPhotos}
-            style={{
-              transitionProperty: 'color, background-color, border-color',
-              transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
-              transitionDuration: BACKGROUND_TRANSITION_DURATION
-            }}
-          />
-        </div>
-
-        {/* Palette */}
-        <div className={classes.devToolsRow}>
-          <Palette
-            photo={currentPhoto}
-            swatchProps={{
-              style: {
-                transitionProperty: 'color, background-color, border-color',
-                transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
-                transitionDuration: BACKGROUND_TRANSITION_DURATION
-              }
-            }}
-          />
+            <div
+              className={classes.date}
+              style={{
+                color: lighten(0.24, desaturate(0, rgba(currentPhoto?.palette?.muted ?? 'white'))),
+                backgroundColor: desaturate(0, rgba(currentPhoto?.palette?.darkMuted ?? 'black', 0.8)),
+                borderColor: darken(0.12, rgba(currentPhoto?.palette?.darkMuted ?? 'gray', 0.72))
+              }}
+            >
+              {isLoadingPhotos ? (
+                <BsArrowRepeat
+                  className={animations.spin}
+                  style={{
+                    width: '1em',
+                    height: '1em',
+                    opacity: 0.72
+                  }}
+                />
+              ) : (
+                <BsCircle
+                  style={{
+                    width: '0.72em',
+                    height: '0.72em',
+                    strokeWidth: '0.42px',
+                    marginLeft: '2px',
+                    opacity: 0.72
+                  }}
+                />
+              )}
+              {format(addDays(new Date(), dayOffset), 'MMM dd')}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
-};
+}

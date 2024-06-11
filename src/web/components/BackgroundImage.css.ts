@@ -1,6 +1,11 @@
 import { style, keyframes as defineKeyframes } from '@vanilla-extract/css';
 
-import { BACKGROUND_ANIMATION_DURATION, BACKGROUND_ANIMATION_INITIAL_SCALE } from 'web/etc/constants';
+import {
+  BACKGROUND_ANIMATION_DURATION,
+  BACKGROUND_ANIMATION_INITIAL_SCALE,
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION
+} from 'web/etc/constants';
 
 export const keyframes = {
   zoomOut: defineKeyframes({
@@ -27,7 +32,9 @@ export default {
     flexDirection: 'column',
     transitionProperty: 'opacity',
     userSelect: 'none',
-    zIndex: 0
+    zIndex: 0,
+    transitionDuration: BACKGROUND_TRANSITION_DURATION,
+    transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION
   }),
   backgroundImage: style({
     width: '100%',

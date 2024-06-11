@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/consistent-destructuring */
 import type React from 'react';
 
+import pRetry from 'p-retry';
 import { rgba as polishedRgba, parseToRgb } from 'polished';
 import queryString from 'query-string';
 import * as R from 'ramda';
@@ -59,7 +60,7 @@ export function modIndex(num: number, arrOrLength: Array<any> | number): number 
  * Provided a string, returns a new string with each word capitalized.
  */
 export function capitalizeWords(input: string): string {
-  return input.split(' ').map(word => `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`).join(' ');
+  return input.split(' ').map(word => `${word.slice(0, 1).toUpperCase()}${word.slice(1)}`).join(' ');
 }
 
 
@@ -181,23 +182,26 @@ const preloadImageCache = new Map<string, PreloadImageCacheValue>();
  */
 export async function preloadImage(imgUrl: string) {
   if (!preloadImageCache.has(imgUrl)) {
-    const imagePromise = new Promise<string | ErrorEvent>((resolve, reject) => {
-      const img = new Image();
+    const imagePromise = pRetry(() => {
+      return new Promise<string | ErrorEvent>((resolve, reject) => {
+        const img = new Image();
 
-      img.addEventListener('load', () => {
-        preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'SUCCESS' });
-        resolve(imgUrl);
+        img.addEventListener('load', () => {
+          preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'SUCCESS' });
+          resolve(imgUrl);
+          img.remove();
+        });
+
+        img.addEventListener('error', event => {
+          preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'ERROR' });
+          const message = event.error?.message ?? 'Unknown Error';
+          reject(new Error(`[preloadImage] Failed to load image: ${message}`, { cause: event.error }));
+        });
+
+        // N.B. Setting this property will cause the browser to fetch the image.
+        img.src = imgUrl;
       });
-
-      img.addEventListener('error', event => {
-        preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'ERROR' });
-        const message = event.error?.message ?? 'Unknown Error';
-        reject(new Error(`[preloadImage] Failed to load image: ${message}`, { cause: event.error }));
-      });
-
-      // N.B. Setting this property will cause the browser to fetch the image.
-      img.src = imgUrl;
-    });
+    }, { retries: 2 });
 
     preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'LOADING' });
   }

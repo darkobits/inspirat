@@ -14,7 +14,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 const WEB_PATH = path.join('src', 'web');
 
 
-export default vite.react(({ config, packageJson, root, ms, manualChunks, mode }) => {
+export default vite.react(({ config, packageJson, root, ms, manualChunks }) => {
   config.root= WEB_PATH;
 
   manualChunks([{
@@ -70,7 +70,7 @@ export default vite.react(({ config, packageJson, root, ms, manualChunks, mode }
       // https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@100;200;300&family=Raleway:wght@200;300;400&display=swap
       families: [{
         name: 'Josefin Sans',
-        styles: 'wght@100;200;300'
+        styles: 'wght@100;200;300;400;500;600'
       }, {
         name: 'Raleway',
         styles: 'wght@200;300;400'

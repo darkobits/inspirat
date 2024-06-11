@@ -1,6 +1,10 @@
 import { style } from '@vanilla-extract/css';
 
-import { BASIS } from 'web/etc/constants';
+import {
+  BASIS,
+  BACKGROUND_TRANSITION_DURATION,
+  BACKGROUND_TRANSITION_FUNCTION
+} from 'web/etc/constants';
 
 export const PROGRESS_BAR_HEIGHT = '4px';
 
@@ -10,7 +14,16 @@ export default {
     top: PROGRESS_BAR_HEIGHT,
     left: 0,
     right: 0,
-    transition: 'opacity 2s ease-in-out'
+    transition: 'opacity 2s ease-in-out',
+    '::before': {
+      content: ' ',
+      position: 'absolute',
+      inset: 0,
+      display: 'block',
+      height: '64px',
+      background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.32) 0%, transparent 100%)',
+      zIndex: -1
+    }
   }),
   devToolsWrapper: style({
     display: 'flex',
@@ -24,5 +37,38 @@ export default {
     alignItems: 'center',
     justifyContent: 'flex-start',
     gap: `calc(${BASIS} * 0.24)`
+  }),
+  date: style({
+    display: 'flex',
+    gap: '6px',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'nowrap',
+
+    // Dimensions
+    minHeight: BASIS,
+    minWidth: '5.8em',
+    paddingLeft: '0.42em',
+    paddingRight: '0.72em',
+
+    // Borders
+    borderStyle: 'solid',
+    borderWidth: '1px',
+    borderRadius: '4px',
+
+    // Typography
+    fontSize: '1rem',
+    fontWeight: 400,
+    textShadow: '0px 0px 6px rgba(0, 0, 0, 0.42)',
+    whiteSpace: 'nowrap',
+
+    backdropFilter: 'blur(12px)',
+    userSelect: 'none',
+
+    // Transitions
+    transitionProperty: 'background-color, border-color, color, opacity',
+    transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+    transitionDuration: BACKGROUND_TRANSITION_DURATION
   })
 };

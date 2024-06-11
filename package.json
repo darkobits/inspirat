@@ -33,6 +33,7 @@
     "localforage": "^1.10.0",
     "mousetrap": "^1.6.5",
     "ms": "^2.1.3",
+    "node-emoji": "^2.1.3",
     "node-vibrant": "^3.1.6",
     "object-hash": "^3.0.0",
     "p-queue": "^8.0.1",

@@ -1,5 +1,7 @@
 import { style, createVar } from '@vanilla-extract/css';
 
+import { BASIS } from 'web/etc/constants';
+
 export const vars = {
   backgroundColor: createVar(),
   border: createVar(),
@@ -9,16 +11,22 @@ export const vars = {
 
 export default {
   swatch: style({
+    display: 'flex',
     alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+
+    width: BASIS,
+    height: BASIS,
+
     backgroundColor: vars.backgroundColor,
+
     borderRadius: '4px',
     border: vars.border,
+
     color: vars.color,
-    display: 'flex',
+
     fontSize: '12px',
-    height: '12px',
-    justifyContent: 'center',
-    textTransform: 'capitalize',
-    width: '32px'
+    textTransform: 'capitalize'
   })
 };

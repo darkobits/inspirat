@@ -29,7 +29,7 @@ if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
  */
 export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'production'
   ? '5s'
-  : '1s';
+  : '2s';
 
 /**
  * Transition timing function used when the background image changes. This must

@@ -9,6 +9,7 @@ import SplashLower from 'web/components/SplashLower';
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
+import { capitalizeWords } from 'web/lib/utils';
 
 import classes from './Splash.css';
 
@@ -44,14 +45,14 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
     const { id, weight } = currentPhoto;
 
     if (activeElement === 'A') {
-      log.debug('[Splash] A:', id, weight?.name, Number(weight?.value).toFixed(2));
       setAPhoto(currentPhoto);
       clearPhotoTimeoutHandle = setTimeout(() => setBPhoto(), ms(transitionDuration));
     } else if (activeElement === 'B') {
-      log.debug('[Splash] B:', id, weight?.name, Number(weight?.value).toFixed(2));
       setBPhoto(currentPhoto);
       clearPhotoTimeoutHandle = setTimeout(() => setAPhoto(), ms(transitionDuration));
     }
+
+    log.debug(`${activeElement} • ${capitalizeWords(weight?.name)} (${Number(weight?.value).toFixed(2)}) - ${id}`);
 
     let transitionDurationTimeoutHandle: NodeJS.Timeout;
 
@@ -86,7 +87,12 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
         isActive={activeElement === 'A'}
         style={{ transitionDuration }}
       >
-        <SplashLower photo={aPhoto} />
+        <SplashLower
+          id="A"
+          isActive={activeElement === 'A'}
+          photo={aPhoto}
+          // style={{ animationDuration: transitionDuration }}
+        />
       </BackgroundImage>
       <BackgroundImage
         id="B"
@@ -94,7 +100,12 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
         isActive={activeElement === 'B'}
         style={{ transitionDuration }}
       >
-        <SplashLower photo={bPhoto} />
+        <SplashLower
+          id="B"
+          isActive={activeElement === 'B'}
+          photo={bPhoto}
+          // style={{ animationDuration: transitionDuration }}
+        />
       </BackgroundImage>
       <Greeting style={{ transitionDuration }} />
     </div>

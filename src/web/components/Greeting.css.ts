@@ -19,7 +19,10 @@ export default {
     paddingBottom: '0.4em',
 
     fontFamily: FONT_FAMILY_FANCY,
-    fontSize: 'clamp(1.5rem, 0.8308rem + 4.3077vw, 6rem)',
+
+    // 2rem @ 400px wide -> 4rem @ 1200px wide
+    // See: https://www.marcbacon.com/tools/clamp-calculator/
+    fontSize: 'clamp(2rem, 1rem + 4vw, 4rem)',
     lineHeight: '1.24em',
     textAlign: 'center',
 
@@ -30,9 +33,15 @@ export default {
     // Adds additional contrast to text.
     backgroundColor: 'rgba(0, 0, 0, 0.12)',
 
-    backdropFilter: 'blur(8px)',
+    backdropFilter: 'blur(10px)',
     boxShadow: '0px 0px 12px rgba(0, 0, 0, 0.12)',
     userSelect: 'none',
+
+    // Most of the time, these margins will not be used. But on a very narrow
+    // viewport, it will prevent the greeting container from touching the edges
+    // of the screen as long as
+    marginLeft: '0.64rem',
+    marginRight: '0.64rem',
 
     // Shifts the greeting upwards a bit, but we don't want to do this in mobile
     // landscape, where vertical space is limited.

@@ -6,8 +6,6 @@ import useAsyncEffect from 'use-async-effect';
 import InspiratContext from 'web/contexts/Inspirat';
 import {
   BACKGROUND_ANIMATION_INITIAL_SCALE,
-  BACKGROUND_TRANSITION_DURATION,
-  BACKGROUND_TRANSITION_FUNCTION,
   BACKGROUND_RULE_OVERRIDES
 } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
@@ -72,13 +70,13 @@ export default function BackgroundImage(props: BackgroundImageProps) {
     await Promise.race([
       preloadImage(photoUrls.lowQuality).then(() => sleep(0)).then(() => {
         if (!isMounted()) return;
-        log.debug(`${id}: Low quality image ready for ${photo.id}.`);
+        log.info(`${id}: Low quality image ready for ${photo.id}.`);
         setLowQualityUrl(photoUrls.lowQuality);
 
       }),
       preloadImage(photoUrls.highQuality).then(() => sleep(10)).then(() => {
         if (!isMounted()) return;
-        log.debug(`${id}: High quality image ready for ${photo.id}.`);
+        log.info(`${id}: High quality image ready for ${photo.id}.`);
         setFullQualityUrl(photoUrls.highQuality);
       })
     ]);
@@ -95,11 +93,15 @@ export default function BackgroundImage(props: BackgroundImageProps) {
    * [Memo] Compute the `srcset` attribute to apply to our image when URLs
    * change.
    */
-  const srcSet = React.useMemo(() => {
-    if (lowQualityUrl && fullQualityUrl) return [
-      `${lowQualityUrl} ${Math.round(window.screen.width / 2)}w`,
-      `${fullQualityUrl} ${Math.round(window.screen.width * 2 * BACKGROUND_ANIMATION_INITIAL_SCALE)}w`
-    ].join(', ');
+  const { srcSet, sizes } = React.useMemo(() => {
+    const sizeSm = Math.round(window.screen.width * 0.64);
+    const sizeLg = Math.round(window.screen.width * BACKGROUND_ANIMATION_INITIAL_SCALE);
+    if (lowQualityUrl && fullQualityUrl) return {
+      srcSet: [`${lowQualityUrl} ${sizeSm}w`, `${fullQualityUrl} ${sizeLg}w`].join(', '),
+      sizes: [`${sizeSm}px`, `${sizeLg}px`].join(', ')
+    };
+
+    return {};
   }, [lowQualityUrl, fullQualityUrl]);
 
   // NOTE: An intermediate wrapper is required for custom transform overrides
@@ -116,8 +118,6 @@ export default function BackgroundImage(props: BackgroundImageProps) {
         backdropFilter: DEBUG_BLUR ? 'none' : `blur(${styleOverrides.backdrop?.blurRadius ?? '0px'})`,
         // Apply opacity transition.
         transitionProperty: 'opacity',
-        transitionDuration: BACKGROUND_TRANSITION_DURATION,
-        transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
         opacity: isActive && anyImageReady ? 1 : 0,
         pointerEvents: isActive ? 'inherit' : 'none',
         ...style
@@ -133,11 +133,11 @@ export default function BackgroundImage(props: BackgroundImageProps) {
         }}
       >
         <img
-          alt="background"
-          srcSet={srcSet}
-          src={lowQualityUrl ?? fullQualityUrl ?? undefined}
-          // sizes="100vw"
+          alt="BackgroundImage"
           className={classes.backgroundImage}
+          src={fullQualityUrl ?? lowQualityUrl ?? ''}
+          srcSet={srcSet}
+          sizes={sizes}
           style={{ animationName }}
         />
       </div>

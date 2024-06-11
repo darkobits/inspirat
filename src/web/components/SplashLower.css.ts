@@ -9,15 +9,23 @@ export default {
   splashLower: style({
     position: 'absolute',
     inset: 0,
+
     display: 'flex',
     justifyContent: 'space-between',
+
+    // Animations.
+    animationDuration: `calc(${BACKGROUND_TRANSITION_DURATION} * 0.8)`,
+    animationTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+
+    // Transitions.
     transitionProperty: 'opacity',
     transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
     transitionDuration: BACKGROUND_TRANSITION_DURATION,
-    // NOTE: It is important that width here be 'vw` while height be `svh`.
+
     width: '100%',
     height: '100%',
     zIndex: 1,
+
     /**
       * This adds a subtle gradient at the bottom of the screen that provides
       * some additional contrast behind the image metadata elements to improve
@@ -30,7 +38,7 @@ export default {
       bottom: 0,
       left: 0,
       right: 0,
-      height: '128px',
+      height: '64px',
       backgroundImage: 'linear-gradient(to top, rgba(0, 0, 0, 0.42) 0%, transparent 100%)',
       zIndex: 0
     }

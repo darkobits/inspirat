@@ -5,7 +5,7 @@ import { Overlay, Tooltip } from 'react-bootstrap';
 import { v4 as uuid } from 'uuid';
 
 import { Color } from 'etc/types';
-import { BASIS, WHITE, BLACK } from 'web/etc/constants';
+import { WHITE, BLACK } from 'web/etc/constants';
 import { rgba } from 'web/lib/utils';
 
 import classes from './Swatch.css';
@@ -27,8 +27,6 @@ export const Swatch = ({ color, children, className, style, ...props }: SwatchPr
     <div
       className={cx(classes.swatch, className)}
       style={{
-        height: BASIS,
-        width: BASIS,
         backgroundColor: rgba(color ?? WHITE),
         border: `1px solid ${darken(0.2, rgba(color ?? BLACK, 0.42))}`,
         color: readableColor(rgba(color ?? WHITE)),
