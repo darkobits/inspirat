@@ -29,7 +29,7 @@ if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
  */
 export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'production'
   ? '5s'
-  : '2s';
+  : '720ms';
 
 /**
  * Transition timing function used when the background image changes. This must
@@ -113,7 +113,7 @@ export const WHITE: Color = {r: 255, g: 255, b: 255};
  * After the mouse leaves the DevTools container, it will wait this amount of
  * time and then hide itself.
  */
-export const DEVTOOLS_MOUSE_LEAVE_TIMEOUT = ms('32 seconds');
+export const DEVTOOLS_MOUSE_LEAVE_TIMEOUT = ms('12 seconds');
 
 // ----- Image Tuning Overrides ------------------------------------------------
 

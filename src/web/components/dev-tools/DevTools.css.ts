@@ -48,7 +48,7 @@ export default {
 
     // Dimensions
     minHeight: BASIS,
-    minWidth: '5.8em',
+    minWidth: '6rem',
     paddingLeft: '0.42em',
     paddingRight: '0.72em',
 

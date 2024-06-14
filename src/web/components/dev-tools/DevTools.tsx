@@ -83,9 +83,9 @@ export function DevTools() {
       }
     }));
 
-    // mouseLeaveTimeout = setTimeout(() => {
-    //   setShow(false);
-    // }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
+    mouseLeaveTimeout = setTimeout(() => {
+      setShow(false);
+    }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
 
     return () => {
       clearTimeout(mouseLeaveTimeout);
@@ -147,7 +147,7 @@ export function DevTools() {
       <div
         data-testid="DevTools"
         className={cx(classes.devToolsContainer, 'safe-padding')}
-        style={{ opacity: show ? 1 : 0 }}
+        // style={{ opacity: show ? 1 : 0 }}
       >
         {/* Progress Bar (Fixed Position) */}
         <ProgressBar
@@ -174,7 +174,15 @@ export function DevTools() {
         >
           {/* Address Bar & Loading Indicator */}
           <div className={classes.devToolsRow}>
-            <Source photo={currentPhoto}>
+            <Source
+              photo={currentPhoto}
+              style={{
+                transitionProperty: 'opacity',
+                transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+                transitionDuration: '240ms',
+                opacity: show ? 1 : 0
+              }}
+            >
               <input
                 type="text"
                 onChange={e => setCustomSource(e.target.value)}
@@ -186,7 +194,7 @@ export function DevTools() {
                 autoComplete="false"
                 style={{
                   height: '100%',
-                  transitionProperty: 'color, background-color, border-color',
+                  transitionProperty: 'color, background-color, border-color, opacity',
                   transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
                   transitionDuration: BACKGROUND_TRANSITION_DURATION
                 }}
