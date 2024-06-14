@@ -10,18 +10,17 @@ import {
   BUCKET_URL,
   CACHE_TTL,
   COLLECTION_CACHE_KEY,
-  CURRENT_PHOTO_CACHE_KEY,
   PHOTO_DEFAULT_WEIGHT
 } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
 import PendingPromiseCache from 'web/lib/pending-promise-cache';
 import { computeSeasonWeights } from 'web/lib/seasons';
 import storage from 'web/lib/storage';
-import { now, midnight, daysSinceEpoch } from 'web/lib/time';
+import { now, daysSinceEpoch } from 'web/lib/time';
 import { ifDebug } from 'web/lib/utils';
 
 import type { InspiratPhotoCollection, InspiratPhotoResource } from 'etc/types';
-import type { CurrentPhotoStorageItem, PhotoCollectionStorageItem } from 'web/etc/types';
+import type { PhotoCollectionStorageItem } from 'web/etc/types';
 
 const log = new Logger({ prefix: '🌅 •' });
 
@@ -125,40 +124,18 @@ export async function getPhotoCollections() {
   });
 }
 
-const chanceInstances: Record<string, Chance.Chance> = {};
-
 /**
- * Returns the photo for the current day (since the Unix epoch) from the photo
- * collection.
+ * @private
  *
- * Note: This function uses the current value of the cached photo collection as
- * its source of truth. Therefore, this function may return different results on
- * the same day if the collection is updated between calls. To
- *
- * Multiple calls to this function on the same day may return different results
- * as the cached photo collection is updated in the background. To retrieve a
- * consistent photo for the current day regardless of the state of the photo
- * collection, use getCurrentPhoto below.
- *
- * If a day argument is provided, will return the photo for the provided day.
+ * Provided a day offset, returns a flat array of photo resources, each photo
+ * annotated with a weight descriptor.
  */
-export async function getCurrentPhotoFromCollection({ name = '', offset = 0 } = {}): Promise<InspiratPhotoResource> {
+async function getWeightedPhotos(offset: number) {
   const photos = await getPhotoCollections();
 
   const days = daysSinceEpoch() + offset;
   const dateForSeasons = addDays(new Date(0), days);
   const seasonWeights = computeSeasonWeights(dateForSeasons);
-  log.debug(`Weights for ${dateForSeasons.toLocaleDateString()}:`, seasonWeights);
-
-  const seed = [name].join(':');
-  let chance: Chance.Chance;
-
-  if (chanceInstances[seed]) {
-    chance = chanceInstances[seed];
-  } else {
-    chance = new Chance(seed);
-    chanceInstances[seed] = chance;
-  }
 
   const mappedCollections = photos.collections?.map(photoCollection => {
     if (photoCollection.weight) {
@@ -178,43 +155,44 @@ export async function getCurrentPhotoFromCollection({ name = '', offset = 0 } = 
     return photoCollection;
   });
 
-  const flatPhotos = mappedCollections.flatMap(photoCollection => photoCollection.photos) as Array<InspiratPhotoResource & { weight: { name: string; value: number } }>;
-  const shuffled = chance.shuffle(flatPhotos);
-  const weights = R.map(R.pathOr(0, ['weight', 'value']), shuffled);
-  const photo = chance.weighted(shuffled, weights);
+  return mappedCollections.flatMap(photoCollection => photoCollection.photos) as Array<InspiratPhotoResource & { weight: { name: string; value: number } }>;
+}
+
+
+const chanceInstances: Record<string, Chance.Chance> = {};
+
+/**
+ * Returns a photo selected at random from the current collection. Photos are
+ * assigned weights based on the provided `offset` parameter. Additionally,
+ * the random number generator may be seeded with a `seed` option.
+ */
+export async function getCurrentPhotoFromCollection({ seed = '', offset = 0 } = {}): Promise<InspiratPhotoResource> {
+  const photos = await getWeightedPhotos(offset);
+
+  let chance: Chance.Chance;
+
+  if (chanceInstances[seed]) {
+    chance = chanceInstances[seed];
+  } else {
+    chance = new Chance(seed);
+    chanceInstances[seed] = chance;
+  }
+
+  // Note: This no longer makes sense; may remove.
+  // const shuffled = chance.shuffle(photos);
+
+  const weights = R.map(R.pathOr(0, ['weight', 'value']), photos);
+  const photo = chance.weighted(photos, weights);
 
   return photo;
 }
 
 
 /**
- * Returns the photo for the current day. If a photo has not been set for the
- * current day, this function will look-up the photo for the current day, then
- * persist it to Local Storage. Subsequent calls to this function on the same
- * day will then use the value from storage rather than re-computing the current
- * photo against the photo collection. This ensures that if the photo collection
- * is updated in the background between calls to this function, the value it
- * returns will not change.
+ * Provided a photo ID and optional day offset (for calculating weight) returns
+ * an Annotated
  */
-export async function getCurrentPhotoFromStorage({ name }: { name: string }): Promise<InspiratPhotoResource> {
-  const currentPhoto = await storage.getItem<CurrentPhotoStorageItem>(CURRENT_PHOTO_CACHE_KEY);
-
-  if (currentPhoto) {
-    if (currentPhoto.expires > now()) {
-      return currentPhoto.photo;
-    }
-
-    ifDebug(() => log.debug('Cached photo was expired.'));
-  } else {
-    ifDebug(() => log.debug('Cache did not contain a photo.'));
-  }
-
-  // Cache did not exist or was expired.
-  const photo = await getCurrentPhotoFromCollection({ name });
-
-  // Don't wait for this promise; return immediately and cache the photo
-  // asynchronously.
-  void storage.setItem(CURRENT_PHOTO_CACHE_KEY, {photo, expires: midnight()});
-
-  return photo;
+export async function getPhotoFromCollection(id: string, offset = 0) {
+  const photos = await getWeightedPhotos(offset);
+  return photos.find(curPhoto => curPhoto.id === id);
 }

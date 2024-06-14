@@ -195,6 +195,11 @@ export async function preloadImage(imgUrl: string) {
           { cause: event.error }
         )));
 
+        img.addEventListener('abort', event => reject(new Error(
+          `[preloadImage] Aborted: ${imgUrl}`,
+          { cause: event }
+        )));
+
         // N.B. Setting this property will cause the browser to fetch the image.
         img.src = imgUrl;
       });

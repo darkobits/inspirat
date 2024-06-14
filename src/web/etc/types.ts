@@ -63,6 +63,8 @@ export interface PhotoCollectionStorageItem {
 
 
 /**
+ * @deprecated
+ *
  * Shape of the object used to cache the current photo.
  */
 export interface CurrentPhotoStorageItem {

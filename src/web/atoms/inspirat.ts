@@ -29,5 +29,16 @@ export const atoms = {
    * [LocalStorage] Whether the user has seen and dismissed the introduction
    * modal.
    */
-  hasSeenIntroduction: atomWithStorage('inspirat/hasSeenIntroduction', false)
+  hasSeenIntroduction: atomWithStorage('inspirat/hasSeenIntroduction', false),
+
+  /**
+   * [LocalStorage] Key/value mapping of dates in the format 'YYYY-MM-DD' to
+   * photo IDs.
+   */
+  photoTimeline: atomWithStorage<Record<string, string> | null>(
+    'inspirat/timeline',
+    null,
+    undefined,
+    { getOnInit: true }
+  )
 };

@@ -1,7 +1,9 @@
 /* eslint-disable no-confusing-arrow */
 import Cron from '@darkobits/cron';
+import { format, addDays } from 'date-fns';
 import * as Jotai from 'jotai';
 import ms from 'ms';
+import * as R from 'ramda';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
@@ -10,8 +12,8 @@ import { BACKGROUND_ANIMATION_INITIAL_SCALE } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
 import {
   getPhotoCollections,
-  getCurrentPhotoFromCollection,
-  getCurrentPhotoFromStorage
+  getPhotoFromCollection,
+  getCurrentPhotoFromCollection
 } from 'web/lib/photos';
 import { getPeriodDescriptor } from 'web/lib/time';
 import {
@@ -133,6 +135,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   const [showDevTools] = Jotai.useAtom(atoms.showDevTools);
   const [dayOffset, setDayOffset] = Jotai.useAtom(atoms.dayOffset);
   const [hasSeenIntroduction, setHasSeenIntroduction] = Jotai.useAtom(atoms.hasSeenIntroduction);
+  const [photoTimeline, setPhotoTimeline] = Jotai.useAtom(atoms.photoTimeline);
 
   const [currentPhoto, setCurrentPhoto] = React.useState<InspiratPhotoResource>();
   const [shouldResetPhoto, resetPhoto] = React.useState(0);
@@ -142,6 +145,12 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
   // ----- Callbacks -----------------------------------------------------------
 
+  /**
+   * [Callback] Provided a photo, returns an object containing URLs with IMGIX
+   * query parameters configured to generate a low quality and high quality
+   * version of the photo based on the user's screen dimensions and other
+   * application settings.
+   */
   const buildPhotoUrls = React.useCallback((photo: InspiratPhotoResource) => {
     if (!photo?.urls) throw new Error('[buildPhotoUrls] Got invalid input.', { cause: photo });
 
@@ -164,39 +173,113 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     });
   }, []);
 
+  /**
+   * [Callback] Provided a day offset (assumed to be from today), populates the
+   * photo timeline for the current date and an interval of +/- 10 days.
+   */
+  const updatePhotoTimeline = React.useCallback(async (offset: number, overwrite = false) => {
+    const dateFromDayOffset = addDays(new Date(), offset);
+    const photosToAdd: Record<string, string> = {};
+
+    for (const curOffset of R.range(-10, 11)) {
+      const dateFromCurOffset = format(addDays(dateFromDayOffset, curOffset), 'yyyy-MM-dd');
+
+      if (!photoTimeline || !Reflect.has(photoTimeline, dateFromCurOffset) || overwrite) {
+        const { id } = await getCurrentPhotoFromCollection({
+          seed: name,
+          offset: offset + curOffset
+        });
+
+        photosToAdd[dateFromCurOffset] = id;
+      }
+    }
+
+    setPhotoTimeline({ ...photoTimeline, ...photosToAdd });
+  }, [name, photoTimeline]);
+
+  /**
+   * [Callback] Provided a day offset (assumed to be from today) pre-loads any
+   * images from the timeline in a +/- 3-day range from the offset.
+   */
+  const preloadPhotosFromTimeline = React.useCallback(async (offset: number) => {
+    if (!photoTimeline) return;
+
+    const dateFromDayOffset = addDays(new Date(), offset);
+    const urlsToPreload: Array<string> = [];
+
+    for (const curOffset of [0, ...R.range(-3, 4)]) {
+      const dateFromCurOffset = format(addDays(dateFromDayOffset, curOffset), 'yyyy-MM-dd');
+      const photoIdFromTimeline = Reflect.get(photoTimeline, dateFromCurOffset);
+
+      if (Reflect.has(photoTimeline, dateFromCurOffset)) {
+        const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline);
+        if (!photoFromTimeline) return;
+
+        const { lowQuality, highQuality } = buildPhotoUrls(photoFromTimeline);
+        urlsToPreload.push(lowQuality);
+        urlsToPreload.push(highQuality);
+      }
+    }
+
+    const uniqueUrlsToPreload = new Set(urlsToPreload);
+
+    // Note: It is safe to call `preloadImage` with URLs we have already
+    // pre-loaded; it will no-op.
+    if (uniqueUrlsToPreload.size > 0) {
+      await Promise.all([...uniqueUrlsToPreload].map(url => preloadImage(url)));
+    }
+  }, [photoTimeline]);
+
   // ----- Effects -------------------------------------------------------------
 
   /**
-   * [Effect] Selects the next photo to use based on whether we are in DevTools
-   * and allowing browsing, or not.
+   * [Effect] ...
    */
   useAsyncEffect(async isMounted => {
-    // log.debug('[Context] Random season:', getRandomWeightedSeason());
+    if (!photoTimeline) {
+      await updatePhotoTimeline(dayOffset);
+      return;
+    }
 
-    // If dev tools are open, the current photo should be pulled from the photo
-    // collection using the current offset. If not, use the 'currentPhoto' cache
-    // item to ensure the photo does not change throughout the day if the photo
-    // collection is updated.
-    const nextPhoto = showDevTools
-      ? await getCurrentPhotoFromCollection({ offset: dayOffset })
-      : await getCurrentPhotoFromStorage({ name });
+    const dateFromDayOffset = format(addDays(new Date(), dayOffset), 'yyyy-MM-dd');
 
+    // If the timeline doesn't have a photo for the current day, update it.
+    if (!Reflect.has(photoTimeline, dateFromDayOffset)) {
+      await updatePhotoTimeline(dayOffset);
+      // Return here. The effect will run again because `updatePhotoTimeline`
+      // will trigger an update of `photoTimeline`, causing this effect to run
+      // again with a fresh value.
+      return;
+    }
+
+    const photoIdFromTimeline = Reflect.get(photoTimeline, dateFromDayOffset);
+    if (!photoIdFromTimeline) throw new Error(`[Inspirat] No entry in timeline for "${dateFromDayOffset}"`);
+
+    const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline, dayOffset);
     if (!isMounted()) return;
 
-    // ifDebug(() => {
-    //   if (!window.debug) window.debug = {};
-    //   window.debug.currentPhoto = nextPhoto;
-    // });
+    // If we can't find a photo in our collections, this may mean that the photo
+    // was removed from all collections after being added to the timeline. In
+    // this case, perform another update to the timeline, but compute fresh
+    // photos rather than only adding missing ones.
+    if (!photoFromTimeline) {
+      log.warn(`No photo in collections with ID ${photoIdFromTimeline}.`);
+      await updatePhotoTimeline(dayOffset, true);
+      // Again, we can bail early and the above function call will trigger a
+      // re-run of this effect with fresh data.
+      return;
+    }
 
-    setCurrentPhoto(nextPhoto);
-  }, [dayOffset, name, showDevTools, shouldResetPhoto]);
+    setCurrentPhoto(photoFromTimeline);
+    void preloadPhotosFromTimeline(dayOffset);
+  }, [dayOffset, photoTimeline]);
 
   /**
    * [Effect] Responsible for ensuring the photo changes at midnight.
    */
   React.useEffect(() => {
     const photoUpdateCron = Cron('0 0 * * *', () => {
-      log.info('Updating photos on cron.');
+      log.info('[Cron] Updating photo.');
       setDayOffset(prev => prev + 1);
     });
 

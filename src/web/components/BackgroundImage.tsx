@@ -70,13 +70,13 @@ export default function BackgroundImage(props: BackgroundImageProps) {
     await Promise.race([
       preloadImage(photoUrls.lowQuality).then(() => sleep(0)).then(() => {
         if (!isMounted()) return;
-        log.info(`${id}: Low quality image ready for ${photo.id}.`);
+        log.silly(`${id}: Low quality image ready for ${photo.id}.`);
         setLowQualityUrl(photoUrls.lowQuality);
 
       }),
       preloadImage(photoUrls.highQuality).then(() => sleep(10)).then(() => {
         if (!isMounted()) return;
-        log.info(`${id}: High quality image ready for ${photo.id}.`);
+        log.silly(`${id}: High quality image ready for ${photo.id}.`);
         setFullQualityUrl(photoUrls.highQuality);
       })
     ]);

@@ -12,7 +12,7 @@ import { InspiratProvider } from 'web/contexts/Inspirat';
 import { TITLE } from 'web/etc/constants';
 import { onClickAndHold, clearSelections } from 'web/lib/utils';
 
-export default function App() {
+function App() {
   const [showSettings, setShowSettings] = React.useState(false);
 
   const handleClickOrTap = React.useCallback(onClickAndHold(ms('1s'), () => {
@@ -21,22 +21,30 @@ export default function App() {
   }), []);
 
   return (
+    <>
+      <Helmet>
+        <title>{TITLE}</title>
+      </Helmet>
+      <Settings
+        show={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
+      <Splash
+        onMouseDown={handleClickOrTap}
+        onTouchStart={handleClickOrTap}
+      />
+      <DevTools />
+      <Introduction />
+    </>
+  );
+}
+
+export default function AppProviders() {
+  return (
     <React.StrictMode>
       <JotaiProvider store={store}>
         <InspiratProvider>
-          <Helmet>
-            <title>{TITLE}</title>
-          </Helmet>
-          <Settings
-            show={showSettings}
-            onClose={() => setShowSettings(false)}
-          />
-          <Splash
-            onMouseDown={handleClickOrTap}
-            onTouchStart={handleClickOrTap}
-          />
-          <DevTools />
-          <Introduction />
+          <App />
         </InspiratProvider>
       </JotaiProvider>
     </React.StrictMode>
