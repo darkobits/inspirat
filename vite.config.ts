@@ -4,7 +4,6 @@ import { vite } from '@darkobits/tsx';
 import { faviconsPlugin } from '@darkobits/vite-plugin-favicons';
 // import devcert from 'devcert';
 import { visualizer } from 'rollup-plugin-visualizer';
-import FontsPlugin from 'unplugin-fonts/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 
@@ -59,22 +58,6 @@ export default vite.react(({ config, packageJson, root, ms, manualChunks }) => {
       favicons: {
         source: path.resolve(root, 'assets', 'favicon.png')
       }
-    }
-  }));
-
-  // Loads Google fonts.
-  config.plugins.push(FontsPlugin({
-    google: {
-      preconnect: true,
-      display: 'swap',
-      // https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@100;200;300&family=Raleway:wght@200;300;400&display=swap
-      families: [{
-        name: 'Josefin Sans',
-        styles: 'wght@100;200;300;400;500;600'
-      }, {
-        name: 'Raleway',
-        styles: 'wght@200;300;400'
-      }]
     }
   }));
 
