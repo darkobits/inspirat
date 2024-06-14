@@ -170,7 +170,7 @@ export function onClickAndHold<E extends React.SyntheticEvent>(interval: number,
 }
 
 type PreloadImageCacheValue = {
-  promise: Promise<string | ErrorEvent>;
+  promise: Promise<any>;
   state: 'LOADING' | 'SUCCESS' | 'ERROR';
 };
 
@@ -183,26 +183,30 @@ const preloadImageCache = new Map<string, PreloadImageCacheValue>();
  */
 export async function preloadImage(imgUrl: string) {
   if (!preloadImageCache.has(imgUrl)) {
+    const img = new Image();
+
+    // Retry loading images up to 2 times with exponential back-off.
     const imagePromise = pRetry(() => {
-      return new Promise<string | ErrorEvent>((resolve, reject) => {
-        const img = new Image();
+      return new Promise<void>((resolve, reject) => {
+        img.addEventListener('load', () => resolve());
 
-        img.addEventListener('load', () => {
-          preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'SUCCESS' });
-          resolve(imgUrl);
-          img.remove();
-        });
-
-        img.addEventListener('error', event => {
-          preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'ERROR' });
-          const message = event.error?.message ?? 'Unknown Error';
-          reject(new Error(`[preloadImage] Failed to load image: ${message}`, { cause: event.error }));
-        });
+        img.addEventListener('error', event => reject(new Error(
+          `[preloadImage] Failed to load image: ${event.error?.message ?? 'Unknown Error'}`,
+          { cause: event.error }
+        )));
 
         // N.B. Setting this property will cause the browser to fetch the image.
         img.src = imgUrl;
       });
-    }, { retries: 2 });
+    }, { retries: 2 }).then(() => {
+      preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'SUCCESS' });
+      return imgUrl;
+    }).catch(err => {
+      preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'ERROR' });
+      throw err;
+    }).finally(() => {
+      img.remove();
+    });
 
     preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'LOADING' });
   }
