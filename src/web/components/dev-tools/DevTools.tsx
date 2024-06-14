@@ -155,7 +155,7 @@ export function DevTools() {
           onProgressChange={handleProgressChange}
           style={{
             height: PROGRESS_BAR_HEIGHT,
-            boxShadow: '0px 2px 1px rgba(0, 0, 0, 0.16)'
+            boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.12)'
           }}
         />
 
@@ -238,7 +238,11 @@ export function DevTools() {
                   }}
                 />
               )}
-              {format(addDays(new Date(), dayOffset), 'MMM dd')}
+              <span
+                style={{ minWidth: '3em', textAlign: 'right' }}
+              >
+                {format(addDays(new Date(), dayOffset), 'MMM dd')}
+              </span>
             </div>
           </div>
         </div>

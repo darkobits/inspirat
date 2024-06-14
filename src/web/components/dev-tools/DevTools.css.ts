@@ -20,8 +20,8 @@ export default {
       position: 'absolute',
       inset: 0,
       display: 'block',
-      height: '64px',
-      background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.32) 0%, transparent 100%)',
+      height: '42px',
+      background: 'linear-gradient(to bottom, rgba(0, 0, 0, 0.24) 0%, transparent 100%)',
       zIndex: -1
     }
   }),
@@ -48,7 +48,7 @@ export default {
 
     // Dimensions
     minHeight: BASIS,
-    minWidth: '6rem',
+    minWidth: '5.6rem',
     paddingLeft: '0.42em',
     paddingRight: '0.72em',
 
@@ -59,7 +59,7 @@ export default {
 
     // Typography
     fontSize: '1rem',
-    fontWeight: 400,
+    fontWeight: 300,
     textShadow: '0px 0px 6px rgba(0, 0, 0, 0.42)',
     whiteSpace: 'nowrap',
 

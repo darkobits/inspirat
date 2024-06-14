@@ -2,12 +2,18 @@ import { style, globalStyle } from '@vanilla-extract/css';
 
 const classes = {
   imageMeta: style({
-    color: 'rgba(255, 255, 255, 0.96)',
     display: 'flex',
-    fontFamily: '"Josefin Sans", -apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif',
-    fontSize: 'clamp(0.76rem, 0.4400rem + 1.2444vw, 1rem)',
-    fontWeight: 300,
-    letterSpacing: '0em',
+
+    color: 'inherit',
+
+    // 0.72rem @ 400px wide -> 1rem @ 1200px wide
+    // See: https://www.marcbacon.com/tools/clamp-calculator/
+    fontSize: 'clamp(0.72rem, 0.58rem + 0.56vw, 1rem)',
+
+    // fontSize: 'clamp(0.76rem, 0.4400rem + 1.2444vw, 1rem)',
+
+    fontWeight: 200,
+    letterSpacing: '0.042em',
     minHeight: 'min-content',
     // Force the element to the flex-end of its parent.
     marginTop: 'auto',

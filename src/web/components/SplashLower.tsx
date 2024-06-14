@@ -1,12 +1,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import cx from 'classnames';
 import * as emoji from 'node-emoji';
+import { desaturate, lighten } from 'polished';
 import React from 'react';
 
 import { ImageMeta } from 'web/components/ImageMeta';
 import { keyframes } from 'web/etc/global-styles.css';
 import useQuery from 'web/hooks/use-query';
-import { capitalizeWords } from 'web/lib/utils';
+import { capitalizeWords, rgba } from 'web/lib/utils';
 
 import classes from './SplashLower.css';
 
@@ -75,6 +76,7 @@ export default function SplashLower(props: SplashLowerProps) {
           : 'none',
         // animationTimingFunction: 'cubic-bezier(0, 0.75, 0.25, 1)',
         opacity: ready ? 1 : 0,
+        color: lighten(0.2, desaturate(0.24, rgba(photo?.palette?.lightVibrant ?? 'white', 1))),
         ...style
       }}
       {...restProps}
@@ -82,9 +84,7 @@ export default function SplashLower(props: SplashLowerProps) {
       <ImageMeta className={classes.imageLocation}>
         {location}
       </ImageMeta>
-      <ImageMeta
-        className={classes.imageAttribution}
-      >
+      <ImageMeta className={classes.imageAttribution}>
         {attribution}
       </ImageMeta>
     </div>

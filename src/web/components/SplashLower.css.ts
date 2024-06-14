@@ -22,9 +22,7 @@ export default {
     transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
     transitionDuration: BACKGROUND_TRANSITION_DURATION,
 
-    width: '100%',
-    height: '100%',
-    zIndex: 1,
+    width: '100%', height: '100%', zIndex: 1,
 
     /**
       * This adds a subtle gradient at the bottom of the screen that provides
@@ -38,13 +36,16 @@ export default {
       bottom: 0,
       left: 0,
       right: 0,
-      height: '64px',
-      backgroundImage: 'linear-gradient(to top, rgba(0, 0, 0, 0.42) 0%, transparent 100%)',
+      height: '3rem',
+      backgroundImage: 'linear-gradient(to top, rgba(0, 0, 0, 0.32) 0%, transparent 100%)',
       zIndex: 0
     }
   }),
   imageLocation: style({
-    padding: '8px 14px',
+    padding: '8px 12px',
+    opacity: 0.72,
+    fontSize: '0.8em',
+    textShadow: '0px 0px 4px rgba(0, 0, 0, 0.8)',
     display: 'none',
     '@media': {
       '(pointer: coarse) and (orientation: landscape)': {
@@ -56,7 +57,10 @@ export default {
     }
   }),
   imageAttribution: style({
-    padding: '8px 14px',
+    padding: '8px 12px',
+    opacity: 0.72,
+    textShadow: '0px 0px 4px rgba(0, 0, 0, 0.8)',
+    fontSize: '0.8em',
     marginLeft: 'auto',
     '@media': {
       '(pointer: coarse) and (orientation: landscape)': {
