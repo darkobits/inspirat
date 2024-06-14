@@ -22,7 +22,9 @@ const PALETTE_COLOR_KEYS = [
  * Provided an image URL, returns a Vibrant Palette instance.
  */
 export default async function getPalette(imgUrl: string) {
-  const palette = await Vibrant.from(imgUrl).getPalette();
+  const palette = await Vibrant.from(imgUrl)
+    .useQuantizer(Vibrant.Quantizer.WebWorker ?? Vibrant.Quantizer.MMCQ)
+    .getPalette();
 
   return R.reduce((mappedPalette, curKey) => {
     const swatch = palette[curKey];

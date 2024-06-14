@@ -52,7 +52,7 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       clearPhotoTimeoutHandle = setTimeout(() => setAPhoto(), ms(transitionDuration));
     }
 
-    log.debug(`${activeElement} • ${capitalizeWords(weight?.name)} (${Number(weight?.value).toFixed(2)}) - ${id}`);
+    log.debug(`${activeElement} • ${capitalizeWords(weight?.name ?? 'Unknown')} (${Number(weight?.value ?? 0).toFixed(2)}) - ${id}`);
 
     let transitionDurationTimeoutHandle: NodeJS.Timeout;
 

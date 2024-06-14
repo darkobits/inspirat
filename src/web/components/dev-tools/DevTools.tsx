@@ -9,6 +9,7 @@ import { BsArrowRepeat, BsCircle } from 'react-icons/bs';
 // @ts-expect-error - This package has no type definitions.
 import SwipeListener from 'swipe-listener';
 import { throttle } from 'throttle-debounce';
+import { useAsyncEffect } from 'use-async-effect';
 
 import { Palette } from 'web/components/dev-tools/Palette';
 import { ProgressBar } from 'web/components/dev-tools/Progress';
@@ -50,6 +51,7 @@ export function DevTools() {
     isLoadingPhotos
   } = React.useContext(InspiratContext);
   const [show, setShow] = React.useState(true);
+  const [customSource, setCustomSource] = React.useState<string | void>('');
 
   /*
    * [Effect] Initialize DevTools mouse/key/gesture bindings.
@@ -61,10 +63,12 @@ export function DevTools() {
 
     mousetrap.bind('left', throttle(THROTTLE_TIME, () => {
       setDayOffset(prev => modIndex(Number(prev) - 1, 365));
+      setCustomSource();
     }, { noLeading: false }));
 
     mousetrap.bind('right', throttle(THROTTLE_TIME, () => {
       setDayOffset(prev => modIndex(Number(prev) + 1, 365));
+      setCustomSource();
     }, { noLeading: false }));
 
     document.addEventListener('swipe', throttle(THROTTLE_TIME, event => {
@@ -72,8 +76,10 @@ export function DevTools() {
 
       if (event.detail.directions.right) {
         setDayOffset(prev => modIndex(Number(prev) + 1, 365));
+        setCustomSource();
       } else if (event.detail.directions.left) {
         setDayOffset(prev => modIndex(Number(prev) - 1, 365));
+        setCustomSource();
       }
     }));
 
@@ -93,38 +99,32 @@ export function DevTools() {
    * [Callback] Immediately select the contents of the image source field when
    * the element is focused.
    */
-  const handleImgIdFocus: React.FocusEventHandler<HTMLInputElement> = React.useCallback(e => {
+  const handleSourceFocus: React.FocusEventHandler<HTMLInputElement> = React.useCallback(e => {
     e.currentTarget.select();
   }, []);
 
-
   /**
-   * [Callback] Handle updates to the image source field.
-   *
-   * Note: This uses the Unsplash Source API, which redirects to a photo URL
-   * with various Imgix query parameters applied. This API lets the user control
-   * image dimensions by passing an additional path parameter in the format
-   * /<width>x<height>. Rather than implement logic to follow these redirects
-   * then run URLs through existing logic to rewrite Imgix params, we will just
-   * pass the browser's current width and height using the Source API parameter
-   * format.
+   * [Effect] Parses custom image source values and updates the current photo.
    */
-  const onImgIdChange: React.ChangeEventHandler<HTMLInputElement> = React.useCallback(e => {
-    try {
-      const value = e.currentTarget.value;
-      if (!value) return resetPhoto();
-
-      const mockPhotoResource = mockPhotoResourceFromUrl(value);
-      if (!mockPhotoResource) return resetPhoto();
-
-      setCurrentPhoto(mockPhotoResource);
-    } catch {
+  useAsyncEffect(async isMounted => {
+    if (!customSource) {
       resetPhoto();
+      return;
     }
-  }, [
-    resetPhoto,
-    setCurrentPhoto
-  ]);
+
+    // This will remove any query parameters, update the input field, and cause
+    // the effect to run again.
+    if (customSource.includes('?')) {
+      const sourceWithoutQuery = customSource.slice(0, customSource.lastIndexOf('?'));
+      setCustomSource(sourceWithoutQuery);
+      return;
+    }
+
+    const mockPhotoResource = await mockPhotoResourceFromUrl(customSource);
+    if (!mockPhotoResource || !isMounted()) return;
+
+    setCurrentPhoto(mockPhotoResource);
+  }, [customSource]);
 
 
   /**
@@ -177,8 +177,9 @@ export function DevTools() {
             <Source photo={currentPhoto}>
               <input
                 type="text"
-                onChange={onImgIdChange}
-                onFocus={handleImgIdFocus}
+                onChange={e => setCustomSource(e.target.value)}
+                value={customSource ?? ''}
+                onFocus={handleSourceFocus}
                 placeholder="https://unsplash.com/photos/:id"
                 spellCheck={false}
                 autoCorrect="false"

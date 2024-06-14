@@ -7,6 +7,7 @@ import queryString from 'query-string';
 import * as R from 'ramda';
 import urlParseLax from 'url-parse-lax';
 
+import getPalette from 'functions/lib/get-palette';
 import { QUALITY_LQIP, QUALITY_FULL } from 'web/etc/constants';
 
 import type { Color, InspiratPhotoResource } from 'etc/types';
@@ -222,23 +223,19 @@ preloadImage.isLoadingImages = () => {
  * Used by DevTools to transform a URL pasted into the URL input into a sparse
  * InspiratPhotoResource.
  */
-export function mockPhotoResourceFromUrl(url: string) {
-  const imgId = url.startsWith('https://unsplash.com/photos/')
-    ? url.replace('https://unsplash.com/photos/', '')
-    : undefined;
+export async function mockPhotoResourceFromUrl(url: string) {
+  if (!url.startsWith('https://images.unsplash.com')) return;
 
-  if (!imgId) return;
+  const id = url.slice(url.lastIndexOf('-') + 1);
 
-  const width = window.innerWidth * window.devicePixelRatio;
-  const height = window.innerHeight * window.devicePixelRatio;
-
-  const newUrl = new URL(`https://source.unsplash.com/${imgId}/${width}x${height}`);
+  const palette = await getPalette(url);
 
   return {
-    id: imgId,
+    id,
     urls: {
-      full: newUrl.href
-    }
+      full: url
+    },
+    palette
   } as InspiratPhotoResource;
 }
 

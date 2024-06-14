@@ -189,7 +189,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     // });
 
     setCurrentPhoto(nextPhoto);
-  }, [dayOffset, name, showDevTools]);
+  }, [dayOffset, name, showDevTools, shouldResetPhoto]);
 
   /**
    * [Effect] Responsible for ensuring the photo changes at midnight.
