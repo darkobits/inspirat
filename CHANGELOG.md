@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.18.0](https://github.com/darkobits/inspirat/compare/v0.17.0...v0.18.0) (2024-06-15)
+
+
+### ✨ Features
+
+* Add photo timeline. ([695dbb8](https://github.com/darkobits/inspirat/commit/695dbb8362238579107989b90d44f8b3b369d707))
+
+
+### 🐞 Bug Fixes
+
+* Adjust photo overrides. ([8be393f](https://github.com/darkobits/inspirat/commit/8be393fb250a3dcede993973f657ae9fb774d165))
+* Custom image sources generate palette on demand. ([3262148](https://github.com/darkobits/inspirat/commit/326214842555d00187b7106ca8d634877a08972f))
+* Improve type checks. ([f9727c5](https://github.com/darkobits/inspirat/commit/f9727c5a8499411e2f64b1b6db489f52afc38807))
+
+
+### 🏗 Chores
+
+* **deps:** Update dependencies. ([bc4bbf2](https://github.com/darkobits/inspirat/commit/bc4bbf22c074352913ceeeb5a72f0a9e55aa2332))
+
+
+### 🛠 Refactoring
+
+* Image pre-loading retries with exponential back-off. ([36968cd](https://github.com/darkobits/inspirat/commit/36968cd1d6c2d6d0e4c40aea8d48c8e80aa60014))
+* Self-host fonts. ([0fb6fb3](https://github.com/darkobits/inspirat/commit/0fb6fb3824e576567abdd3a6e22d0afe3c29d454))
+* Tune animations. ([5b21d77](https://github.com/darkobits/inspirat/commit/5b21d777a86616fa76da7465c25f7bced9e08828))
+* Update DevTools. ([f2b3c12](https://github.com/darkobits/inspirat/commit/f2b3c12d5d4ddd6edaf5515a607652c28219c5ab))
+* Various improvements. ([c3213c8](https://github.com/darkobits/inspirat/commit/c3213c8118e41d5459c0b2e5cdfb51a8cb04d6ab))
+
+
+### 🎨 Style
+
+* Various UI tweaks. ([447b0b3](https://github.com/darkobits/inspirat/commit/447b0b375e27be47cbbda5b75575541bf2c8963f))
+
 ## [0.17.0](https://github.com/darkobits/inspirat/compare/v0.16.0...v0.17.0) (2024-06-10)
 
 
