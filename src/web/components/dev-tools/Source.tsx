@@ -1,4 +1,5 @@
 import { assignInlineVars } from '@vanilla-extract/dynamic';
+import cx from 'classnames';
 import { darken, desaturate, lighten } from 'polished';
 
 import { BASIS, WHITE, BLACK } from 'web/etc/constants';
@@ -16,13 +17,13 @@ interface SourceProps extends ElementProps<HTMLDivElement> {
 /**
  * Image override component.
  */
-export function Source({ photo, children, style }: SourceProps) {
+export function Source({ photo, children, className, style }: SourceProps) {
   const fgColor = photo?.palette?.lightVibrant ?? WHITE;
   const bgColor = photo?.palette?.darkVibrant ?? BLACK;
 
   return (
     <div
-      className={classes.source}
+      className={cx(classes.source, className)}
       style={{
         height: BASIS,
         ...assignInlineVars({

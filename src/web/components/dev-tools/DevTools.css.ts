@@ -39,16 +39,14 @@ export default {
     gap: `calc(${BASIS} * 0.24)`
   }),
   date: style({
-    display: 'flex',
-    gap: '6px',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'nowrap',
+    position: 'relative',
+
+    display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end',
+    gap: '6px', flexWrap: 'nowrap',
 
     // Dimensions
     minHeight: BASIS,
-    minWidth: '5.6rem',
+    minWidth: '5.4rem',
     paddingLeft: '0.42em',
     paddingRight: '0.72em',
 
@@ -58,13 +56,35 @@ export default {
     borderRadius: '4px',
 
     // Typography
-    fontSize: '1rem',
+    fontFamily: 'monospace',
+    fontSize: '0.8rem',
     fontWeight: 300,
     textShadow: '0px 0px 6px rgba(0, 0, 0, 0.42)',
     whiteSpace: 'nowrap',
 
     backdropFilter: 'blur(12px)',
     userSelect: 'none',
+
+    // Transitions
+    transitionProperty: 'background-color, border-color, color, opacity',
+    transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
+    transitionDuration: BACKGROUND_TRANSITION_DURATION
+  }),
+
+  arrowIndicator: style({
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexGrow: 1, flexShrink: 0,
+
+    // borderStyle: 'solid', borderWidth: '1px',
+    border: '1px solid rgba(255, 255, 255, 0.12)',
+    borderRadius: '6px',
+
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backdropFilter: 'blur(12px)',
+
+    fontSize: '1rem',
+
+    width: BASIS, height: BASIS,
 
     // Transitions
     transitionProperty: 'background-color, border-color, color, opacity',

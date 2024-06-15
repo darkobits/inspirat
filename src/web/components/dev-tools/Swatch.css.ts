@@ -27,6 +27,8 @@ export default {
     color: vars.color,
 
     fontSize: '12px',
-    textTransform: 'capitalize'
+    textTransform: 'capitalize',
+
+    cursor: 'crosshair'
   })
 };

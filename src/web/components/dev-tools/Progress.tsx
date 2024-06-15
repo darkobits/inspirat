@@ -3,6 +3,8 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { assignInlineVars } from '@vanilla-extract/dynamic';
 import React from 'react';
+import { Overlay, Tooltip } from 'react-bootstrap';
+import { v4 as uuid } from 'uuid';
 
 import InspiratContext from 'web/contexts/Inspirat';
 import { WHITE, BLACK } from 'web/etc/constants';
@@ -23,6 +25,11 @@ export interface ProgressBarProps extends ElementProps<HTMLProgressElement> {
    * X coordinate within the element from 0 to 1.
    */
   onProgressChange?: (progress: number) => void;
+  /**
+   * Callback fired when the user hovers the progress bar. Reports the user's
+   * X coordinate within the element from 0 to 1.
+   */
+  onProgressHover?: (progress: number) => void;
 }
 
 
@@ -36,12 +43,42 @@ export interface ProgressBarProps extends ElementProps<HTMLProgressElement> {
  * collection.
  */
 export function ProgressBar(props: ProgressBarProps) {
-  const { progress, onProgressChange, children, style, ...restProps } = props;
+  const { progress, onProgressChange, onProgressHover, children, style, ...restProps } = props;
   const { currentPhoto } = React.useContext(InspiratContext);
   const target = React.useRef(null);
 
+  const [tooltipId] = React.useState(uuid());
+  const [showTooltip, setShowTooltip] = React.useState(false);
+
   const fgColor = currentPhoto?.palette?.muted ?? WHITE;
   const bgColor = currentPhoto?.palette?.darkMuted ?? BLACK;
+
+  const whereTheFckIsTheCursor = React.useRef(document.createElement('div'));
+
+  React.useEffect(() => {
+    if (!whereTheFckIsTheCursor.current) return;
+
+    whereTheFckIsTheCursor.current.style.position = 'fixed';
+    whereTheFckIsTheCursor.current.style.width = '0px';
+    whereTheFckIsTheCursor.current.style.height = '0px';
+    whereTheFckIsTheCursor.current.style.pointerEvents = 'none';
+    document.body.append(whereTheFckIsTheCursor.current);
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (whereTheFckIsTheCursor.current) {
+        whereTheFckIsTheCursor.current.style.top = `calc(${event.clientY}px + 1.64rem)`;
+        whereTheFckIsTheCursor.current.style.left = `calc(${event.clientX}px + 0.46rem)`;
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      whereTheFckIsTheCursor.current.remove();
+    };
+  }, []);
+
 
   /**
    * [Callback] Invoke user-provided progress callback when the progress bar is
@@ -58,6 +95,21 @@ export function ProgressBar(props: ProgressBarProps) {
   }, [onProgressChange]);
 
 
+  /**
+   * [Callback] Invoke user-provided progress callback when the progress bar is
+   * clicked.
+   */
+  const handleHover: React.EventHandler<React.MouseEvent<HTMLProgressElement>> = React.useCallback(e => {
+    const { left, right } = e.currentTarget.getBoundingClientRect();
+    const { clientX } = e;
+    const userProgress = (clientX - left) / (right - left);
+
+    if (onProgressHover) {
+      onProgressHover(userProgress);
+    }
+  }, [onProgressHover]);
+
+
   return (
     <progress
       className={classes.progress}
@@ -72,11 +124,26 @@ export function ProgressBar(props: ProgressBarProps) {
       }}
       value={progress || 0}
       max={1}
-      onClick={handleClick}
       ref={target}
+      onClick={handleClick}
+      onMouseMove={handleHover}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
       {...restProps}
     >
-      {children}
+      <Overlay
+        target={whereTheFckIsTheCursor.current}
+        container={whereTheFckIsTheCursor.current}
+        show={Boolean(showTooltip && children)}
+        placement="bottom"
+      >
+        {overlayProps => (
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          <Tooltip id={tooltipId} {...overlayProps as any}>
+            {children}
+          </Tooltip>
+        )}
+      </Overlay>
     </progress>
   );
 }

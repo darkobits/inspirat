@@ -5,7 +5,7 @@ import ms from 'ms';
 import { desaturate, lighten, darken } from 'polished';
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { BsArrowRepeat, BsCircle } from 'react-icons/bs';
+import { BsArrowRepeat, BsCircle, BsArrowRight, BsArrowLeft } from 'react-icons/bs';
 // @ts-expect-error - This package has no type definitions.
 import SwipeListener from 'swipe-listener';
 import { throttle } from 'throttle-debounce';
@@ -52,6 +52,7 @@ export function DevTools() {
   } = React.useContext(InspiratContext);
   const [show, setShow] = React.useState(true);
   const [customSource, setCustomSource] = React.useState<string | void>('');
+  const [formattedDate, setFormattedDate] = React.useState('');
 
   /*
    * [Effect] Initialize DevTools mouse/key/gesture bindings.
@@ -132,8 +133,21 @@ export function DevTools() {
    * from the progress bar.
    */
   const handleProgressChange = React.useCallback((newProgress: number) => {
-    setDayOffset(Math.floor(365 * newProgress));
-  }, [setDayOffset]);
+    const newDayOffset = Math.floor(365 * newProgress);
+
+    setDayOffset(newDayOffset);
+    setFormattedDate(format(addDays(new Date(), newDayOffset), 'MMM dd'));
+  }, []);
+
+
+  /**
+   * [Callback] Explicitly sets the day offset when we get a progress update
+   * from the progress bar.
+   */
+  const handleProgressHover = React.useCallback((newProgress: number) => {
+    const newDayOffset = Math.floor(365 * newProgress);
+    setFormattedDate(format(addDays(new Date(), newDayOffset), 'MMM dd'));
+  }, []);
 
   if (!showDevTools) return null;
 
@@ -153,11 +167,14 @@ export function DevTools() {
         <ProgressBar
           progress={progress}
           onProgressChange={handleProgressChange}
+          onProgressHover={handleProgressHover}
           style={{
             height: PROGRESS_BAR_HEIGHT,
             boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.12)'
           }}
-        />
+        >
+          <span style={{ whiteSpace: 'nowrap' }}>{formattedDate}</span>
+        </ProgressBar>
 
         {/* DevTools */}
         <div
@@ -174,14 +191,20 @@ export function DevTools() {
         >
           {/* Address Bar & Loading Indicator */}
           <div className={classes.devToolsRow}>
+            <div
+              className={classes.arrowIndicator}
+              style={{ color: lighten(0.24, desaturate(0, rgba(currentPhoto?.palette?.muted ?? 'white'))) }}
+            >
+              <BsArrowLeft style={{ filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))' }} />
+            </div>
+
             <Source
+              className={cx(
+                'animate__animated',
+                show ? 'animate__fadeInDown' : 'animate__fadeOutUp'
+              )}
               photo={currentPhoto}
-              style={{
-                transitionProperty: 'opacity',
-                transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
-                transitionDuration: '240ms',
-                opacity: show ? 1 : 0
-              }}
+              style={{ animationDuration: show ? '240ms' : '2400ms' }}
             >
               <input
                 type="text"
@@ -192,6 +215,7 @@ export function DevTools() {
                 spellCheck={false}
                 autoCorrect="false"
                 autoComplete="false"
+                disabled={!show}
                 style={{
                   height: '100%',
                   transitionProperty: 'color, background-color, border-color, opacity',
@@ -210,6 +234,8 @@ export function DevTools() {
                 }
               }}
             />
+
+            {/* Date & Loading Indicator */}
             <div
               className={classes.date}
               style={{
@@ -218,31 +244,49 @@ export function DevTools() {
                 borderColor: darken(0.12, rgba(currentPhoto?.palette?.darkMuted ?? 'gray', 0.72))
               }}
             >
-              {isLoadingPhotos ? (
-                <BsArrowRepeat
-                  className={animations.spin}
-                  style={{
-                    width: '1em',
-                    height: '1em',
-                    opacity: 0.72
-                  }}
-                />
-              ) : (
-                <BsCircle
-                  style={{
-                    width: '0.72em',
-                    height: '0.72em',
-                    strokeWidth: '0.42px',
-                    marginLeft: '2px',
-                    opacity: 0.72
-                  }}
-                />
-              )}
+              <BsArrowRepeat
+                className={animations.spin}
+                style={{
+                  position: 'absolute',
+                  top: '0.7em',
+                  left: '0.45em',
+                  width: '1.2em',
+                  height: '1.2em',
+                  opacity: isLoadingPhotos ? 1 : 0,
+                  // opacity: 1,
+                  transition: 'opacity 640ms ease-in'
+                }}
+              />
+
+              <BsCircle
+                style={{
+                  position: 'absolute',
+                  top: '0.82em',
+                  left: '0.42em',
+                  width: '0.94em',
+                  height: '0.94em',
+                  strokeWidth: '0.42px',
+                  marginLeft: '2px',
+                  marginBottom: '0.5px',
+                  opacity: isLoadingPhotos ? 0 : 1,
+                  // opacity: 1,
+                  // color: 'red',
+                  transition: 'opacity 640ms ease-in'
+                }}
+              />
+
               <span
                 style={{ minWidth: '3em', textAlign: 'right' }}
               >
                 {format(addDays(new Date(), dayOffset), 'MMM dd')}
               </span>
+            </div>
+
+            <div
+              className={classes.arrowIndicator}
+              style={{ color: lighten(0.24, desaturate(0, rgba(currentPhoto?.palette?.vibrant ?? 'white'))) }}
+            >
+              <BsArrowRight style={{ filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))' }} />
             </div>
           </div>
         </div>

@@ -98,7 +98,7 @@ export const QUALITY_LQIP = 50 as const;
  * When using weighted categories, this is the weight that will be assigned to
  * photos not belonging to any weighted categories.
  */
-export const PHOTO_DEFAULT_WEIGHT = 0.32 as const;
+export const PHOTO_DEFAULT_WEIGHT = 0.5 as const;
 
 // ----- Dev Tools -------------------------------------------------------------
 
