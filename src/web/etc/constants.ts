@@ -165,5 +165,5 @@ export const BACKGROUND_RULE_OVERRIDES: {[key: string]: BackgroundImageOverrides
   },
   'aO1jND20GHA': { backgroundPosition: 'center bottom' },
   'Fkwj-xk6yck': { transform: 'rotate(-1.4deg) scale(1.05)' },
-  'yz_blCQ-OiQ': { transform: 'rotate(-0.95deg)' }
+  'yz_blCQ-OiQ': { transform: 'rotate(-0.95deg) scale(1.1)' }
 };
