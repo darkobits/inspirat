@@ -37,7 +37,7 @@ export default {
     // Needed in Mobile Safari or the greeting will not be visible.
     position: 'relative', zIndex: 1,
 
-    backdropFilter: 'blur(10px)',
+    // backdropFilter: 'blur(10px)',
     boxShadow: '0px 0px 12px rgba(0, 0, 0, 0.12)',
     userSelect: 'none'
 
