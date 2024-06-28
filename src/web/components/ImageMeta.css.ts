@@ -25,7 +25,7 @@ const classes = {
 globalStyle(`${classes.imageMeta} *`, {
   color: 'inherit',
   transition: 'all 0.25s ease-in-out',
-  textShadow: '0px 0px 1ipx rgba(0, 0, 0, 1)'
+  textShadow: '0px 0px 1px rgba(0, 0, 0, 1)'
 });
 
 globalStyle(`${classes.imageMeta} *:hover`, {

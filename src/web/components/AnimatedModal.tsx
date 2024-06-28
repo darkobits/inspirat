@@ -1,8 +1,8 @@
-import cx from 'classnames';
 import React from 'react';
 import { Modal } from 'react-bootstrap';
+import { twMerge } from 'tailwind-merge';
 
-import useHideCallback from 'web/hooks/use-hide-callback';
+import useDelayedCallback from 'web/hooks/use-delayed-callback';
 
 import type { GenericFunction, ElementProps } from 'web/etc/types';
 
@@ -22,12 +22,12 @@ export const AnimatedModal = React.memo((props: Props) => {
   /**
    * [Callback] Sets the new name, waits 500ms, then invokes onClose.
    */
-  const [isHiding, handleClose] = useHideCallback({
-    hideTime: 500,
-    onBeginHide: () => {
+  const [isClosing, handleClose] = useDelayedCallback({
+    time: 500,
+    onBegin: () => {
       if (onBeginHide) onBeginHide();
     },
-    onEndHide: () => {
+    onEnd: () => {
       setShowInternal(false);
       if (onClose) onClose();
     }
@@ -55,18 +55,22 @@ export const AnimatedModal = React.memo((props: Props) => {
   return (
     <Modal
       id={id}
-      animation={false}
-      centered
       onHide={handleClose}
       show={showInternal}
-      size="lg"
-      className={cx('animate__animated', !isHiding ? 'animate__zoomIn' : 'animate__zoomOut')}
+      className={twMerge(
+        'animate__animated',
+        !isClosing ? 'animate__zoomIn' : 'animate__zoomOut',
+        'h-full w-full'
+      )}
       contentClassName={className ?? ''}
+      dialogClassName="h-full w-full flex flex-column items-center justify-center"
     >
-      <Modal.Body className={cx('bg-dark', 'text-light', 'shadow-lg', 'p-4')}>
+      <Modal.Body>
         {body}
-        {footer && <footer className="text-end mt-3">{footer}</footer>}
       </Modal.Body>
+      <Modal.Footer>
+        {footer}
+      </Modal.Footer>
     </Modal>
   );
 });

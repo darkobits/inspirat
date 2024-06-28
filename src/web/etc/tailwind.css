@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/**
+ * This appears redundant, but what this is actually doing is using the values
+ * of CSS variables defined in global-styles.css.ts or elsewhere to create
+ * custom Tailwind classes using a syntax that happens to look very similar to
+ * how CSS variables are defined.
+ */
+@theme {
+  --font-family-display: var(--font-family-display);
+  --font-family-fancy: var(--font-family-fancy);
+  --font-family-sans: var(--font-family-sans);
+}

@@ -1,24 +1,25 @@
 import { style } from '@vanilla-extract/css';
 
-import { FONT_FAMILY_FANCY } from 'web/etc/global-styles.css';
+// import { FONT_FAMILY_FANCY } from 'web/etc/global-styles.css';
 
 export default {
   greeting: style({
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    flexWrap: 'wrap', flexShrink: 1,
+    // display: 'flex', alignItems: 'center', justifyContent: 'center',
+    // flexWrap: 'wrap', flexShrink: 1,
 
-    minWidth: 'min-content', height: 'min-content',
+    // minWidth: 'min-content', height: 'min-content',
 
-    paddingTop: '0.6em', paddingBottom: '0.4em',
-    paddingLeft: '0.7em', paddingRight: '0.7em',
+    // paddingTop: '0.6em', paddingBottom: '0.4em',
+    // paddingLeft: '0.7em', paddingRight: '0.7em',
 
     // 2rem @ 400px wide -> 4rem @ 1200px wide
     // See: https://www.marcbacon.com/tools/clamp-calculator/
-    fontSize: 'clamp(2rem, 1rem + 4vw, 4rem)',
-    fontFamily: FONT_FAMILY_FANCY, fontWeight: 300,
-    lineHeight: '1.24em', textAlign: 'center',
+    // fontSize: 'clamp(2rem, 1rem + 4vw, 4rem)',
+    // fontFamily: FONT_FAMILY_FANCY,
+    // fontWeight: 300,
+    // lineHeight: '1.24em', textAlign: 'center',
 
-    borderWidth: '1px', borderStyle: 'solid', borderRadius: '0.42em',
+    // borderWidth: '1px', borderStyle: 'solid', borderRadius: '0.42em',
 
     // Adds additional contrast to text.
     backgroundColor: 'rgba(0, 0, 0, 0.12)',

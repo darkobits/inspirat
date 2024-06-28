@@ -1,5 +1,6 @@
 import { desaturate, lighten } from 'polished';
 import React from 'react';
+import { twMerge } from 'tailwind-merge';
 
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION, BACKGROUND_TRANSITION_FUNCTION } from 'web/etc/constants';
@@ -47,12 +48,21 @@ export default function Greeting(props: ElementProps<HTMLDivElement>) {
   return (
     <div
       data-testid="Greeting"
-      className={classes.greeting}
+      className={twMerge(
+        classes.greeting,
+        'flex flex-wrap shrink items-center content-center',
+        'font-light font-fancy',
+        'min-w-min h-min',
+        'px-12 pt-10 pb-7',
+        'rounded-3xl'
+
+      )}
       style={{
         color: lighten(0.2, desaturate(0.24, rgba(currentPhoto?.palette?.lightVibrant ?? 'white', 1))),
         borderColor: rgba(currentPhoto?.palette?.vibrant ?? 'white', 0.02),
         textShadow: `0px 0px 4px ${rgba(currentPhoto?.palette?.darkMuted ?? 'black', 0.42)}`,
         opacity: ready ? 1 : 0,
+        fontSize: 'clamp(2rem, 1rem + 4vw, 4rem)',
 
         // Animations.
         animationName: ready ? keyframes.blurIn : 'none',

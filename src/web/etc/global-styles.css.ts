@@ -2,9 +2,10 @@ import { globalStyle, style, keyframes as defineKeyframes } from '@vanilla-extra
 
 import { FontDisplayVariable, FontText } from 'web/etc/fonts.css';
 
-export const FONT_FAMILY_PLAIN = '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif';
-export const FONT_FAMILY_FANCY = `"Josefin Sans", ${FontDisplayVariable}, ${FONT_FAMILY_PLAIN}`;
-export const FONT_FAMILY_SANS_SERIF = `${FontText}, ${FONT_FAMILY_PLAIN}`;
+export const FONT_FALLBACKS = '-apple-system, BlinkMacSystemFont, Segoe UI, Helvetica, Arial, sans-serif';
+export const FONT_FAMILY_FANCY = `"Josefin Sans", ${FontDisplayVariable}, ${FONT_FALLBACKS}`;
+export const FONT_FAMILY_DISPLAY = `${FontDisplayVariable}, ${FONT_FALLBACKS}`;
+export const FONT_FAMILY_SANS = `${FontText}, ${FONT_FALLBACKS}`;
 
 // ----- Shared Global Classes -------------------------------------------------
 
@@ -46,9 +47,9 @@ export const animations = {
         transform: 'rotate(360deg)'
       }
     }),
-    animationDuration: '2s',
+    animationDuration: '1.2s',
     animationIterationCount: 'infinite',
-    animationTimingFunction: 'linear'
+    animationTimingFunction: 'cubic-bezier(.6,-0.3,.3,1.3)'
   })
 };
 
@@ -77,47 +78,26 @@ globalStyle('.safe-margins', {
 // ----- Global Style ----------------------------------------------------------
 
 globalStyle('*, *:before, *:after', {
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
-  fontSize: 'inherit',
-  fontWeight: 'inherit',
-  letterSpacing: 'inherit',
-  lineHeight: 'inherit',
-  textRendering: 'optimizeLegibility',
-  WebkitFontSmoothing: 'antialiased',
-  MozOsxFontSmoothing: 'grayscale',
   overscrollBehavior: 'none'
 });
 
-globalStyle('html, body', {
-  backgroundColor: 'rgb(12, 12, 12)',
-  fontFamily: FONT_FAMILY_SANS_SERIF,
-  fontWeight: 300,
-  lineHeight: '1.2em',
-  margin: 0,
-  padding: 0
+globalStyle(':root', {
+  vars: {
+    '--font-family-display': FONT_FAMILY_DISPLAY,
+    '--font-family-fancy': FONT_FAMILY_FANCY,
+    '--font-family-sans': FONT_FAMILY_SANS
+  },
+  height: '100%'
+});
+
+globalStyle('body', {
+  backgroundColor: 'var(--color-slate-950)',
+  height: '100%'
 });
 
 globalStyle('a, a:hover', {
   color: 'inherit',
   textDecoration: 'none'
-});
-
-globalStyle('input.form-control.form-control-lg', {
-  padding: '0.5rem 0.8rem 0.6rem 0.8rem'
-});
-
-globalStyle('h1, h2, h3, h4, h5, h6', {
-  fontFamily: FONT_FAMILY_SANS_SERIF,
-  lineHeight: '1em'
-});
-
-globalStyle('.text-plain', {
-  fontFamily: FONT_FAMILY_PLAIN
-});
-
-globalStyle('.text-fancy', {
-  fontFamily: FONT_FAMILY_FANCY
 });
 
 globalStyle('#root', {

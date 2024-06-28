@@ -2,10 +2,10 @@ import path from 'path';
 
 import { vite } from '@darkobits/tsx';
 import { faviconsPlugin } from '@darkobits/vite-plugin-favicons';
+import tailwindCssPlugin from '@tailwindcss/vite';
 // import devcert from 'devcert';
 import { visualizer } from 'rollup-plugin-visualizer';
 import { VitePWA } from 'vite-plugin-pwa';
-
 
 /**
  * N.B. This _must_ match infra/WebStack.ts.
@@ -47,6 +47,8 @@ export default vite.react(({ config, packageJson, root, ms, manualChunks }) => {
       '~icons'
     ]
   }]);
+
+  config.plugins.push(tailwindCssPlugin());
 
   config.plugins.push(faviconsPlugin({
     appName: 'Inspirat',
