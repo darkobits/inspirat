@@ -1,6 +1,6 @@
 /* eslint-disable no-confusing-arrow */
-import Cron from '@darkobits/cron';
-import { format, addDays } from 'date-fns';
+// import Cron from '@darkobits/cron';
+import { addDays, format } from 'date-fns';
 import * as Jotai from 'jotai';
 import ms from 'ms';
 import * as R from 'ramda';
@@ -18,6 +18,7 @@ import {
 import { getPeriodDescriptor } from 'web/lib/time';
 import {
   buildPhotoUrlSrcSet,
+  getFormattedDateWithDayOffset,
   preloadImage
 } from 'web/lib/utils';
 
@@ -45,9 +46,10 @@ export interface InspiratContextValue {
   setHasSeenIntroduction: (value: boolean) => void;
 
   /**
-   * Tracks the current day offset (starts at 0) when in development mode.
+   * The current date in the format "yyyy-MM-dd". This can be manipulated using
+   * the Dev Tools.
    */
-  dayOffset: number;
+  currentDate: Date;
 
   /**
    * The photo resource that should be used based on the current day offset.
@@ -80,10 +82,9 @@ export interface InspiratContextValue {
   period: string;
 
   /**
-   * Allows other components to set the day offset to a value by using the
-   * 'increment' or 'decrement' actions.
+   * Allows other components to set the date to a value.
    */
-  setDayOffset: (offset: number | ((prev: number) => number)) => void;
+  setCurrentDate: (newDate: Date | ((prev: Date) => Date)) => void;
 
   /**
    * Allows other components to set the current photo, overriding the photo that
@@ -112,8 +113,8 @@ const InspiratContext = React.createContext<InspiratContextValue>({
   currentPhoto: undefined,
   setCurrentPhoto: () => {/* Empty function. */},
 
-  dayOffset: 0,
-  setDayOffset: () => {/* Empty function. */},
+  currentDate: new Date(),
+  setCurrentDate: () => new Date(),
 
   hasSeenIntroduction: undefined,
   setHasSeenIntroduction: () => {/* Empty function. */},
@@ -133,7 +134,7 @@ const InspiratContext = React.createContext<InspiratContextValue>({
 export function InspiratProvider(props: React.PropsWithChildren) {
   const [name, setName] = Jotai.useAtom(atoms.name);
   const [showDevTools] = Jotai.useAtom(atoms.showDevTools);
-  const [dayOffset, setDayOffset] = Jotai.useAtom(atoms.dayOffset);
+  const [currentDate, setCurrentDate] = Jotai.useAtom(atoms.currentDate);
   const [hasSeenIntroduction, setHasSeenIntroduction] = Jotai.useAtom(atoms.hasSeenIntroduction);
   const [photoTimeline, setPhotoTimeline] = Jotai.useAtom(atoms.photoTimeline);
 
@@ -174,41 +175,40 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   }, []);
 
   /**
-   * [Callback] Provided a day offset (assumed to be from today), populates the
-   * photo timeline for the current date and an interval of +/- 10 days.
+   * [Callback] Provided a string representing a date in the format
+   * "yyyy-MM-dd", populates the photo timeline for the indicated date and an
+   * interval of +/- 5 days.
    */
-  const updatePhotoTimeline = React.useCallback(async (offset: number, overwrite = false) => {
-    const dateFromDayOffset = addDays(new Date(), offset);
+  const updatePhotoTimeline = React.useCallback(async (date: Date, overwrite = false) => {
     const photosToAdd: Record<string, string> = {};
 
-    for (const curOffset of R.range(-10, 11)) {
-      const dateFromCurOffset = format(addDays(dateFromDayOffset, curOffset), 'yyyy-MM-dd');
+    for (const curOffset of R.range(-5, 6)) {
+      const dateWithCurOffset = addDays(date, curOffset);
+      // Compute the key used in the photo timeline object for the current date.
+      const timelineKey = format(dateWithCurOffset, 'yyyy-MM-dd');
 
-      if (!photoTimeline || !Reflect.has(photoTimeline, dateFromCurOffset) || overwrite) {
-        const { id } = await getCurrentPhotoFromCollection({
-          seed: name,
-          offset: offset + curOffset
-        });
-
-        photosToAdd[dateFromCurOffset] = id;
+      if (!photoTimeline || !Reflect.has(photoTimeline, timelineKey) || overwrite) {
+        const { id } = await getCurrentPhotoFromCollection({ seed: name, date: dateWithCurOffset });
+        photosToAdd[timelineKey] = id;
       }
     }
 
-    setPhotoTimeline({ ...photoTimeline, ...photosToAdd });
+    const newTimeline = { ...photoTimeline, ...photosToAdd };
+    setPhotoTimeline(newTimeline);
+    log.debug(`Timeline has ${Object.keys(newTimeline).length} entries.`);
   }, [name, photoTimeline]);
 
   /**
    * [Callback] Provided a day offset (assumed to be from today) pre-loads any
    * images from the timeline in a +/- 3-day range from the offset.
    */
-  const preloadPhotosFromTimeline = React.useCallback(async (offset: number) => {
+  const preloadPhotosFromTimeline = React.useCallback(async (date: Date) => {
     if (!photoTimeline) return;
 
-    const dateFromDayOffset = addDays(new Date(), offset);
     const urlsToPreload: Array<string> = [];
 
     for (const curOffset of [0, ...R.range(-3, 4)]) {
-      const dateFromCurOffset = format(addDays(dateFromDayOffset, curOffset), 'yyyy-MM-dd');
+      const dateFromCurOffset = format(addDays(date, curOffset), 'yyyy-MM-dd');
       const photoIdFromTimeline = Reflect.get(photoTimeline, dateFromCurOffset);
 
       if (Reflect.has(photoTimeline, dateFromCurOffset)) {
@@ -237,25 +237,25 @@ export function InspiratProvider(props: React.PropsWithChildren) {
    */
   useAsyncEffect(async isMounted => {
     if (!photoTimeline) {
-      await updatePhotoTimeline(dayOffset);
+      await updatePhotoTimeline(currentDate);
       return;
     }
 
-    const dateFromDayOffset = format(addDays(new Date(), dayOffset), 'yyyy-MM-dd');
+    const timelineKey = getFormattedDateWithDayOffset({ date: currentDate });
 
     // If the timeline doesn't have a photo for the current day, update it.
-    if (!Reflect.has(photoTimeline, dateFromDayOffset)) {
-      await updatePhotoTimeline(dayOffset);
+    if (!Reflect.has(photoTimeline, timelineKey)) {
+      await updatePhotoTimeline(currentDate);
       // Return here. The effect will run again because `updatePhotoTimeline`
       // will trigger an update of `photoTimeline`, causing this effect to run
       // again with a fresh value.
       return;
     }
 
-    const photoIdFromTimeline = Reflect.get(photoTimeline, dateFromDayOffset);
-    if (!photoIdFromTimeline) throw new Error(`[Inspirat] No entry in timeline for "${dateFromDayOffset}"`);
+    const photoIdFromTimeline = Reflect.get(photoTimeline, timelineKey);
+    if (!photoIdFromTimeline) throw new Error(`[Inspirat] No entry in timeline for "${currentDate}"`);
 
-    const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline, dayOffset);
+    const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline, currentDate);
     if (!isMounted()) return;
 
     // If we can't find a photo in our collections, this may mean that the photo
@@ -264,31 +264,34 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     // photos rather than only adding missing ones.
     if (!photoFromTimeline) {
       log.warn(`No photo in collections with ID ${photoIdFromTimeline}.`);
-      await updatePhotoTimeline(dayOffset, true);
+      await updatePhotoTimeline(currentDate, true);
       // Again, we can bail early and the above function call will trigger a
       // re-run of this effect with fresh data.
       return;
     }
 
     setCurrentPhoto(photoFromTimeline);
-    void preloadPhotosFromTimeline(dayOffset);
-  }, [dayOffset, photoTimeline]);
+    void preloadPhotosFromTimeline(currentDate);
+  }, [currentDate, photoTimeline]);
 
   /**
    * [Effect] Responsible for ensuring the photo changes at midnight.
+   * SHOULD NOT BE NEEDED ANY MORE, CURRENT DATE IS ALWAYS KNOWNj
+   * MAYBE ADD A CRON TO RE-GET THE CURRENT PHOTO FOR THE CURRENT DATE EVERY
+   * SO OFTEN.
    */
-  React.useEffect(() => {
-    const photoUpdateCron = Cron('0 0 * * *', () => {
-      log.info('[Cron] Updating photo.');
-      setDayOffset(prev => prev + 1);
-    });
+  // React.useEffect(() => {
+  //   const photoUpdateCron = Cron('0 0 * * *', () => {
+  //     log.info('[Cron] Updating photo.');
+  //     setDayOffset(prev => prev + 1);
+  //   });
 
-    void photoUpdateCron.start();
+  //   void photoUpdateCron.start();
 
-    return () => {
-      void photoUpdateCron.suspend();
-    };
-  }, [setDayOffset, dayOffset]);
+  //   return () => {
+  //     void photoUpdateCron.suspend();
+  //   };
+  // }, [currentDate]);
 
   /**
    * [Effect] Periodically checks if we are waiting for any photos to load.
@@ -339,8 +342,8 @@ export function InspiratProvider(props: React.PropsWithChildren) {
         currentPhoto: currentPhoto,
         setCurrentPhoto,
 
-        dayOffset,
-        setDayOffset,
+        currentDate,
+        setCurrentDate,
 
         hasSeenIntroduction,
         setHasSeenIntroduction,

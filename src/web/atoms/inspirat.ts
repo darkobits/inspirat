@@ -1,22 +1,28 @@
+import { format, parse } from 'date-fns';
 import { atomWithStorage } from 'jotai/utils';
 
-import { atomFromQueryParam } from 'web/atoms/lib';
+import { atomWithQueryParam } from 'web/atoms/lib';
 
 export const atoms = {
   /**
    * [URL] Whether to enable DevTools.
    */
-  showDevTools: atomFromQueryParam<boolean>('devtools', {
-    initialValue: false,
-    parseValue: value => (value === 'false' ? false : Boolean(value))
-  }),
+  showDevTools: atomWithQueryParam('devtools', false),
 
   /**
    * [URL] Custom offset to use when browsing photo collections using DevTools.
    */
-  dayOffset: atomFromQueryParam<number>('offset', {
-    initialValue: 0,
-    parseValue: Number
+  currentDate: atomWithQueryParam('date', new Date(), {
+    deserialize: value => {
+      if (typeof value !== 'string') return new Date();
+
+      try {
+        return parse(value, 'yyyy-MM-dd', new Date());
+      } catch {
+        return new Date();
+      }
+    },
+    serialize: date => format(date, 'yyyy-MM-dd')
   }),
 
   /**
@@ -32,7 +38,7 @@ export const atoms = {
   hasSeenIntroduction: atomWithStorage('inspirat/hasSeenIntroduction', false),
 
   /**
-   * [LocalStorage] Key/value mapping of dates in the format 'YYYY-MM-DD' to
+   * [LocalStorage] Key/value mapping of dates in the format 'yyyy-MM-DD' to
    * photo IDs.
    */
   photoTimeline: atomWithStorage<Record<string, string> | null>(

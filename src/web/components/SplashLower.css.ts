@@ -36,8 +36,8 @@ export default {
       bottom: 0,
       left: 0,
       right: 0,
-      height: '3rem',
-      backgroundImage: 'linear-gradient(to top, rgba(0, 0, 0, 0.32) 0%, transparent 100%)',
+      height: '4rem',
+      backgroundImage: 'linear-gradient(to top, rgba(0, 0, 0, 0.24) 0%, transparent 100%)',
       zIndex: 0
     }
   }),

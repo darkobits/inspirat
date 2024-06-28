@@ -8,11 +8,13 @@ import { v4 as uuid } from 'uuid';
 
 import InspiratContext from 'web/contexts/Inspirat';
 import { WHITE, BLACK } from 'web/etc/constants';
+import { useWhereTheCursorIs } from 'web/hooks/use-where-the-cursor-is';
 import { rgba } from 'web/lib/utils';
 
 import classes, { vars } from './Progress.css';
 
 import type { ElementProps } from 'web/etc/types';
+
 
 export interface ProgressBarProps extends ElementProps<HTMLProgressElement> {
   /**
@@ -32,7 +34,6 @@ export interface ProgressBarProps extends ElementProps<HTMLProgressElement> {
   onProgressHover?: (progress: number) => void;
 }
 
-
 /**
  * Progress bar that resides at the top of the screen and reflects the current
  * position in the photo collection.
@@ -45,40 +46,19 @@ export interface ProgressBarProps extends ElementProps<HTMLProgressElement> {
 export function ProgressBar(props: ProgressBarProps) {
   const { progress, onProgressChange, onProgressHover, children, style, ...restProps } = props;
   const { currentPhoto } = React.useContext(InspiratContext);
-  const target = React.useRef(null);
 
+  const target = React.useRef(null);
   const [tooltipId] = React.useState(uuid());
   const [showTooltip, setShowTooltip] = React.useState(false);
 
+  const whereTheCursorIs = useWhereTheCursorIs({
+    enable: showTooltip,
+    xOffset: '0.46rem',
+    yOffset: '1.64rem'
+  });
+
   const fgColor = currentPhoto?.palette?.muted ?? WHITE;
   const bgColor = currentPhoto?.palette?.darkMuted ?? BLACK;
-
-  const whereTheFckIsTheCursor = React.useRef(document.createElement('div'));
-
-  React.useEffect(() => {
-    if (!whereTheFckIsTheCursor.current) return;
-
-    whereTheFckIsTheCursor.current.style.position = 'fixed';
-    whereTheFckIsTheCursor.current.style.width = '0px';
-    whereTheFckIsTheCursor.current.style.height = '0px';
-    whereTheFckIsTheCursor.current.style.pointerEvents = 'none';
-    document.body.append(whereTheFckIsTheCursor.current);
-
-    const handleMouseMove = (event: MouseEvent) => {
-      if (whereTheFckIsTheCursor.current) {
-        whereTheFckIsTheCursor.current.style.top = `calc(${event.clientY}px + 1.64rem)`;
-        whereTheFckIsTheCursor.current.style.left = `calc(${event.clientX}px + 0.46rem)`;
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      whereTheFckIsTheCursor.current.remove();
-    };
-  }, []);
-
 
   /**
    * [Callback] Invoke user-provided progress callback when the progress bar is
@@ -132,8 +112,8 @@ export function ProgressBar(props: ProgressBarProps) {
       {...restProps}
     >
       <Overlay
-        target={whereTheFckIsTheCursor.current}
-        container={whereTheFckIsTheCursor.current}
+        target={whereTheCursorIs}
+        container={whereTheCursorIs}
         show={Boolean(showTooltip && children)}
         placement="bottom"
       >

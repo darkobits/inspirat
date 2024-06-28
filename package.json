@@ -54,6 +54,7 @@
     "throttle-debounce": "^5.0.0",
     "url-parse-lax": "^4.0.0",
     "use-async-effect": "^2.2.7",
+    "use-query-params": "^2.2.1",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

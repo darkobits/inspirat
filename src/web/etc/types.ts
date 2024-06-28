@@ -8,7 +8,7 @@ export interface LooseObject {
 }
 
 
-export type GenericFunction = (...args: Array<any>) => any;
+export type GenericFunction<T = void> = (...args: Array<any>) => T;
 
 
 /**

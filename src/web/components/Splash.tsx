@@ -9,6 +9,7 @@ import SplashLower from 'web/components/SplashLower';
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
+import { daysSinceEpoch } from 'web/lib/time';
 import { capitalizeWords } from 'web/lib/utils';
 
 import classes from './Splash.css';
@@ -26,11 +27,11 @@ const INITIAL_LOAD_TRANSITION_DURATION = '0.5s';
  */
 export function Splash(props: ElementProps<HTMLDivElement>) {
   const { className, style, ...restProps } = props;
-  const { currentPhoto, dayOffset } = React.useContext(InspiratContext);
+  const { currentPhoto, currentDate } = React.useContext(InspiratContext);
   const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
   const [bPhoto, setBPhoto] = React.useState<InspiratPhotoResource | void>();
   const [transitionDuration, setTransitionDuration] = React.useState(INITIAL_LOAD_TRANSITION_DURATION);
-  const activeElement = dayOffset % 2 === 0 ? 'A' : 'B';
+  const activeElement = daysSinceEpoch(currentDate) % 2 === 0 ? 'A' : 'B';
 
   /**
    * [Effect] Handles changes to photo URLs. Sets the transition duration to its

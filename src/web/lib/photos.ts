@@ -1,6 +1,5 @@
 import axios from 'axios';
 import Chance from 'chance';
-import { addDays } from 'date-fns';
 // import objectHash from 'object-hash';
 import prettyMs from 'pretty-ms';
 import * as R from 'ramda';
@@ -16,7 +15,7 @@ import { Logger } from 'web/lib/log';
 import PendingPromiseCache from 'web/lib/pending-promise-cache';
 import { computeSeasonWeights } from 'web/lib/seasons';
 import storage from 'web/lib/storage';
-import { now, daysSinceEpoch } from 'web/lib/time';
+import { now } from 'web/lib/time';
 import { ifDebug } from 'web/lib/utils';
 
 import type { InspiratPhotoCollection, InspiratPhotoResource } from 'etc/types';
@@ -99,12 +98,12 @@ export async function getPhotoCollections() {
 
     // If the cache is empty, fetch photos from Unsplash and cache them.
     if (!photoCache) {
-      ifDebug(() => log.debug('Cache is empty. Fetching collection.'));
+      log.debug('Cache is empty. Fetching collection.');
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollections();
     } else if (now() - photoCache.updatedAt >= CACHE_TTL) {
       // If the cached collection is stale, re-fetch it.
-      ifDebug(() => log.debug(`Cache is stale, re-fetching. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`));
+      log.debug(`Updating stale photo cache. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`);
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollections();
     } else {
@@ -117,7 +116,7 @@ export async function getPhotoCollections() {
     // If photoCache is still null at this point, we had no cached data and
     // the fetch attempt failed.
     if (!photoCache) {
-      throw new Error('[getPhotoCollections] Photo collection cache was empty and an error occurred while trying to fetch it.');
+      throw new Error('[getPhotoCollections] Photo collection cache was empty and an error occurred while trying to update it.');
     }
 
     return photoCache;
@@ -130,12 +129,10 @@ export async function getPhotoCollections() {
  * Provided a day offset, returns a flat array of photo resources, each photo
  * annotated with a weight descriptor.
  */
-async function getWeightedPhotos(offset: number) {
+async function getWeightedPhotos(date: Date) {
   const photos = await getPhotoCollections();
 
-  const days = daysSinceEpoch() + offset;
-  const dateForSeasons = addDays(new Date(0), days);
-  const seasonWeights = computeSeasonWeights(dateForSeasons);
+  const seasonWeights = computeSeasonWeights(date);
 
   const mappedCollections = photos.collections?.map(photoCollection => {
     if (photoCollection.weight) {
@@ -166,8 +163,8 @@ const chanceInstances: Record<string, Chance.Chance> = {};
  * assigned weights based on the provided `offset` parameter. Additionally,
  * the random number generator may be seeded with a `seed` option.
  */
-export async function getCurrentPhotoFromCollection({ seed = '', offset = 0 } = {}): Promise<InspiratPhotoResource> {
-  const photos = await getWeightedPhotos(offset);
+export async function getCurrentPhotoFromCollection({ seed = '', date = new Date() } = {}): Promise<InspiratPhotoResource> {
+  const photos = await getWeightedPhotos(date);
 
   let chance: Chance.Chance;
 
@@ -192,7 +189,7 @@ export async function getCurrentPhotoFromCollection({ seed = '', offset = 0 } = 
  * Provided a photo ID and optional day offset (for calculating weight) returns
  * an Annotated
  */
-export async function getPhotoFromCollection(id: string, offset = 0) {
-  const photos = await getWeightedPhotos(offset);
+export async function getPhotoFromCollection(id: string, date = new Date()) {
+  const photos = await getWeightedPhotos(date);
   return photos.find(curPhoto => curPhoto.id === id);
 }

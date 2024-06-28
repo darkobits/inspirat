@@ -6,19 +6,20 @@ import {
 
 
 /**
- * Returns the number of days since the Unix epoch.
- */
-export function daysSinceEpoch(): number {
-  return differenceInDays(new Date(), new Date(0));
-}
-
-
-/**
  * Returns the current Unix timestamp with millisecond precision.
  */
 export function now() {
   return Date.now();
 }
+
+/**
+ * Returns the number of days between the UNIX epoch and the provided date. If
+ * no date is provided, the current date is assumed.
+ */
+export function daysSinceEpoch(date = new Date()): number {
+  return differenceInDays(date, new Date(0));
+}
+
 
 /**
  * Returns the Unix timestamp with millisecond precision for the last

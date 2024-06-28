@@ -1,5 +1,15 @@
 import cx from 'classnames';
-import { format, addDays } from 'date-fns';
+import {
+  addDays,
+  differenceInDays,
+  format,
+  isBefore,
+  addYears,
+  differenceInYears,
+  startOfToday,
+  setYear,
+  getYear
+} from 'date-fns';
 import mousetrap from 'mousetrap';
 import ms from 'ms';
 import { desaturate, lighten, darken } from 'polished';
@@ -22,7 +32,7 @@ import {
   TITLE
 } from 'web/etc/constants';
 import { animations } from 'web/etc/global-styles.css';
-import { modIndex, mockPhotoResourceFromUrl, isTouchEvent, rgba } from 'web/lib/utils';
+import { mockPhotoResourceFromUrl, isTouchEvent, rgba } from 'web/lib/utils';
 
 import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
 
@@ -35,16 +45,16 @@ import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
 let mouseLeaveTimeout: NodeJS.Timeout;
 
 /**
- * How long to throttle (ignore) keyboard or swipe events that change the day
- * offset. Set to the transition time plus a small buffer.
+ * How long to throttle (ignore) keyboard or swipe events that change the date.
+ * Set to the transition time plus a small buffer.
  */
 const THROTTLE_TIME = ms(BACKGROUND_TRANSITION_DURATION) + ms('250ms');
 
 export function DevTools() {
   const {
     showDevTools,
-    dayOffset,
-    setDayOffset,
+    currentDate,
+    setCurrentDate,
     currentPhoto,
     setCurrentPhoto,
     resetPhoto,
@@ -52,7 +62,58 @@ export function DevTools() {
   } = React.useContext(InspiratContext);
   const [show, setShow] = React.useState(true);
   const [customSource, setCustomSource] = React.useState<string | void>('');
-  const [formattedDate, setFormattedDate] = React.useState('');
+  const [hoverDate, setHoverDate] = React.useState('');
+
+  /**
+   * [Callback] Moves the date backwards by 1 day. If the new date would be
+   * before the current date, 1 year is added to it.
+   */
+  const retardDate = React.useCallback(() => {
+    setCurrentDate(currentDate => {
+      const newDate = addDays(currentDate, -1);
+      return isBefore(newDate, startOfToday())
+        ? addYears(startOfToday(), 1)
+        : newDate;
+    });
+  }, []);
+
+  /**
+   * [Callback] Moves the date forward by 1 day. If the new date would be more
+   * than 1 year after the current date, 1 year is subtracted from it.
+   */
+  const advanceDate = React.useCallback(() => {
+    setCurrentDate(currentDate => {
+      const newDate = addDays(currentDate, 1);
+      return differenceInYears(addDays(newDate, + 1), startOfToday())
+        ? setYear(newDate, getYear(new Date()))
+        : newDate;
+    });
+  }, []);
+
+  /**
+   * [Callback] Immediately select the contents of the image source field when
+   * the element is focused.
+   */
+  const handleSourceFocus: React.FocusEventHandler<HTMLInputElement> = React.useCallback(e => {
+    e.currentTarget.select();
+  }, []);
+
+  /**
+   * [Callback] Explicitly sets the day offset when we get a progress update
+   * from the progress bar.
+   */
+  const handleProgressChange = React.useCallback((newProgress: number) => {
+    setCurrentDate(() => addDays(startOfToday(), Math.round(newProgress * 365)));
+  }, []);
+
+
+  /**
+   * [Callback] Explicitly sets the day offset when we get a progress update
+   * from the progress bar.
+   */
+  const handleProgressHover = React.useCallback((newProgress: number) => {
+    setHoverDate(format(addDays(startOfToday(), Math.round(newProgress * 365)), 'MMMM dd'));
+  }, []);
 
   /*
    * [Effect] Initialize DevTools mouse/key/gesture bindings.
@@ -63,12 +124,13 @@ export function DevTools() {
     const swipeListener = SwipeListener(document);
 
     mousetrap.bind('left', throttle(THROTTLE_TIME, () => {
-      setDayOffset(prev => modIndex(Number(prev) - 1, 365));
+      retardDate();
       setCustomSource();
     }, { noLeading: false }));
 
+
     mousetrap.bind('right', throttle(THROTTLE_TIME, () => {
-      setDayOffset(prev => modIndex(Number(prev) + 1, 365));
+      advanceDate();
       setCustomSource();
     }, { noLeading: false }));
 
@@ -76,10 +138,10 @@ export function DevTools() {
       if (!isTouchEvent(event)) return;
 
       if (event.detail.directions.right) {
-        setDayOffset(prev => modIndex(Number(prev) + 1, 365));
+        advanceDate();
         setCustomSource();
       } else if (event.detail.directions.left) {
-        setDayOffset(prev => modIndex(Number(prev) - 1, 365));
+        retardDate();
         setCustomSource();
       }
     }));
@@ -95,14 +157,6 @@ export function DevTools() {
       swipeListener.off();
     };
   }, [showDevTools]);
-
-  /**
-   * [Callback] Immediately select the contents of the image source field when
-   * the element is focused.
-   */
-  const handleSourceFocus: React.FocusEventHandler<HTMLInputElement> = React.useCallback(e => {
-    e.currentTarget.select();
-  }, []);
 
   /**
    * [Effect] Parses custom image source values and updates the current photo.
@@ -128,30 +182,11 @@ export function DevTools() {
   }, [customSource]);
 
 
-  /**
-   * [Callback] Explicitly sets the day offset when we get a progress update
-   * from the progress bar.
-   */
-  const handleProgressChange = React.useCallback((newProgress: number) => {
-    const newDayOffset = Math.floor(365 * newProgress);
-
-    setDayOffset(newDayOffset);
-    setFormattedDate(format(addDays(new Date(), newDayOffset), 'MMM dd'));
-  }, []);
-
-
-  /**
-   * [Callback] Explicitly sets the day offset when we get a progress update
-   * from the progress bar.
-   */
-  const handleProgressHover = React.useCallback((newProgress: number) => {
-    const newDayOffset = Math.floor(365 * newProgress);
-    setFormattedDate(format(addDays(new Date(), newDayOffset), 'MMM dd'));
-  }, []);
-
   if (!showDevTools) return null;
 
-  const progress = dayOffset / 365;
+  // The current state of the progress bar should represent the distance between
+  // todays date and 1 year in the future.
+  const progress = Math.abs(differenceInDays(currentDate, startOfToday())) / 365;
 
   return (
     <>
@@ -173,7 +208,7 @@ export function DevTools() {
             boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.12)'
           }}
         >
-          <span style={{ whiteSpace: 'nowrap' }}>{formattedDate}</span>
+          <span style={{ whiteSpace: 'nowrap' }}>{hoverDate}</span>
         </ProgressBar>
 
         {/* DevTools */}
@@ -201,10 +236,10 @@ export function DevTools() {
             <Source
               className={cx(
                 'animate__animated',
-                show ? 'animate__fadeInDown' : 'animate__fadeOutUp'
+                show || customSource ? 'animate__fadeInDown' : 'animate__fadeOutUp'
               )}
               photo={currentPhoto}
-              style={{ animationDuration: show ? '240ms' : '2400ms' }}
+              style={{ animationDuration: show || customSource ? '420ms' : '2400ms' }}
             >
               <input
                 type="text"
@@ -217,6 +252,8 @@ export function DevTools() {
                 autoComplete="false"
                 disabled={!show}
                 style={{
+                  fontFamily: 'monospace',
+                  fontSize: '0.8rem',
                   height: '100%',
                   transitionProperty: 'color, background-color, border-color, opacity',
                   transitionTimingFunction: BACKGROUND_TRANSITION_FUNCTION,
@@ -248,8 +285,8 @@ export function DevTools() {
                 className={animations.spin}
                 style={{
                   position: 'absolute',
-                  top: '0.7em',
-                  left: '0.45em',
+                  top: '0.66em',
+                  left: '0.5em',
                   width: '1.2em',
                   height: '1.2em',
                   opacity: isLoadingPhotos ? 1 : 0,
@@ -261,8 +298,8 @@ export function DevTools() {
               <BsCircle
                 style={{
                   position: 'absolute',
-                  top: '0.82em',
-                  left: '0.42em',
+                  top: '0.76em',
+                  left: '0.46em',
                   width: '0.94em',
                   height: '0.94em',
                   strokeWidth: '0.42px',
@@ -278,13 +315,13 @@ export function DevTools() {
               <span
                 style={{ minWidth: '3em', textAlign: 'right' }}
               >
-                {format(addDays(new Date(), dayOffset), 'MMM dd')}
+                {format(currentDate, 'MMM dd')}
               </span>
             </div>
 
             <div
               className={classes.arrowIndicator}
-              style={{ color: lighten(0.24, desaturate(0, rgba(currentPhoto?.palette?.vibrant ?? 'white'))) }}
+              style={{ color: lighten(0.24, desaturate(0, rgba(currentPhoto?.palette?.muted ?? 'white'))) }}
             >
               <BsArrowRight style={{ filter: 'drop-shadow(0px 0px 2px rgba(0, 0, 0, 0.8))' }} />
             </div>
@@ -294,3 +331,4 @@ export function DevTools() {
     </>
   );
 }
+//

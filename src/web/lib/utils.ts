@@ -1,6 +1,7 @@
 /* eslint-disable unicorn/consistent-destructuring */
 import type React from 'react';
 
+import { addDays, format } from 'date-fns';
 import pRetry from 'p-retry';
 import { rgba as polishedRgba, parseToRgb } from 'polished';
 import queryString from 'query-string';
@@ -12,6 +13,16 @@ import { QUALITY_LQIP, QUALITY_FULL } from 'web/etc/constants';
 
 import type { Color, InspiratPhotoResource } from 'etc/types';
 import type { TouchEvent, GenericFunction, LooseObject } from 'web/etc/types';
+
+/**
+ * Returns the current date in the format "yyyy-MM-dd". Accepts an optional
+ * `date` option which will override the default date (now), and an optional
+ * `offset` option that will add or subtract the number of days indicated.
+ */
+export function getFormattedDateWithDayOffset({ date = new Date(), offset = 0 } = {}) {
+  return format(addDays(date, offset), 'yyyy-MM-dd');
+}
+
 
 /**
  * Determines if the provided value is a TouchEvent.
