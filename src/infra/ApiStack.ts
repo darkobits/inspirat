@@ -54,12 +54,10 @@ export function ApiStack({ app, stack }: StackContext) {
 
   // ----- Production Cron: Sync Collections -----------------------------------
 
-  if (stage === 'production') {
-    new Cron(stack, 'cron-sync-collection', {
-      schedule: 'rate(1 hour)',
-      job: syncCollections
-    });
-  }
+  new Cron(stack, 'cron-sync-collection', {
+    schedule: 'rate(1 hour)',
+    job: syncCollections
+  });
 
   // ----- Non-Production Endpoint: Sync Collections ---------------------------
 
