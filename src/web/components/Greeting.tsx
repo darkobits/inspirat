@@ -50,7 +50,7 @@ export default function Greeting({ style }: ElementProps<HTMLDivElement>) {
       className={twMerge(
         'flex flex-wrap shrink items-center content-center',
         'min-w-min h-min px-11 pt-8 pb-5',
-        'rounded-3xl backdrop-blur-xl',
+        'rounded-3xl backdrop-blur-md',
         'font-fancy font-light tracking-normal',
         classes.greeting
       )}

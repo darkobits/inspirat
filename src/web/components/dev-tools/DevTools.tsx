@@ -32,7 +32,8 @@ import {
   TITLE
 } from 'web/etc/constants';
 import { animations } from 'web/etc/global-styles.css';
-import { mockPhotoResourceFromUrl, isTouchEvent, rgba } from 'web/lib/utils';
+import { getPhotoFromCollection } from 'web/lib/photos';
+import { isUrl, mockPhotoResourceFromUrl, isTouchEvent, rgba } from 'web/lib/utils';
 
 import classes, { PROGRESS_BAR_HEIGHT } from './DevTools.css';
 
@@ -167,18 +168,25 @@ export function DevTools() {
       return;
     }
 
-    // This will remove any query parameters, update the input field, and cause
-    // the effect to run again.
-    if (customSource.includes('?')) {
-      const sourceWithoutQuery = customSource.slice(0, customSource.lastIndexOf('?'));
-      setCustomSource(sourceWithoutQuery);
-      return;
+    if (isUrl(customSource)) {
+      // This will remove any query parameters, update the input field, and cause
+      // the effect to run again. The resulting effect is that of a "clean paste"
+      // into the DevTools URL bar.
+      if (customSource.includes('?')) {
+        const sourceWithoutQuery = customSource.slice(0, customSource.lastIndexOf('?'));
+        setCustomSource(sourceWithoutQuery);
+        return;
+      }
+
+      const mockPhotoResource = await mockPhotoResourceFromUrl(customSource);
+      if (!mockPhotoResource || !isMounted()) return;
+      setCurrentPhoto(mockPhotoResource);
+    } else {
+      // Assume the value entered is a photo ID and try to load it explicitly.
+      const photoResource = await getPhotoFromCollection(customSource);
+      if (!photoResource || !isMounted()) return;
+      setCurrentPhoto(photoResource);
     }
-
-    const mockPhotoResource = await mockPhotoResourceFromUrl(customSource);
-    if (!mockPhotoResource || !isMounted()) return;
-
-    setCurrentPhoto(mockPhotoResource);
   }, [customSource]);
 
 

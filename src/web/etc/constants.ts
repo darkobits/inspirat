@@ -46,7 +46,7 @@ export const BACKGROUND_TRANSITION_FUNCTION = import.meta.env.NODE_ENV === 'prod
  * Duration for the custom animation applied to a background image when it comes
  * into view.
  */
-export const BACKGROUND_ANIMATION_DURATION = ms('100s');
+export const BACKGROUND_ANIMATION_DURATION = ms('120s');
 
 /**
  * Adjusts the initial scale for the background zoom-out animation. Also passed
@@ -56,9 +56,17 @@ export const BACKGROUND_ANIMATION_DURATION = ms('100s');
  */
 export const BACKGROUND_ANIMATION_INITIAL_SCALE = 1.5 as const;
 
+// ----- Photos ----------------------------------------------------------------
+
 /**
- * How long image collection data may persist in the cache before it must be
- * updated.
+ * How many days to look back/forward from the current day to pre-populate
+ * timeline entries and pre-load photos for those entries.
+ */
+export const TIMELINE_WINDOW_DAYS = [-10, 10] as const;
+
+/**
+ * How long photo collection data may persist in the cache it is considered
+ * stale.
  */
 export const CACHE_TTL = ms('1 day');
 
@@ -73,30 +81,19 @@ export const COLLECTION_CACHE_KEY = 'photoCollections';
 export const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
 
 /**
- * Default font family string to use.
- */
-export const DEFAULT_FONTS = [
-  '-apple-system',
-  'BlinkMacSystemFont',
-  '"Segoe UI"',
-  'Helvetica',
-  'Arial',
-  'sans-serif'
-];
-
-/**
- * Image quality to use for full-quality images.
+ * JPEG quality to use for full-quality images.
  */
 export const QUALITY_FULL = 100 as const;
 
 /**
- * Image quality to use for low-quality image previews.
+ * JPEG quality to use for low-quality image previews.
  */
 export const QUALITY_LQIP = 50 as const;
 
 /**
  * When using weighted categories, this is the weight that will be assigned to
- * photos not belonging to any weighted categories.
+ * photos not belonging to any weighted categories. In most cases, this will be
+ * applied to photos in the "default" collection.
  */
 export const PHOTO_DEFAULT_WEIGHT = 0.5 as const;
 
@@ -121,49 +118,50 @@ export const DEVTOOLS_MOUSE_LEAVE_TIMEOUT = ms('4 seconds');
  * Map of Unsplash photo IDs to various CSS overrides for that image.
  */
 export const BACKGROUND_RULE_OVERRIDES: {[key: string]: BackgroundImageOverrides} = {
-  'sMQiL_2v4vs': { backdrop: { backgroundOpacity: 0.4, blurRadius: '0.5px' } },
-  'iqeG5xA96M4': { backdrop: { backgroundOpacity: 0.3, blurRadius: '0.5px' } },
-  '-6jxbP3-N1I': { backdrop: { backgroundOpacity: 0.3, blurRadius: '1px' } },
-  'C8Z5DvtWQMw': { backdrop: { backgroundOpacity: 0.3, blurRadius: '0.5px' } },
-  'HUiNRjXr-bQ': { backdrop: { blurRadius: '4px' } },
-  'YHdztOlV9bc': { backdrop: { backgroundOpacity: 0.3 } },
-  '_QoAuZGAoPY': { backdrop: { backgroundOpacity: 0.5 } },
-  'iciBcD8NOeA': { backgroundPosition: 'center top' },
-  'q-fr4QsIyic': { backgroundPosition: 'center top' },
-  'U7gbwg2fjCs': { backgroundPosition: 'center bottom' },
-  '9h2CRu-lqyw': { backgroundPosition: 'center bottom' },
-  'IdYeC0NqNls': { backgroundPosition: 'bottom center' },
-  'Do6yoytec5E': { backgroundPosition: 'center top' },
-  'bDVnmzmW4a0': { backgroundPosition: 'center bottom' },
-  '85f8mC4SRzk': { backgroundPosition: 'center 15%' },
-  'pn2aVMO0lvE': { backgroundPosition: 'center bottom' },
-  '47HoSotxeRQ': { backgroundPosition: 'center bottom' },
-  'u0cSubf5F-E': { backgroundPosition: 'center top' },
-  '-N_UwPdUs7E': { backgroundPosition: 'center top' },
-  '1HkVV14d8Bg': { backgroundPosition: 'right center' },
-  '3TmLV0fLzfU': { backgroundPosition: 'center 20%' },
-  'FxU8KV7psMY': { backgroundPosition: 'center top' },
-  'o8Utw2ETExA': { backgroundPosition: 'right center' },
-  'pZXg_ObLOM4': { backgroundPosition: 'center top' },
-  'Zm2n2O7Fph4': { backgroundPosition: 'center 75%' },
-  'LgCj9qcrfhI': { backgroundPosition: 'center top' },
-  'vpHCfunwDrQ': { backgroundPosition: 'center top' },
-  'c4XoMGxfsVU': { backgroundPosition: 'center top' },
-  'r7GOO6M2TmU': { backgroundPosition: 'center 20%' },
-  '9qvZSH_NOQs': { backgroundPosition: 'center top' },
+  'iciBcD8NOeA': { styleOverrides: { backgroundPosition: 'center top' }},
+  'q-fr4QsIyic': { styleOverrides: { backgroundPosition: 'center top' }},
+  'U7gbwg2fjCs': { styleOverrides: { backgroundPosition: 'center bottom' }},
+  '9h2CRu-lqyw': { styleOverrides: { backgroundPosition: 'center bottom' }},
+  'IdYeC0NqNls': { styleOverrides: { backgroundPosition: 'bottom center' }},
+  'Do6yoytec5E': { styleOverrides: { backgroundPosition: 'center top' }},
+  'bDVnmzmW4a0': { styleOverrides: { backgroundPosition: 'center bottom' }},
+  '85f8mC4SRzk': { styleOverrides: { backgroundPosition: 'center 15%' }},
+  'pn2aVMO0lvE': { styleOverrides: { backgroundPosition: 'center bottom' }},
+  '47HoSotxeRQ': { styleOverrides: { backgroundPosition: 'center bottom' }},
+  'u0cSubf5F-E': { styleOverrides: { backgroundPosition: 'center top' }},
+  '-N_UwPdUs7E': { styleOverrides: { backgroundPosition: 'center top' }},
+  '1HkVV14d8Bg': { styleOverrides: { backgroundPosition: 'right center' }},
+  '3TmLV0fLzfU': { styleOverrides: { backgroundPosition: 'center 20%' }},
+  'FxU8KV7psMY': { styleOverrides: { backgroundPosition: 'center top' }},
+  'o8Utw2ETExA': { styleOverrides: { backgroundPosition: 'right center' }},
+  'pZXg_ObLOM4': { styleOverrides: { backgroundPosition: 'center top' }},
+  'Zm2n2O7Fph4': { styleOverrides: { backgroundPosition: 'center 75%' }},
+  'LgCj9qcrfhI': { styleOverrides: { backgroundPosition: 'center top' }},
+  'vpHCfunwDrQ': { styleOverrides: { backgroundPosition: 'center top' }},
+  'c4XoMGxfsVU': { styleOverrides: { backgroundPosition: 'center top' }},
+  'r7GOO6M2TmU': { styleOverrides: { backgroundPosition: 'center 20%' }},
+  '9qvZSH_NOQs': { styleOverrides: { backgroundPosition: 'center top' }},
+  'aO1jND20GHA': { styleOverrides: { backgroundPosition: 'center bottom' }},
+  'Fkwj-xk6yck': { styleOverrides: { transform: 'rotate(-1.4deg) scale(1.05)' }},
+  'yz_blCQ-OiQ': { styleOverrides: { transform: 'rotate(-0.95deg) scale(1.1)' }},
   'kZ1zThg6G40': {
-    backgroundPosition: 'center top',
-    transform: 'scale(1.2) translateY(8.3333333%)'
+    styleOverrides: {
+      backgroundPosition: 'center top',
+      transform: 'scale(1.2) translateY(8.3333333%)'
+    }
   },
   '_WuPjE-MPHo': {
-    backgroundPosition: 'center top',
-    transform: 'scale(1.1)'
+    styleOverrides: {
+      backgroundPosition: 'center top',
+      transform: 'scale(1.1)'
+    }
   },
   'qpemSW6_1Z0': {
-    backgroundPosition: 'center top',
-    transform: 'scale(1.2) translateY(8.3333333%)'
+    styleOverrides: {
+      backgroundPosition: 'center top',
+      transform: 'scale(1.2) translateY(8.3333333%)'
+    }
   },
-  'aO1jND20GHA': { backgroundPosition: 'center bottom' },
-  'Fkwj-xk6yck': { transform: 'rotate(-1.4deg) scale(1.05)' },
-  'yz_blCQ-OiQ': { transform: 'rotate(-0.95deg) scale(1.1)' }
+  'tA90pRfL2gM': { imgixParams: { orient: '90' }  },
+  'RBpUVzCP3ws': { styleOverrides: { objectPosition: 'center bottom' }}
 };

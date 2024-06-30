@@ -278,7 +278,7 @@ export class Logger implements RequiredLogMethods {
    */
   silly(...args: Array<any>) {
     void this.isLevelAtLeast('silly', () => {
-      console.debug(...processLogMessage({
+      console.log(...processLogMessage({
         prefix: [icons.silly.square, this.prefix].filter(Boolean).join(' '),
         args,
         style: { color: '#BA55D3' } // medium orchid
@@ -291,7 +291,7 @@ export class Logger implements RequiredLogMethods {
    */
   debug(...args: Array<any>) {
     void this.isLevelAtLeast('debug', () => {
-      console.debug(...processLogMessage({
+      console.log(...processLogMessage({
         prefix: [icons.debug.square, this.prefix].filter(Boolean).join(' '),
         args,
         style: { color: '#1E90FF' } // dodger blue

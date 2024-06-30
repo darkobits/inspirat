@@ -22,24 +22,8 @@ export type ElementProps<T extends HTMLElement = HTMLElement> = React.DetailedHT
  * rule in the BackgroundImage component.
  */
 export interface BackgroundImageOverrides {
-  backgroundPosition?: string;
-  transform?: string;
-  opacity?: number;
-  transitionDuration?: string;
-  transitionTimingFunction?: string;
-  // backdropBlurRadius?: string;
-  // backdropBlur?: string;
-  backdrop?: {
-    /**
-     * Must be a valid CSS length.
-     */
-    blurRadius?: string;
-
-    /**
-     * The alpha value applied to the black ellipse in the image backdrop.
-     */
-    backgroundOpacity?: number;
-  };
+  imgixParams?: Record<string, any>;
+  styleOverrides?: React.CSSProperties;
 }
 
 

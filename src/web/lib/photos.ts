@@ -23,6 +23,8 @@ import type { PhotoCollectionStorageItem } from 'web/etc/types';
 
 const log = new Logger({ prefix: '🌅 •' });
 
+const chance = new Chance();
+
 /**
  * @private
  *
@@ -30,7 +32,6 @@ const log = new Logger({ prefix: '🌅 •' });
  * multiple invocations occur before the first invocation finishes.
  */
 const pendingPromiseCache = new PendingPromiseCache();
-
 
 /**
  * @private
@@ -85,42 +86,44 @@ async function fetchAndUpdateCollections(): Promise<PhotoCollectionStorageItem |
   }
 }
 
-
 /**
- * Returns an array of all images in the Inspirat collection from local storage.
+ * Returns an array of all photo collections from local storage.
  *
- * Additionally checks if cached photo collection data has expired and performs
- * an update in the background if necessary.
+ * Additionally, if the cached data is expired, schedules an asynchronous
+ * update.
  */
 export async function getPhotoCollections() {
-  return pendingPromiseCache.set('getPhotoCollection', async () => {
+  return pendingPromiseCache.use('getPhotoCollection', async () => {
     let photoCache = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
 
-    // If the cache is empty, fetch photos from Unsplash and cache them.
     if (!photoCache) {
       log.debug('Cache is empty. Fetching collection.');
       // eslint-disable-next-line require-atomic-updates
       photoCache = await fetchAndUpdateCollections();
-    } else if (now() - photoCache.updatedAt >= CACHE_TTL) {
-      // If the cached collection is stale, re-fetch it.
+
+      // If photoCache is still null at this point, we had no cached data and
+      // the fetch attempt failed.
+      if (!photoCache) {
+        throw new Error('[getPhotoCollections] Photo collection cache was empty and an error occurred while trying to update it.');
+      }
+    }
+
+    // If cached data is stale, re-fetch it, but do not block on this.
+    if (now() - photoCache.updatedAt >= CACHE_TTL) {
       log.debug(`Updating stale photo cache. (${prettyMs(now() - (photoCache?.updatedAt ?? 0), { verbose: true })} out of date.).`);
       // eslint-disable-next-line require-atomic-updates
-      photoCache = await fetchAndUpdateCollections();
+      void fetchAndUpdateCollections();
     } else {
-      ifDebug(() => {
-        const expiresIn = CACHE_TTL - (now() - (photoCache?.updatedAt ?? 0));
-        log.debug(`Photo collection will be updated in ${prettyMs(expiresIn)}.`);
-      }, { once: true });
+      const expiresIn = CACHE_TTL - (now() - (photoCache?.updatedAt ?? 0));
+      log.debug(`Photo collection will be updated in ${prettyMs(expiresIn)}.`);
     }
 
-    // If photoCache is still null at this point, we had no cached data and
-    // the fetch attempt failed.
-    if (!photoCache) {
-      throw new Error('[getPhotoCollections] Photo collection cache was empty and an error occurred while trying to update it.');
-    }
+
+    // ifDebug(() => {
+    // }, { once: true });
 
     return photoCache;
-  });
+  }, { ttl: CACHE_TTL });
 }
 
 /**
@@ -155,39 +158,21 @@ async function getWeightedPhotos(date: Date) {
   return mappedCollections.flatMap(photoCollection => photoCollection.photos) as Array<InspiratPhotoResource & { weight: { name: string; value: number } }>;
 }
 
-
-const chanceInstances: Record<string, Chance.Chance> = {};
-
 /**
  * Returns a photo selected at random from the current collection. Photos are
  * assigned weights based on the provided `offset` parameter. Additionally,
  * the random number generator may be seeded with a `seed` option.
  */
-export async function getCurrentPhotoFromCollection({ seed = '', date = new Date() } = {}): Promise<InspiratPhotoResource> {
+export async function getCurrentPhotoFromCollection({ date = new Date() } = {}): Promise<InspiratPhotoResource> {
   const photos = await getWeightedPhotos(date);
-
-  let chance: Chance.Chance;
-
-  if (chanceInstances[seed]) {
-    chance = chanceInstances[seed];
-  } else {
-    chance = new Chance(seed);
-    chanceInstances[seed] = chance;
-  }
-
-  // Note: This no longer makes sense; may remove.
-  // const shuffled = chance.shuffle(photos);
-
   const weights = R.map(R.pathOr(0, ['weight', 'value']), photos);
   const photo = chance.weighted(photos, weights);
-
   return photo;
 }
 
-
 /**
  * Provided a photo ID and optional day offset (for calculating weight) returns
- * an Annotated
+ * the indicated photo with a `weight` key calculated for the provided date.
  */
 export async function getPhotoFromCollection(id: string, date = new Date()) {
   const photos = await getWeightedPhotos(date);

@@ -9,7 +9,6 @@ import SplashLower from 'web/components/SplashLower';
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
-import { daysSinceEpoch } from 'web/lib/time';
 import { capitalizeWords } from 'web/lib/utils';
 
 import classes from './Splash.css';
@@ -27,11 +26,20 @@ const INITIAL_LOAD_TRANSITION_DURATION = '0.5s';
  */
 export function Splash(props: ElementProps<HTMLDivElement>) {
   const { className, style, ...restProps } = props;
-  const { currentPhoto, currentDate } = React.useContext(InspiratContext);
+  const { currentPhoto } = React.useContext(InspiratContext);
   const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
   const [bPhoto, setBPhoto] = React.useState<InspiratPhotoResource | void>();
   const [transitionDuration, setTransitionDuration] = React.useState(INITIAL_LOAD_TRANSITION_DURATION);
-  const activeElement = daysSinceEpoch(currentDate) % 2 === 0 ? 'A' : 'B';
+  const [counter, setCounter] = React.useState(0);
+  const activeElement = counter % 2 === 0 ? 'A' : 'B';
+
+  /**
+   * [Effect] Increment `counter` whenever the current photo changes.
+   */
+  React.useEffect(() => {
+    if (!currentPhoto?.id) return;
+    setCounter(prev => prev + 1);
+  }, [currentPhoto?.id]);
 
   /**
    * [Effect] Handles changes to photo URLs. Sets the transition duration to its
@@ -67,12 +75,8 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       clearTimeout(clearPhotoTimeoutHandle);
       clearTimeout(transitionDurationTimeoutHandle);
     };
-  }, [currentPhoto?.id, transitionDuration]);
+  }, [activeElement]);
 
-  // NOTE: SplashLower is nested inside BackgroundImage so that image metadata
-  // can be displayed for both images simultaneously and fade in/out with the
-  // associated image.
-  // TODO: Make <SplashLower> a part of <BackgroundImage>?
   return (
     <div
       data-testid="Splash"
@@ -83,30 +87,20 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       {...restProps}
     >
       <BackgroundImage
-        id="A"
+        id="BackgroundImage:A"
         photo={aPhoto}
         isActive={activeElement === 'A'}
         style={{ transitionDuration }}
       >
-        <SplashLower
-          id="A"
-          isActive={activeElement === 'A'}
-          photo={aPhoto}
-          // style={{ animationDuration: transitionDuration }}
-        />
+        <SplashLower photo={aPhoto} isActive={activeElement === 'A'} />
       </BackgroundImage>
       <BackgroundImage
-        id="B"
+        id="BackgroundImage:B"
         photo={bPhoto}
         isActive={activeElement === 'B'}
         style={{ transitionDuration }}
       >
-        <SplashLower
-          id="B"
-          isActive={activeElement === 'B'}
-          photo={bPhoto}
-          // style={{ animationDuration: transitionDuration }}
-        />
+        <SplashLower photo={bPhoto} isActive={activeElement === 'B'} />
       </BackgroundImage>
       <Greeting style={{ transitionDuration }} />
     </div>

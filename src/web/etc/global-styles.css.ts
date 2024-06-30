@@ -91,7 +91,7 @@ globalStyle(':root', {
 });
 
 globalStyle('body', {
-  backgroundColor: 'var(--color-slate-950)',
+  backgroundColor: 'var(--color-gray-950)',
   height: '100%'
 });
 

@@ -31,6 +31,19 @@ export function isTouchEvent(e: any): e is TouchEvent {
   return e?.detail?.directions;
 }
 
+/**
+ * Returns `true` if the provided string is a valid URL according to the `URL`
+ * constructor, or `false` otherwise.
+ */
+export function isUrl(value: string) {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 
 /**
  * Provided an Inspirat color object or a color string and an optional alpha
@@ -187,7 +200,6 @@ type PreloadImageCacheValue = {
 
 const preloadImageCache = new Map<string, PreloadImageCacheValue>();
 
-
 /**
  * Asynchronously pre-loads the image at the provided URL and returns a promise
  * that resolves when the image has finished loading.
@@ -196,10 +208,9 @@ export async function preloadImage(imgUrl: string) {
   if (!preloadImageCache.has(imgUrl)) {
     const img = new Image();
 
-    // Retry loading images up to 2 times with exponential back-off.
     const imagePromise = pRetry(() => {
-      return new Promise<void>((resolve, reject) => {
-        img.addEventListener('load', () => resolve());
+      return new Promise<string>((resolve, reject) => {
+        img.addEventListener('load', () => resolve(imgUrl));
 
         img.addEventListener('error', event => reject(new Error(
           `[preloadImage] Failed to load image: ${event.error?.message ?? 'Unknown Error'}`,
@@ -214,7 +225,10 @@ export async function preloadImage(imgUrl: string) {
         // N.B. Setting this property will cause the browser to fetch the image.
         img.src = imgUrl;
       });
-    }, { retries: 2 }).then(() => {
+    }, {
+      // Retry loading images up to 2 times with exponential back-off.
+      retries: 2
+    }).then(() => {
       preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'SUCCESS' });
       return imgUrl;
     }).catch(err => {
@@ -224,10 +238,13 @@ export async function preloadImage(imgUrl: string) {
       img.remove();
     });
 
-    preloadImageCache.set(imgUrl, { promise: imagePromise, state: 'LOADING' });
+    preloadImageCache.set(imgUrl, {
+      promise: imagePromise,
+      state: 'LOADING'
+    });
   }
 
-  return preloadImageCache.get(imgUrl)?.promise;
+  return preloadImageCache.get(imgUrl)?.promise as Promise<string>;
 }
 
 /**

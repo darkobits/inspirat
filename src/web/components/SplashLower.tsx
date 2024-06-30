@@ -20,17 +20,16 @@ export interface SplashLowerProps extends ElementProps<HTMLDivElement> {
 }
 
 export default function SplashLower(props: SplashLowerProps) {
-  const { id, photo, isActive, className, style, ...restProps } = props;
+  const { photo, isActive, className, style, ...restProps } = props;
   const [ready, setReady] = React.useState(false);
   const query = useQuery();
 
   /**
-   * [Effect] Flips our `ready` state to `true` once, when the first photo is
-   * ready.
+   * [Effect] Sets `ready` state to `true` once, when the first photo is ready.
    */
   React.useEffect(() => {
     if (!photo?.id) return;
-    const timeout = setTimeout(() => setReady(true), 200);
+    const timeout = setTimeout(() => setReady(true), 120);
     return () => clearTimeout(timeout);
   }, [photo?.id]);
 
@@ -38,55 +37,43 @@ export default function SplashLower(props: SplashLowerProps) {
   if (query?.meta === 'false') return null;
 
   // Location.
-  const location = emoji.strip(capitalizeWords(photo?.location?.name ?? ''))
+  const location = photo?.location?.name && emoji.strip(capitalizeWords(photo.location.name))
     // Remove 5-digit ZIP codes.
     .replaceAll(/(\s?\d{5}\s?)/gi, '')
     // Fix this semi-common issue in image locations:
-    // "Usa, United States" => "United States"
+    // "USA, United States" => "United States"
     .replaceAll(/usa,?\s*united\s*states/gi, 'United States');
-    // Replace strings like "Fl, Usa" with "FL, USA".
-    // .replaceAll(/\w{2}, usa/gi, input => input.toUpperCase())
-    // Replace any remaining words "Usa" with "USA".
-    // .replaceAll(/\busa\b/gi, 'USA')
-    // Replace words "Uk" with "UK".
-    // .replaceAll(/\buk\b/gi, 'UK');
 
   // Attribution.
-  const author = emoji.strip(capitalizeWords(photo?.user?.name ?? ''));
-  const authorHref = photo?.user?.links?.html;
+  const user = photo?.user?.name && emoji.strip(capitalizeWords(photo.user.name));
+  const userHref = photo?.user?.links?.html;
   const photoHref = photo?.links?.html;
 
-  const attribution = author && (
+  const attribution = user && (
     <span>
       <a href={photoHref} target="_blank" rel="noopener noreferrer">Photo</a> by{' '}
-      <a href={authorHref} target="_blank" rel="noopener noreferrer">{author}</a>
+      <a href={userHref} target="_blank" rel="noopener noreferrer">{user}</a>
     </span>
   );
 
   return (
     <div
-      id={id}
       data-testid="SplashLower"
       className={cx(classes.splashLower, className, 'safe-padding')}
       style={{
-        animationName: ready
-          ? isActive
+        animationName: !ready
+          ? 'none'
+          : isActive
             ? keyframes.blurIn
-            : keyframes.blurOut
-          : 'none',
-        // animationTimingFunction: 'cubic-bezier(0, 0.75, 0.25, 1)',
+            : keyframes.blurOut,
         opacity: ready ? 1 : 0,
         color: lighten(0.2, desaturate(0.24, rgba(photo?.palette?.lightVibrant ?? 'white', 1))),
         ...style
       }}
       {...restProps}
     >
-      <ImageMeta className={classes.imageLocation}>
-        {location}
-      </ImageMeta>
-      <ImageMeta className={classes.imageAttribution}>
-        {attribution}
-      </ImageMeta>
+      <ImageMeta className={classes.imageLocation}>{location}</ImageMeta>
+      <ImageMeta className={classes.imageAttribution}>{attribution}</ImageMeta>
     </div>
   );
 }
