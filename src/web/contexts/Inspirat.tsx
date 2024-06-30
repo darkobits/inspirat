@@ -1,14 +1,17 @@
-/* eslint-disable no-confusing-arrow */
-// import Cron from '@darkobits/cron';
 import { addDays, format } from 'date-fns';
 import * as Jotai from 'jotai';
 import ms from 'ms';
+import pQueue from 'p-queue';
 import * as R from 'ramda';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
 
 import { atoms } from 'web/atoms/inspirat';
-import { BACKGROUND_ANIMATION_INITIAL_SCALE } from 'web/etc/constants';
+import {
+  BACKGROUND_ANIMATION_INITIAL_SCALE,
+  BACKGROUND_RULE_OVERRIDES,
+  TIMELINE_WINDOW_DAYS
+} from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
 import {
   getPhotoCollections,
@@ -25,6 +28,13 @@ import {
 import type { InspiratPhotoResource } from 'etc/types';
 
 const log = new Logger({ prefix: '🌅 •' });
+
+const preloadQueue = new pQueue({
+  concurrency: 2,
+  intervalCap: 2,
+  interval: ms('1 second'),
+  carryoverConcurrencyCount: true
+});
 
 /**
  * Shape of the object provided by this hook.
@@ -155,22 +165,25 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   const buildPhotoUrls = React.useCallback((photo: InspiratPhotoResource) => {
     if (!photo?.urls) throw new Error('[buildPhotoUrls] Got invalid input.', { cause: photo });
 
+    const { imgixParams } = BACKGROUND_RULE_OVERRIDES[photo.id] ?? {};
+
     // This is where IMGIX configuration for low and high quality versions of
     // photos is defined.
     return buildPhotoUrlSrcSet(photo.urls.full, {
-      // fm: 'webp',
       fm: 'jpg',
       q: 70,
-      w: Math.round(window.screen.width * 0.64)
+      w: Math.round(window.screen.width * 0.64),
       // h: Math.round(window.screen.height / 2)
       // Adds a color overlay. Can be useful for debugging.
       // blend: 'FA653D',
       // blendMode: 'overlay'
+      ...imgixParams
     }, {
       fm: 'jpg',
       q: 98,
       w: Math.round(window.screen.width * BACKGROUND_ANIMATION_INITIAL_SCALE),
-      h: Math.round(window.screen.height * BACKGROUND_ANIMATION_INITIAL_SCALE)
+      h: Math.round(window.screen.height * BACKGROUND_ANIMATION_INITIAL_SCALE),
+      ...imgixParams
     });
   }, []);
 
@@ -182,13 +195,13 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   const updatePhotoTimeline = React.useCallback(async (date: Date, overwrite = false) => {
     const photosToAdd: Record<string, string> = {};
 
-    for (const curOffset of R.range(-5, 6)) {
+    for (const curOffset of R.range(TIMELINE_WINDOW_DAYS[0], TIMELINE_WINDOW_DAYS[1] + 1)) {
       const dateWithCurOffset = addDays(date, curOffset);
       // Compute the key used in the photo timeline object for the current date.
       const timelineKey = format(dateWithCurOffset, 'yyyy-MM-dd');
 
       if (!photoTimeline || !Reflect.has(photoTimeline, timelineKey) || overwrite) {
-        const { id } = await getCurrentPhotoFromCollection({ seed: name, date: dateWithCurOffset });
+        const { id } = await getCurrentPhotoFromCollection({ date: dateWithCurOffset });
         photosToAdd[timelineKey] = id;
       }
     }
@@ -205,28 +218,37 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   const preloadPhotosFromTimeline = React.useCallback(async (date: Date) => {
     if (!photoTimeline) return;
 
-    const urlsToPreload: Array<string> = [];
+    // Pre-load past and future photos in dev mode. Otherwise, only pre-load
+    // future photos.
+    const offsets = import.meta.env.DEV
+      ? R.range(TIMELINE_WINDOW_DAYS[0], TIMELINE_WINDOW_DAYS[1] + 1)
+      : R.range(0, TIMELINE_WINDOW_DAYS[1] + 1);
 
-    for (const curOffset of [0, ...R.range(-3, 4)]) {
+    // N.B. The leading 0 ensures we always preload the photo for the current
+    // day first. The duplicated 0 from R.range will be a no-op.
+    for (const curOffset of offsets) {
       const dateFromCurOffset = format(addDays(date, curOffset), 'yyyy-MM-dd');
       const photoIdFromTimeline = Reflect.get(photoTimeline, dateFromCurOffset);
 
       if (Reflect.has(photoTimeline, dateFromCurOffset)) {
         const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline);
         if (!photoFromTimeline) return;
-
         const { lowQuality, highQuality } = buildPhotoUrls(photoFromTimeline);
-        urlsToPreload.push(lowQuality);
-        urlsToPreload.push(highQuality);
+
+        // This will compute a priority such that offset 0 will have a priority
+        // of Infinity, and other offsets will have a decreasing priority based
+        // on their distance from 0. In other words, photos will be loaded based
+        // on their proximity to today.
+        const priority = Math.round(Math.abs(1 / curOffset) * 100);
+
+        void preloadQueue.add(() => {
+          return preloadImage(lowQuality);
+        }, { priority });
+
+        void preloadQueue.add(() => {
+          return preloadImage(highQuality);
+        }, { priority });
       }
-    }
-
-    const uniqueUrlsToPreload = new Set(urlsToPreload);
-
-    // Note: It is safe to call `preloadImage` with URLs we have already
-    // pre-loaded; it will no-op.
-    if (uniqueUrlsToPreload.size > 0) {
-      await Promise.all([...uniqueUrlsToPreload].map(url => preloadImage(url)));
     }
   }, [photoTimeline]);
 
@@ -246,9 +268,8 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     // If the timeline doesn't have a photo for the current day, update it.
     if (!Reflect.has(photoTimeline, timelineKey)) {
       await updatePhotoTimeline(currentDate);
-      // Return here. The effect will run again because `updatePhotoTimeline`
-      // will trigger an update of `photoTimeline`, causing this effect to run
-      // again with a fresh value.
+      // Return here. Because `updatePhotoTimeline` triggers an update of
+      // `photoTimeline`, causing this effect to run again with a fresh value.
       return;
     }
 
@@ -272,35 +293,22 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
     setCurrentPhoto(photoFromTimeline);
     void preloadPhotosFromTimeline(currentDate);
-  }, [currentDate, photoTimeline]);
+  }, [currentDate, photoTimeline, shouldResetPhoto]);
 
   /**
-   * [Effect] Responsible for ensuring the photo changes at midnight.
-   * SHOULD NOT BE NEEDED ANY MORE, CURRENT DATE IS ALWAYS KNOWNj
-   * MAYBE ADD A CRON TO RE-GET THE CURRENT PHOTO FOR THE CURRENT DATE EVERY
-   * SO OFTEN.
-   */
-  // React.useEffect(() => {
-  //   const photoUpdateCron = Cron('0 0 * * *', () => {
-  //     log.info('[Cron] Updating photo.');
-  //     setDayOffset(prev => prev + 1);
-  //   });
-
-  //   void photoUpdateCron.start();
-
-  //   return () => {
-  //     void photoUpdateCron.suspend();
-  //   };
-  // }, [currentDate]);
-
-  /**
-   * [Effect] Periodically checks if we are waiting for any photos to load.
+   * [Effect] Sets up event listeners which update isLoading based on the state
+   * of the queue.
    */
   React.useEffect(() => {
-    const intervalHandle = setInterval(() => {
-      setIsLoadingPhotos(preloadImage.isLoadingImages());
-    }, 1000);
-    return () => clearInterval(intervalHandle);
+    const onActive = () => setIsLoadingPhotos(true);
+    const onIdle = () => setIsLoadingPhotos(false);
+    preloadQueue.on('active', onActive);
+    preloadQueue.on('idle', onIdle);
+
+    return () => {
+      preloadQueue.off('active', onActive);
+      preloadQueue.off('idle', onIdle);
+    };
   }, []);
 
   /**
@@ -308,17 +316,9 @@ export function InspiratProvider(props: React.PropsWithChildren) {
    */
   useAsyncEffect(async isMounted => {
     const photos = await getPhotoCollections();
-
     if (!isMounted()) return;
-
     const numPhotos = photos.collections.reduce((total, collection) => total + collection.photos.length, 0);
     setNumPhotos(numPhotos);
-
-    // ifDebug(() => {
-    //   if (!window.debug) window.debug = {};
-    //   window.debug.photos = photos;
-    //   window.debug.numPhotos = numPhotos;
-    // });
   }, []);
 
   /**
