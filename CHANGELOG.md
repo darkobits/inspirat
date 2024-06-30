@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.18.1](https://github.com/darkobits/inspirat/compare/v0.18.0...v0.18.1) (2024-06-30)
+
+
+### 🛠 Refactoring
+
+* Add Tailwind. ([18a74d4](https://github.com/darkobits/inspirat/commit/18a74d47dacc699ec5d493b62c30e957d3545ee9))
+* Improve DevTools. ([d7bd736](https://github.com/darkobits/inspirat/commit/d7bd736fc51e26fdd7b8d946f9ad02c2dd75171e))
+* Improve image pre-loading. ([8bbd22e](https://github.com/darkobits/inspirat/commit/8bbd22e5a17a50b88daa2452d29d33a7cdfec4f0))
+* Update styles. ([81f0b49](https://github.com/darkobits/inspirat/commit/81f0b49bb66df2a4164f4c72b285558412ee3d99))
+* Use cron job in all environments. ([dd463c0](https://github.com/darkobits/inspirat/commit/dd463c0a04f84ee277d1ca9394ba7861233bf228))
+* Various improvements. ([bd092f2](https://github.com/darkobits/inspirat/commit/bd092f24741aef3c7b9dd8d5f1bc05044dafd833))
+
 ## [0.18.0](https://github.com/darkobits/inspirat/compare/v0.17.0...v0.18.0) (2024-06-15)
 
 
