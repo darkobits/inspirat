@@ -32,12 +32,12 @@ export interface BackgroundImageProps extends ElementProps<HTMLDivElement> {
 export default function BackgroundImage(props: BackgroundImageProps) {
   const { id, children, style, isActive, photo, ...restProps } = props;
   const { buildPhotoUrls } = React.useContext(InspiratContext);
-
   const [styleOverrides, setStyleOverrides] = React.useState<React.CSSProperties>({});
   const [animationName, setAnimationName] = React.useState('none');
   const [lowQualityUrl, setLowQualityUrl] = React.useState<string | void>();
   const [fullQualityUrl, setFullQualityUrl] = React.useState<string | void>();
   const [anyImageReady, setAnyImageReady] = React.useState(false);
+  const [animationPlayState, setAnimationPlayState] = React.useState<React.CSSProperties['animationPlayState']>('running');
 
   /**
    * [Effect] When the photo changes, computes new low quality and full-quality
@@ -88,6 +88,29 @@ export default function BackgroundImage(props: BackgroundImageProps) {
   }, [photo?.id, isActive]);
 
   /**
+   * [Effect] Pauses the active CSS animation on the background image when the
+   * window or tab is blurred. We do this because CSS animations don't run on
+   * inactive tabs anyway, and if we fail to pause the animation it will skip
+   * ahead to where it thinks it should be (potentially the end) once the tab
+   * is re-focused, based on how much time has elapsed.
+   */
+  React.useEffect(() => {
+    const onVisibilityStateChange = () => {
+      if (document.hidden) {
+        setAnimationPlayState('paused');
+      } else {
+        setAnimationPlayState('running');
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityStateChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityStateChange);
+    };
+  }, []);
+
+  /**
    * [Memo] Compute the `srcset` attribute to apply to our image when URLs
    * change.
    */
@@ -136,6 +159,7 @@ export default function BackgroundImage(props: BackgroundImageProps) {
           sizes={sizes}
           style={{
             animationName,
+            animationPlayState,
             ...restStyleOverrides
           }}
         />
