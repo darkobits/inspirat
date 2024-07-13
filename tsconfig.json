@@ -14,8 +14,8 @@
   "include": [
     "**/.eslintrc.cjs",
     "src/**/*",
-    "./nr.config.ts",
-    "./sst.config.ts",
-    "./vite.config.ts"
+    "nr.config.ts",
+    "sst.config.ts",
+    "vite.config.ts"
   ]
 }

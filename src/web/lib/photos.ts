@@ -13,7 +13,7 @@ import {
 } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
 import PendingPromiseCache from 'web/lib/pending-promise-cache';
-import { computeSeasonWeights } from 'web/lib/seasons';
+import { getSeasonWeightsForDate } from 'web/lib/seasons';
 import storage from 'web/lib/storage';
 import { now } from 'web/lib/time';
 import { ifDebug } from 'web/lib/utils';
@@ -138,7 +138,7 @@ function getSeasonWeightedPhotosFromDate(
   date: Date,
   photoCollections: Array<AnnotatedPhotoCollection>
 ) {
-  const seasonWeights = computeSeasonWeights(date);
+  const seasonWeights = getSeasonWeightsForDate(date);
 
   const mappedCollections = photoCollections.map(photoCollection => {
     if (photoCollection.weight) {

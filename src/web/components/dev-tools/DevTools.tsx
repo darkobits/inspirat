@@ -228,7 +228,7 @@ export function DevTools() {
           }}
           onMouseLeave={() => {
             mouseLeaveTimeout = setTimeout(() => {
-              setShow(false);
+              // setShow(false);
             }, DEVTOOLS_MOUSE_LEAVE_TIMEOUT);
           }}
         >
