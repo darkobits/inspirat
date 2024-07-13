@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.19.0](https://github.com/darkobits/inspirat/compare/v0.18.1...v0.19.0) (2024-07-13)
+
+
+### ✨ Features
+
+* Reduce duplicated photos in timeline. ([24c0700](https://github.com/darkobits/inspirat/commit/24c0700b523dba251654b1d6217b6b30422a9bdb))
+
+
+### 🐞 Bug Fixes
+
+* Pause animation on window/tab blur. ([fb6d987](https://github.com/darkobits/inspirat/commit/fb6d98744636261eb237cc6aac5b098cc64abc5a))
+
 ## [0.18.1](https://github.com/darkobits/inspirat/compare/v0.18.0...v0.18.1) (2024-06-30)
 
 
