@@ -2,6 +2,7 @@ import { addDays, format } from 'date-fns';
 import * as Jotai from 'jotai';
 import ms from 'ms';
 import pQueue from 'p-queue';
+import pRetry from 'p-retry';
 import * as R from 'ramda';
 import React from 'react';
 import useAsyncEffect from 'use-async-effect';
@@ -258,13 +259,15 @@ export function InspiratProvider(props: React.PropsWithChildren) {
         // on their proximity to today.
         const priority = Math.round(Math.abs(1 / curOffset) * 100);
 
-        void preloadQueue.add(() => {
-          return preloadImage(lowQuality);
-        }, { priority });
+        void preloadQueue.add(() => pRetry(
+          async () => preloadImage(lowQuality),
+          { retries: 4 }), { priority }
+        );
 
-        void preloadQueue.add(() => {
-          return preloadImage(highQuality);
-        }, { priority });
+        void preloadQueue.add(() => pRetry(
+          async () => preloadImage(highQuality),
+          { retries: 4 }), { priority }
+        );
       }
     }
   }, [photoTimeline]);
