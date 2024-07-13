@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { getPlatformDetails } from '@darkobits/react-kit/platform';
 import chalkModule from 'chalk';
+import { createConsola } from 'consola';
 import React from 'react';
 import styleToCss from 'style-object-to-css-string';
 
@@ -384,4 +385,15 @@ export class Logger implements RequiredLogMethods {
 /**
  * Default logger instance.
  */
-export default new Logger();
+// export default new Logger();
+
+
+export default createConsola({
+  level: 4
+  // formatOptions: {
+  //     columns: 80,
+  //     colors: false,
+  //     compact: false,
+  //     date: false,
+  // },
+});

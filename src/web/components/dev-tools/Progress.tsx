@@ -53,8 +53,8 @@ export function ProgressBar(props: ProgressBarProps) {
 
   const whereTheCursorIs = useWhereTheCursorIs({
     enable: showTooltip,
-    xOffset: '0.46rem',
-    yOffset: '1.64rem'
+    xOffset: '0.32rem',
+    yOffset: '1.32rem'
   });
 
   const fgColor = currentPhoto?.palette?.muted ?? WHITE;
@@ -119,7 +119,14 @@ export function ProgressBar(props: ProgressBarProps) {
       >
         {overlayProps => (
           // eslint-disable-next-line react/jsx-props-no-spreading
-          <Tooltip id={tooltipId} {...overlayProps as any}>
+          <Tooltip
+            id={tooltipId}
+            className="
+              text-slate-100 text-sm font-thin bg-slate-950/90
+              py-1 px-2 rounded-md tracking-wide
+            "
+            {...overlayProps as any}
+          >
             {children}
           </Tooltip>
         )}

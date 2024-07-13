@@ -1,4 +1,4 @@
-import defineConfig, { type CommandOptions } from '@darkobits/nr';
+import { defineConfig, type CommandOptions } from '@darkobits/nr';
 import { defaultPackageScripts } from '@darkobits/ts';
 
 // TODO: Create a "serverless" template repo for boilerplate.

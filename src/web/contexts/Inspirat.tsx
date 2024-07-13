@@ -10,7 +10,9 @@ import { atoms } from 'web/atoms/inspirat';
 import {
   BACKGROUND_ANIMATION_INITIAL_SCALE,
   BACKGROUND_RULE_OVERRIDES,
-  TIMELINE_WINDOW_DAYS
+  TIMELINE_WINDOW_DAYS,
+  QUALITY_FULL,
+  QUALITY_LQIP
 } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
 import {
@@ -18,7 +20,7 @@ import {
   getPhotoFromCollection,
   getCurrentPhotoFromCollection
 } from 'web/lib/photos';
-import { getPeriodDescriptor } from 'web/lib/time';
+import { getPeriodDescriptor, midnight, now } from 'web/lib/time';
 import {
   buildPhotoUrlSrcSet,
   getFormattedDateWithDayOffset,
@@ -29,11 +31,16 @@ import type { InspiratPhotoResource } from 'etc/types';
 
 const log = new Logger({ prefix: '🌅 •' });
 
+/**
+ * @private
+ *
+ * Async task queue used for pre-loading images. This configuration ensures that
+ * only 2 photos are loaded at a time during each 2-second window.
+ */
 const preloadQueue = new pQueue({
   concurrency: 2,
   intervalCap: 2,
-  interval: ms('1 second'),
-  carryoverConcurrencyCount: true
+  interval: ms('2 seconds')
 });
 
 /**
@@ -171,7 +178,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
     // photos is defined.
     return buildPhotoUrlSrcSet(photo.urls.full, {
       fm: 'jpg',
-      q: 70,
+      q: QUALITY_LQIP,
       w: Math.round(window.screen.width * 0.64),
       // h: Math.round(window.screen.height / 2)
       // Adds a color overlay. Can be useful for debugging.
@@ -180,7 +187,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
       ...imgixParams
     }, {
       fm: 'jpg',
-      q: 98,
+      q: QUALITY_FULL,
       w: Math.round(window.screen.width * BACKGROUND_ANIMATION_INITIAL_SCALE),
       h: Math.round(window.screen.height * BACKGROUND_ANIMATION_INITIAL_SCALE),
       ...imgixParams
@@ -192,24 +199,34 @@ export function InspiratProvider(props: React.PropsWithChildren) {
    * "yyyy-MM-dd", populates the photo timeline for the indicated date and an
    * interval of +/- 5 days.
    */
-  const updatePhotoTimeline = React.useCallback(async (date: Date, overwrite = false) => {
+  const updatePhotoTimeline = React.useCallback(async (date: Date, photoTimeline: Record<string, string> | null, overwrite = false) => {
     const photosToAdd: Record<string, string> = {};
 
     for (const curOffset of R.range(TIMELINE_WINDOW_DAYS[0], TIMELINE_WINDOW_DAYS[1] + 1)) {
       const dateWithCurOffset = addDays(date, curOffset);
       // Compute the key used in the photo timeline object for the current date.
-      const timelineKey = format(dateWithCurOffset, 'yyyy-MM-dd');
+      const timelineKey = getFormattedDateWithDayOffset({ date: dateWithCurOffset });
 
       if (!photoTimeline || !Reflect.has(photoTimeline, timelineKey) || overwrite) {
-        const { id } = await getCurrentPhotoFromCollection({ date: dateWithCurOffset });
+        const { id } = await getCurrentPhotoFromCollection({
+          date: dateWithCurOffset,
+          excludePhotoIds: R.uniq([
+            ...Object.values(photosToAdd ?? {}),
+            ...Object.values(photoTimeline ?? {})
+          ])
+        });
         photosToAdd[timelineKey] = id;
       }
     }
 
     const newTimeline = { ...photoTimeline, ...photosToAdd };
-    setPhotoTimeline(newTimeline);
-    log.debug(`Timeline has ${Object.keys(newTimeline).length} entries.`);
-  }, [name, photoTimeline]);
+
+    if (R.values(newTimeline).length > R.uniq(R.values(newTimeline)).length) {
+      log.warn('Timeline may contain duplicates.');
+    }
+
+    return newTimeline;
+  }, []);
 
   /**
    * [Callback] Provided a day offset (assumed to be from today) pre-loads any
@@ -231,7 +248,7 @@ export function InspiratProvider(props: React.PropsWithChildren) {
       const photoIdFromTimeline = Reflect.get(photoTimeline, dateFromCurOffset);
 
       if (Reflect.has(photoTimeline, dateFromCurOffset)) {
-        const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline);
+        const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline, currentDate);
         if (!photoFromTimeline) return;
         const { lowQuality, highQuality } = buildPhotoUrls(photoFromTimeline);
 
@@ -255,45 +272,29 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   // ----- Effects -------------------------------------------------------------
 
   /**
-   * [Effect] ...
+   * [Effect] TheBigOne
    */
   useAsyncEffect(async isMounted => {
     if (!photoTimeline) {
-      await updatePhotoTimeline(currentDate);
+      log.warn('[Effect:TheBigOne] Initializing photo timeline.');
+      setPhotoTimeline(await updatePhotoTimeline(currentDate, photoTimeline));
       return;
     }
 
     const timelineKey = getFormattedDateWithDayOffset({ date: currentDate });
-
-    // If the timeline doesn't have a photo for the current day, update it.
-    if (!Reflect.has(photoTimeline, timelineKey)) {
-      await updatePhotoTimeline(currentDate);
-      // Return here. Because `updatePhotoTimeline` triggers an update of
-      // `photoTimeline`, causing this effect to run again with a fresh value.
-      return;
-    }
-
-    const photoIdFromTimeline = Reflect.get(photoTimeline, timelineKey);
-    if (!photoIdFromTimeline) throw new Error(`[Inspirat] No entry in timeline for "${currentDate}"`);
-
-    const photoFromTimeline = await getPhotoFromCollection(photoIdFromTimeline, currentDate);
+    const updatedPhotoTimeline = await updatePhotoTimeline(currentDate, photoTimeline);
     if (!isMounted()) return;
 
-    // If we can't find a photo in our collections, this may mean that the photo
-    // was removed from all collections after being added to the timeline. In
-    // this case, perform another update to the timeline, but compute fresh
-    // photos rather than only adding missing ones.
-    if (!photoFromTimeline) {
-      log.warn(`No photo in collections with ID ${photoIdFromTimeline}.`);
-      await updatePhotoTimeline(currentDate, true);
-      // Again, we can bail early and the above function call will trigger a
-      // re-run of this effect with fresh data.
-      return;
-    }
+    const photoId = Reflect.get(updatedPhotoTimeline, timelineKey);
+    if (!photoId) throw new Error(`[Effect:TheBigOne] No entry in timeline for "${currentDate}"`);
 
+    const photoFromTimeline = await getPhotoFromCollection(photoId, currentDate);
+    if (!isMounted()) return;
+
+    setPhotoTimeline(updatedPhotoTimeline);
     setCurrentPhoto(photoFromTimeline);
     void preloadPhotosFromTimeline(currentDate);
-  }, [currentDate, photoTimeline, shouldResetPhoto]);
+  }, [currentDate, shouldResetPhoto]);
 
   /**
    * [Effect] Sets up event listeners which update isLoading based on the state
@@ -322,15 +323,24 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   }, []);
 
   /**
-   * [Effect] Update period.
+   * [Effect] Updates `period` periodically and updates the date at midnight.
    */
   React.useEffect(() => {
-    const interval = setInterval(() => {
+    const intervalHandle = setInterval(() => {
       setPeriod(getPeriodDescriptor());
     }, ms('30 seconds'));
 
-    return () => clearInterval(interval);
-  }, []);
+    const msToMidnight = midnight() - now();
+
+    const timeoutHandle = setTimeout(() => {
+      setCurrentDate(addDays(currentDate, 1));
+    }, msToMidnight);
+
+    return () => {
+      clearInterval(intervalHandle);
+      clearTimeout(timeoutHandle);
+    };
+  }, [currentDate]);
 
 
   return (

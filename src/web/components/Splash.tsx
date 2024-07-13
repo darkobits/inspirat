@@ -9,7 +9,6 @@ import SplashLower from 'web/components/SplashLower';
 import InspiratContext from 'web/contexts/Inspirat';
 import { BACKGROUND_TRANSITION_DURATION } from 'web/etc/constants';
 import { Logger } from 'web/lib/log';
-import { capitalizeWords } from 'web/lib/utils';
 
 import classes from './Splash.css';
 
@@ -20,25 +19,20 @@ const log = new Logger({ prefix: '🌅 •' });
 
 const INITIAL_LOAD_TRANSITION_DURATION = '0.5s';
 
-/**
- * TODO: Deprecate usage of maskColor and maskAmount overrides. Use photo
- * palette with a box-shadow around text instead.
- */
 export function Splash(props: ElementProps<HTMLDivElement>) {
   const { className, style, ...restProps } = props;
   const { currentPhoto } = React.useContext(InspiratContext);
   const [aPhoto, setAPhoto] = React.useState<InspiratPhotoResource | void>();
   const [bPhoto, setBPhoto] = React.useState<InspiratPhotoResource | void>();
   const [transitionDuration, setTransitionDuration] = React.useState(INITIAL_LOAD_TRANSITION_DURATION);
-  const [counter, setCounter] = React.useState(0);
-  const activeElement = counter % 2 === 0 ? 'A' : 'B';
+  const [activeElement, setActiveElement] = React.useState<'A' | 'B'>('B');
 
   /**
    * [Effect] Increment `counter` whenever the current photo changes.
    */
   React.useEffect(() => {
     if (!currentPhoto?.id) return;
-    setCounter(prev => prev + 1);
+    setActiveElement(prev => (prev === 'A' ? 'B' : 'A'));
   }, [currentPhoto?.id]);
 
   /**
@@ -61,7 +55,7 @@ export function Splash(props: ElementProps<HTMLDivElement>) {
       clearPhotoTimeoutHandle = setTimeout(() => setAPhoto(), ms(transitionDuration));
     }
 
-    log.debug(`${activeElement} • ${capitalizeWords(weight?.name ?? 'Unknown')} (${Number(weight?.value ?? 0).toFixed(2)}) - ${id}`);
+    log.debug(`${activeElement} • collection: ${weight?.name ?? 'unknown'} • weight: ${Number(weight?.value ?? 0).toFixed(2)} • id: ${id}`);
 
     let transitionDurationTimeoutHandle: NodeJS.Timeout;
 

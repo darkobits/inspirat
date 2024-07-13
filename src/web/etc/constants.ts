@@ -1,33 +1,35 @@
+import * as CSS from 'csstype';
 import ms from 'ms';
 
 import type { Color } from 'etc/types';
 import type { BackgroundImageOverrides } from 'web/etc/types';
 
-const VITE_TITLE = import.meta.env.VITE_TITLE as string | undefined;
-const VITE_BUCKET_URL = import.meta.env.VITE_BUCKET_URL as string | undefined;
+const VITE_TITLE: string | undefined = import.meta.env.VITE_TITLE;
+const VITE_BUCKET_URL: string | undefined = import.meta.env.VITE_BUCKET_URL;
 
 /**
  * Document title to use.
  */
 export const TITLE = VITE_TITLE;
-if (!TITLE) throw new Error('TITLE is not set.');
 
 /**
  * AWS S3 Bucket URL.
- */
-export const BUCKET_URL = VITE_BUCKET_URL as string;
+*/
+export const BUCKET_URL = VITE_BUCKET_URL;
+
+if (!TITLE) throw new Error('TITLE is not set.');
 if (!BUCKET_URL) throw new Error('BUCKET_URL is not set.');
 
 // ----- Backgrounds -----------------------------------------------------------
 
 /**
- * Duration of the opacity transition when the background image changes. This
- * should be a valid CSS transition-duration value.
+ * Duration of the opacity-based cross-fade transition when the background image
+ * changes. This should be a valid CSS transition-duration value.
  *
  * N.B. This value is shared between various components to coordinate
  * animations.
  */
-export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'production'
+export const BACKGROUND_TRANSITION_DURATION: CSS.Property.AnimationDuration<string> = import.meta.env.NODE_ENV === 'production'
   ? '5s'
   : '720ms';
 
@@ -38,7 +40,7 @@ export const BACKGROUND_TRANSITION_DURATION = import.meta.env.NODE_ENV === 'prod
  * N.B. This value is shared between various components to coordinate
  * animations.
  */
-export const BACKGROUND_TRANSITION_FUNCTION = import.meta.env.NODE_ENV === 'production'
+export const BACKGROUND_TRANSITION_FUNCTION: CSS.Property.AnimationTimingFunction = import.meta.env.NODE_ENV === 'production'
   ? 'ease-in-out'
   : 'ease-in-out';
 
@@ -83,12 +85,12 @@ export const CURRENT_PHOTO_CACHE_KEY = 'currentPhoto';
 /**
  * JPEG quality to use for full-quality images.
  */
-export const QUALITY_FULL = 100 as const;
+export const QUALITY_FULL = 98 as const;
 
 /**
  * JPEG quality to use for low-quality image previews.
  */
-export const QUALITY_LQIP = 50 as const;
+export const QUALITY_LQIP = 70 as const;
 
 /**
  * When using weighted categories, this is the weight that will be assigned to
@@ -103,8 +105,8 @@ export const PHOTO_DEFAULT_WEIGHT = 0.5 as const;
  * Basis for computing various attributes of the Source and Swatch components.
  */
 export const BASIS = '34px';
-export const BLACK: Color  = {r: 0, g: 0, b: 0};
-export const WHITE: Color = {r: 255, g: 255, b: 255};
+export const BLACK: Color  = { r: 0, g: 0, b: 0 };
+export const WHITE: Color = { r: 255, g: 255, b: 255 };
 
 /**
  * After the mouse leaves the DevTools container, it will wait this amount of

@@ -19,7 +19,7 @@ import { now } from 'web/lib/time';
 import { ifDebug } from 'web/lib/utils';
 
 import type { InspiratPhotoCollection, InspiratPhotoResource } from 'etc/types';
-import type { PhotoCollectionStorageItem } from 'web/etc/types';
+import type { PhotoCollectionStorageItem, AnnotatedPhotoCollection } from 'web/etc/types';
 
 const log = new Logger({ prefix: '🌅 •' });
 
@@ -28,8 +28,8 @@ const chance = new Chance();
 /**
  * @private
  *
- * Tracks calls to getPhotoCollection, ensuring promises are re-used when
- * multiple invocations occur before the first invocation finishes.
+ * Used by `getPhotoCollections` to dispatch the same promise to subsequent
+ * callers.
  */
 const pendingPromiseCache = new PendingPromiseCache();
 
@@ -93,7 +93,9 @@ async function fetchAndUpdateCollections(): Promise<PhotoCollectionStorageItem |
  * update.
  */
 export async function getPhotoCollections() {
-  return pendingPromiseCache.use('getPhotoCollection', async () => {
+  return pendingPromiseCache.use(JSON.stringify([
+    'getPhotoCollections'
+  ]), async () => {
     let photoCache = await storage.getItem<PhotoCollectionStorageItem>(COLLECTION_CACHE_KEY);
 
     if (!photoCache) {
@@ -129,15 +131,16 @@ export async function getPhotoCollections() {
 /**
  * @private
  *
- * Provided a day offset, returns a flat array of photo resources, each photo
+ * Provided a Date, returns a flat array of photo resources, each photo
  * annotated with a weight descriptor.
  */
-async function getWeightedPhotos(date: Date) {
-  const photos = await getPhotoCollections();
-
+function getSeasonWeightedPhotosFromDate(
+  date: Date,
+  photoCollections: Array<AnnotatedPhotoCollection>
+) {
   const seasonWeights = computeSeasonWeights(date);
 
-  const mappedCollections = photos.collections?.map(photoCollection => {
+  const mappedCollections = photoCollections.map(photoCollection => {
     if (photoCollection.weight) {
       const weightDescriptor = seasonWeights.find(weightDescriptor => weightDescriptor.name.toLowerCase() === photoCollection.weight.name.toLowerCase());
 
@@ -158,15 +161,41 @@ async function getWeightedPhotos(date: Date) {
   return mappedCollections.flatMap(photoCollection => photoCollection.photos) as Array<InspiratPhotoResource & { weight: { name: string; value: number } }>;
 }
 
+export interface GetCurrentPhotoOptions {
+  date?: Date;
+  excludePhotoIds?: Array<string>;
+}
 /**
  * Returns a photo selected at random from the current collection. Photos are
  * assigned weights based on the provided `offset` parameter. Additionally,
  * the random number generator may be seeded with a `seed` option.
  */
-export async function getCurrentPhotoFromCollection({ date = new Date() } = {}): Promise<InspiratPhotoResource> {
-  const photos = await getWeightedPhotos(date);
-  const weights = R.map(R.pathOr(0, ['weight', 'value']), photos);
+export async function getCurrentPhotoFromCollection({
+  date = new Date(),
+  excludePhotoIds = []
+}: GetCurrentPhotoOptions = {}): Promise<InspiratPhotoResource> {
+  const { collections } = await getPhotoCollections();
+  // log.info('[getCurrentPhotoFromCollection] excludeIds:', excludePhotoIds);
+
+  const clonedCollections = R.clone(collections);
+
+  clonedCollections.forEach(collection => {
+    collection.photos = collection.photos.filter(
+      photo => !excludePhotoIds.includes(photo.id)
+    );
+  });
+
+  const photos = getSeasonWeightedPhotosFromDate(date, clonedCollections);
+  if (photos.length === 0) throw new Error('[getCurrentPhotoFromCollection] No photos to choose from.');
+
+  // log.info('[getCurrentPhotoFromCollection] photos.length:', photos.length);
+
+  // We use an "alternative minimum weight" here because if all weights in the
+  // list are 0, `chance.weighted` will throw an error.
+  const weights = photos.map(photo => photo.weight.value || 0.01);
+  // log.info('[getCurrentPhotoFromCollection] weights:', weights);
   const photo = chance.weighted(photos, weights);
+
   return photo;
 }
 
@@ -175,6 +204,7 @@ export async function getCurrentPhotoFromCollection({ date = new Date() } = {}):
  * the indicated photo with a `weight` key calculated for the provided date.
  */
 export async function getPhotoFromCollection(id: string, date = new Date()) {
-  const photos = await getWeightedPhotos(date);
+  const { collections } = await getPhotoCollections();
+  const photos = getSeasonWeightedPhotosFromDate(date, collections);
   return photos.find(curPhoto => curPhoto.id === id);
 }

@@ -11,24 +11,10 @@ export const vars = {
 
 export default {
   swatch: style({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-
+    backgroundColor: vars.backgroundColor,
     width: BASIS,
     height: BASIS,
-
-    backgroundColor: vars.backgroundColor,
-
-    borderRadius: '4px',
     border: vars.border,
-
-    color: vars.color,
-
-    fontSize: '12px',
-    textTransform: 'capitalize',
-
-    cursor: 'crosshair'
+    color: vars.color
   })
 };
