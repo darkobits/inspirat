@@ -235,9 +235,9 @@ export function InspiratProvider(props: React.PropsWithChildren) {
   const preloadPhotosFromTimeline = React.useCallback(async (date: Date) => {
     if (!photoTimeline) return;
 
-    // Pre-load past and future photos in dev mode. Otherwise, only pre-load
-    // future photos.
-    const offsets = import.meta.env.DEV
+    // Pre-load past and future photos when dev tools are active. Otherwise,
+    // only pre-load future photos.
+    const offsets = showDevTools
       ? R.range(TIMELINE_WINDOW_DAYS[0], TIMELINE_WINDOW_DAYS[1] + 1)
       : R.range(0, TIMELINE_WINDOW_DAYS[1] + 1);
 
