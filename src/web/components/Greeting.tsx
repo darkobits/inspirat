@@ -63,7 +63,7 @@ export default function Greeting({ style }: ElementProps<HTMLDivElement>) {
 
         // Animations.
         animationName: ready ? keyframes.blurIn : 'none',
-        animationDuration: '720ms',
+        animationDuration: '1200ms',
         animationTimingFunction: 'cubic-bezier(0, 0.75, 0.25, 1)',
 
         // Transitions.
