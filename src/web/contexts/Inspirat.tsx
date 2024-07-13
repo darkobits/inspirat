@@ -296,6 +296,12 @@ export function InspiratProvider(props: React.PropsWithChildren) {
 
     setPhotoTimeline(updatedPhotoTimeline);
     setCurrentPhoto(photoFromTimeline);
+
+    // Clear the queue before we re-populate it based on the new currentDate.
+    // This will ensure that high-priority photos (like the one for the current
+    // date) are pre-loaded first.
+    preloadQueue.clear();
+
     void preloadPhotosFromTimeline(currentDate);
   }, [currentDate, shouldResetPhoto]);
 
