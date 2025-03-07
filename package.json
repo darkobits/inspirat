@@ -21,7 +21,7 @@
     "@darkobits/sleep": "^3.0.0",
     "@vanilla-extract/dynamic": "^2.1.1",
     "animate.css": "^4.1.1",
-    "axios": "^1.7.2",
+    "axios": "^1.8.2",
     "bootstrap": "^5.3.3",
     "camelcase": "^8.0.0",
     "chance": "^1.1.11",
