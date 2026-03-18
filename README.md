@@ -7,6 +7,10 @@
   <a href="https://conventionalcommits.org"><img src="https://img.shields.io/static/v1?label=commits&message=conventional&style=flat-square&color=398AFB"></a>
 </p>
 
+> [!WARNING]
+> Consult [`AGELESS.md`](./AGELESS.md) to determine if you are permitted to use
+> this software where you live.
+
 A minimalistic New Tab experience for Chrome and Chromium-based browsers. Each day, Inspirat will
 display a beautiful photograph from Unsplash along with a customizable greeting. Grab it
 [here](https://bit.ly/inspirat-chrome).
